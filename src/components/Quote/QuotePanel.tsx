@@ -27,11 +27,6 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
   const { dimensions, type, propertyType, surfaceFinish, selectedAccessories } = config;
   const area = dimensions.length * dimensions.width;
 
-  // Rough cost estimate
-  const baseCostPerSqFt = propertyType === 'commercial' ? 8 : 6;
-  const finishMultiplier = { smooth: 1, textured: 1.15, cushioned: 1.4 }[surfaceFinish];
-  const surfaceCost = Math.round(area * baseCostPerSqFt * finishMultiplier);
-
   const presetName =
     COURT_PRESETS.find(
       (p) =>
@@ -75,39 +70,23 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
           <h3 className="text-sm font-bold text-white">Your Court Summary</h3>
         </div>
         <div className="p-4 space-y-2 text-sm">
-          <Row label="Court Type"     value={COURT_LABELS[type]} />
-          <Row label="Size"           value={`${dimensions.length} × ${dimensions.width} ft (${presetName})`} />
-          <Row label="Area"           value={`${area.toLocaleString()} sq ft`} />
-          <Row label="Property"       value={propertyType.charAt(0).toUpperCase() + propertyType.slice(1)} />
-          <Row label="Surface"        value={FINISH_LABELS[surfaceFinish]} />
+          <Row label="Court Type" value={COURT_LABELS[type]} />
+          <Row label="Size"       value={`${dimensions.length} × ${dimensions.width} ft (${presetName})`} />
+          <Row label="Area"       value={`${area.toLocaleString()} sq ft`} />
+          <Row label="Property"   value={propertyType.charAt(0).toUpperCase() + propertyType.slice(1)} />
+          <Row label="Surface"    value={FINISH_LABELS[surfaceFinish]} />
           <div className="border-t border-gray-700 pt-2 mt-2">
             <div className="text-xs text-gray-400 mb-1">Selected Accessories</div>
             {selectedAccessoryItems.length === 0 ? (
               <div className="text-gray-500 text-xs">None selected</div>
             ) : (
               selectedAccessoryItems.map((a) => (
-                <div key={a.id} className="flex justify-between text-xs py-0.5">
-                  <span className="text-gray-300">{a.icon} {a.name}</span>
-                  <span className="text-gray-500">{a.priceEstimate}</span>
+                <div key={a.id} className="text-xs py-0.5 text-gray-300">
+                  {a.icon} {a.name}
                 </div>
               ))
             )}
           </div>
-        </div>
-
-        {/* Estimate band */}
-        <div className="px-4 py-3 bg-pink-900/30 border-t border-pink-800/40">
-          <div className="text-xs text-pink-400 font-medium uppercase tracking-wide mb-0.5">
-            Estimated Surface Cost
-          </div>
-          <div className="text-2xl font-bold text-white">
-            ${surfaceCost.toLocaleString()}
-            <span className="text-sm font-normal text-gray-400 ml-1">– ${Math.round(surfaceCost * 1.25).toLocaleString()}</span>
-          </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Estimate covers asphalt surface & line markings. Accessories and site prep billed separately.
-            Final quote after site evaluation.
-          </p>
         </div>
       </div>
 

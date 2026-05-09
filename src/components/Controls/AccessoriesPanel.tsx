@@ -65,10 +65,6 @@ export const AccessoriesPanel: React.FC<Props> = ({ courtType, selected, onToggl
                       </div>
                     </div>
 
-                    {/* Price */}
-                    <div className={`text-xs font-medium whitespace-nowrap ml-1 ${isSelected ? 'text-pink-300' : 'text-gray-500'}`}>
-                      {acc.priceEstimate}
-                    </div>
                   </button>
                 );
               })}

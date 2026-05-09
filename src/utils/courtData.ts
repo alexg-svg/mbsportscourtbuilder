@@ -168,7 +168,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'Single adjustable in-ground hoop with breakaway rim',
     category: 'sport-equipment',
     icon: '🏀',
-    priceEstimate: '$800–$1,500',
     compatibleCourts: ['basketball', 'multi-sport'],
   },
   {
@@ -177,7 +176,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'Pair of adjustable in-ground hoops – full court setup',
     category: 'sport-equipment',
     icon: '🏀',
-    priceEstimate: '$1,500–$3,000',
     compatibleCourts: ['basketball', 'multi-sport'],
   },
   {
@@ -186,7 +184,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'Center strap net with steel posts, regulation height',
     category: 'sport-equipment',
     icon: '🎾',
-    priceEstimate: '$500–$1,200',
     compatibleCourts: ['tennis', 'multi-sport'],
   },
   {
@@ -195,7 +192,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'Portable or permanent net system, 34" center height',
     category: 'sport-equipment',
     icon: '🏓',
-    priceEstimate: '$300–$800',
     compatibleCourts: ['pickleball', 'multi-sport'],
   },
   // Lighting
@@ -205,7 +201,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'Two 20-ft light poles, ideal for half court or pickleball',
     category: 'lighting',
     icon: '💡',
-    priceEstimate: '$3,000–$6,000',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -214,7 +209,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'Four 20-ft poles for full coverage on full courts',
     category: 'lighting',
     icon: '💡',
-    priceEstimate: '$6,000–$10,000',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -223,7 +217,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'Six 20-ft poles for commercial-grade full-court lighting',
     category: 'lighting',
     icon: '💡',
-    priceEstimate: '$10,000–$18,000',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   // Fencing
@@ -233,7 +226,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'Galvanized steel chain-link perimeter fencing, 10 ft high',
     category: 'fencing',
     icon: '🔲',
-    priceEstimate: '$8–$15 / lin. ft',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -242,7 +234,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'White vinyl perimeter fencing, low-maintenance',
     category: 'fencing',
     icon: '🔲',
-    priceEstimate: '$15–$30 / lin. ft',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -251,7 +242,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'UV-resistant privacy & wind-reduction screen for fence',
     category: 'fencing',
     icon: '🛡️',
-    priceEstimate: '$2–$5 / lin. ft',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   // Amenities
@@ -261,7 +251,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'Two aluminum bleacher benches, seats 4–6 each',
     category: 'amenities',
     icon: '🪑',
-    priceEstimate: '$600–$1,200',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -270,7 +259,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'Four aluminum benches for larger commercial courts',
     category: 'amenities',
     icon: '🪑',
-    priceEstimate: '$1,200–$2,400',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -279,7 +267,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'Outdoor-rated drinking fountain with drain connection',
     category: 'amenities',
     icon: '💧',
-    priceEstimate: '$800–$1,500',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -288,7 +275,6 @@ export const ACCESSORIES: Accessory[] = [
     description: 'LED electronic scoreboard with remote, weatherproof',
     category: 'amenities',
     icon: '📋',
-    priceEstimate: '$1,500–$4,000',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
 ];

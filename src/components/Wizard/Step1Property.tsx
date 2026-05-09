@@ -28,8 +28,8 @@ export const Step1Property: React.FC<Props> = ({ propertyType, onChange, onNext 
           onClick={() => { onChange(id); setTimeout(onNext, 250); }}
           className={`w-full p-5 rounded-2xl border-2 text-left transition-all flex items-start gap-4 active:scale-[0.98] ${
             propertyType === id
-              ? 'border-pink-500 bg-pink-600/15 text-theme-primary shadow-lg shadow-pink-900/20'
-              : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-pink-500/40 hover:text-theme-primary hover:shadow-md'
+              ? 'border-pink-500 bg-pink-600/15 text-theme-primary shadow-lg shadow-pink-500/25 ring-1 ring-pink-500/30'
+              : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-pink-500/50 hover:text-theme-primary hover:shadow-md hover:shadow-pink-500/10'
           }`}
         >
           <Icon className={`w-8 h-8 mt-0.5 flex-shrink-0 ${propertyType === id ? 'text-pink-400' : 'text-theme-muted'}`} />

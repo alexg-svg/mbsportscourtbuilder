@@ -72,8 +72,8 @@ export const Step5Accessories: React.FC<Props> = ({ courtType, selected, onToggl
                       onClick={() => onToggle(acc.id)}
                       className={`w-full p-3 rounded-xl border-2 text-left flex items-start gap-3 transition-all active:scale-[0.98] ${
                         isSelected
-                          ? 'border-pink-500 bg-pink-600/15 text-theme-primary shadow-md shadow-pink-900/20'
-                          : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-pink-500/30 hover:text-theme-primary'
+                          ? 'border-pink-500 bg-pink-600/15 text-theme-primary shadow-md shadow-pink-500/20 ring-1 ring-pink-500/25'
+                          : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-pink-500/40 hover:text-theme-primary hover:shadow-sm hover:shadow-pink-500/10'
                       }`}
                     >
                       {/* Checkbox */}

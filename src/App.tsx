@@ -173,8 +173,17 @@ export default function App() {
         {/* Right: Live court preview */}
         <div className={`
           ${showPreview ? 'flex' : 'hidden'} sm:flex
-          flex-1 flex-col bg-theme-canvas overflow-hidden
+          flex-1 flex-col bg-theme-canvas overflow-hidden relative canvas-grid
         `}>
+          {/* Animated background orbs */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-1/4 left-1/5 w-80 h-80 rounded-full blur-3xl animate-orb-float"
+              style={{ background: 'var(--orb-pink)' }} />
+            <div className="absolute bottom-1/4 right-1/5 w-72 h-72 rounded-full blur-3xl animate-orb-float-alt"
+              style={{ background: 'var(--orb-cyan)', animationDelay: '-10s' }} />
+            <div className="absolute top-2/3 left-1/2 w-56 h-56 rounded-full blur-2xl animate-orb-float"
+              style={{ background: 'var(--orb-pink)', animationDelay: '-16s', animationDuration: '24s' }} />
+          </div>
           <div className="px-6 py-3 border-b border-theme-border flex items-center justify-between bg-theme-panel/70 flex-shrink-0">
             <div>
               <h2 className="text-sm font-semibold text-theme-primary">Live Court Preview</h2>

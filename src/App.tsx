@@ -2,55 +2,51 @@ import React, { useState, useCallback } from 'react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES } from './utils/courtData';
 import { CourtSVG } from './components/Court/CourtSVG';
-import { CourtTypeSelector } from './components/Controls/CourtTypeSelector';
-import { DimensionsPanel } from './components/Controls/DimensionsPanel';
-import { ColorsPanel } from './components/Controls/ColorsPanel';
-import { AccessoriesPanel } from './components/Controls/AccessoriesPanel';
-import { QuotePanel } from './components/Quote/QuotePanel';
-
-type Tab = 'type' | 'size' | 'colors' | 'accessories' | 'quote';
-
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'type',        label: 'Court',       icon: '🏟️' },
-  { id: 'size',        label: 'Size',         icon: '📐' },
-  { id: 'colors',      label: 'Colors',       icon: '🎨' },
-  { id: 'accessories', label: 'Extras',       icon: '⚡' },
-  { id: 'quote',       label: 'Get Quote',    icon: '💬' },
-];
+import { StepProgress } from './components/Wizard/StepProgress';
+import { Step1Property } from './components/Wizard/Step1Property';
+import { Step2CourtType } from './components/Wizard/Step2CourtType';
+import { Step3Size } from './components/Wizard/Step3Size';
+import { Step4Colors } from './components/Wizard/Step4Colors';
+import { Step5Accessories } from './components/Wizard/Step5Accessories';
+import { Step6Contact } from './components/Wizard/Step6Contact';
+import type { ContactData } from './components/Wizard/Step6Contact';
+import { StepDone } from './components/Wizard/StepDone';
 
 function getDefaultDimensions(type: CourtType, propertyType: PropertyType): CourtDimensions {
-  const preferred = COURT_PRESETS.find(
+  const pref = COURT_PRESETS.find(
     (p) => p.type === type && (p.recommended === propertyType || p.recommended === 'both'),
   );
-  return preferred?.dimensions ?? COURT_PRESETS.find((p) => p.type === type)!.dimensions;
+  return pref?.dimensions ?? COURT_PRESETS.find((p) => p.type === type)!.dimensions;
 }
 
-const initialType: CourtType     = 'basketball';
-const initialProperty: PropertyType = 'residential';
-
 const initialConfig: CourtConfig = {
-  type:                initialType,
-  propertyType:        initialProperty,
-  dimensions:          getDefaultDimensions(initialType, initialProperty),
-  colors:              DEFAULT_COLORS[initialType],
+  type:                'basketball',
+  propertyType:        'residential',
+  dimensions:          getDefaultDimensions('basketball', 'residential'),
+  colors:              DEFAULT_COLORS['basketball'],
   surfaceFinish:       'smooth',
-  selectedAccessories: ['basketball-hoop-double'],
+  selectedAccessories: [],
   customDimensions:    false,
 };
 
-export default function App() {
-  const [config, setConfig]     = useState<CourtConfig>(initialConfig);
-  const [activeTab, setActiveTab] = useState<Tab>('type');
-  const [showPreview, setShowPreview] = useState(false);
+const TOTAL_STEPS = 6;
 
-  const updateConfig = useCallback(<K extends keyof CourtConfig>(key: K, value: CourtConfig[K]) => {
+export default function App() {
+  const [step, setStep]         = useState(0);           // 0–5 = wizard steps; -1 = done
+  const [config, setConfig]     = useState<CourtConfig>(initialConfig);
+  const [submitted, setSubmitted] = useState<ContactData | null>(null);
+  const [showPreview, setShowPreview] = useState(false); // mobile toggle
+
+  const next = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
+  const back = () => setStep((s) => Math.max(s - 1, 0));
+
+  const update = useCallback(<K extends keyof CourtConfig>(key: K, value: CourtConfig[K]) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
   }, []);
 
   const handleCourtTypeChange = useCallback((type: CourtType) => {
     setConfig((prev) => ({
-      ...prev,
-      type,
+      ...prev, type,
       dimensions:          getDefaultDimensions(type, prev.propertyType),
       colors:              DEFAULT_COLORS[type],
       selectedAccessories: [],
@@ -58,46 +54,110 @@ export default function App() {
     }));
   }, []);
 
-  const handlePropertyTypeChange = useCallback((propertyType: PropertyType) => {
+  const handlePropertyChange = useCallback((propertyType: PropertyType) => {
     setConfig((prev) => ({
-      ...prev,
-      propertyType,
-      dimensions: getDefaultDimensions(prev.type, propertyType),
+      ...prev, propertyType,
+      dimensions:       getDefaultDimensions(prev.type, propertyType),
       customDimensions: false,
     }));
   }, []);
 
   const handleAccessoryToggle = useCallback((id: AccessoryId) => {
     setConfig((prev) => {
-      const acc = ACCESSORIES.find((a) => a.id === id)!;
-      // Mutual exclusion within lighting and hoops
-      const mutualExclusionGroups: AccessoryId[][] = [
+      const exclusionGroups: AccessoryId[][] = [
         ['lighting-2-pole', 'lighting-4-pole', 'lighting-6-pole'],
         ['basketball-hoop-single', 'basketball-hoop-double'],
       ];
-      let updated = [...prev.selectedAccessories];
-      if (updated.includes(id)) {
-        updated = updated.filter((x) => x !== id);
+      let next = [...prev.selectedAccessories];
+      if (next.includes(id)) {
+        next = next.filter((x) => x !== id);
       } else {
-        // Remove siblings
-        for (const group of mutualExclusionGroups) {
-          if (group.includes(id)) updated = updated.filter((x) => !group.includes(x));
+        for (const group of exclusionGroups) {
+          if (group.includes(id)) next = next.filter((x) => !group.includes(x));
         }
-        updated.push(id);
+        next.push(id);
       }
-      return { ...prev, selectedAccessories: updated };
+      return { ...prev, selectedAccessories: next };
     });
   }, []);
 
-  const accessoryCount  = config.selectedAccessories.length;
-  const selectedAreaStr = `${config.dimensions.length}×${config.dimensions.width} ft`;
+  const handleSubmit = (data: ContactData) => {
+    setSubmitted(data);
+    setStep(-1);
+  };
+
+  const handleReset = () => {
+    setConfig(initialConfig);
+    setSubmitted(null);
+    setStep(0);
+    setShowPreview(false);
+  };
+
+  const renderStep = () => {
+    switch (step) {
+      case 0: return (
+        <Step1Property
+          propertyType={config.propertyType}
+          onChange={handlePropertyChange}
+          onNext={next}
+        />
+      );
+      case 1: return (
+        <Step2CourtType
+          courtType={config.type}
+          onChange={handleCourtTypeChange}
+          onBack={back}
+          onNext={next}
+        />
+      );
+      case 2: return (
+        <Step3Size
+          courtType={config.type}
+          dimensions={config.dimensions}
+          customDimensions={config.customDimensions}
+          onDimensionsChange={(d: CourtDimensions) => update('dimensions', d)}
+          onCustomToggle={(v: boolean) => update('customDimensions', v)}
+          onBack={back}
+          onNext={next}
+        />
+      );
+      case 3: return (
+        <Step4Colors
+          courtType={config.type}
+          colors={config.colors}
+          surfaceFinish={config.surfaceFinish}
+          onColorsChange={(c: CourtColors) => update('colors', c)}
+          onSurfaceFinishChange={(f: SurfaceFinish) => update('surfaceFinish', f)}
+          onBack={back}
+          onNext={next}
+        />
+      );
+      case 4: return (
+        <Step5Accessories
+          courtType={config.type}
+          selected={config.selectedAccessories}
+          onToggle={handleAccessoryToggle}
+          onBack={back}
+          onNext={next}
+        />
+      );
+      case 5: return (
+        <Step6Contact
+          config={config}
+          onBack={back}
+          onSubmit={handleSubmit}
+        />
+      );
+      default: return null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-950 text-white font-sans flex flex-col">
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header className="bg-gray-900 border-b border-gray-800 px-4 py-2.5 flex items-center justify-between">
+
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
+      <header className="bg-gray-900 border-b border-gray-800 px-4 py-2.5 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
-          {/* Oval logo badge */}
           <div className="flex flex-col items-center justify-center px-3 py-1 rounded-full border-2 border-black bg-pink-600 shadow-lg shadow-pink-900/40 min-w-[52px]">
             <span className="text-white font-extrabold text-[9px] tracking-tight leading-tight">MB</span>
             <span className="text-cyan-300 font-extrabold text-[9px] tracking-tight leading-tight">SPORTS</span>
@@ -113,125 +173,58 @@ export default function App() {
           <span className="text-gray-700">·</span>
           <span className="text-gray-500">Tennis · Basketball · Pickleball</span>
         </div>
-        {/* Mobile preview toggle */}
-        <button
-          className="sm:hidden text-xs bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-lg"
-          onClick={() => setShowPreview((v) => !v)}
-        >
-          {showPreview ? '⚙️ Controls' : '👁️ Preview'}
-        </button>
+        {/* Mobile: toggle between form and preview */}
+        {step >= 0 && (
+          <button
+            className="sm:hidden text-xs bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-lg"
+            onClick={() => setShowPreview((v) => !v)}
+          >
+            {showPreview ? '📝 Form' : '👁️ Preview'}
+          </button>
+        )}
       </header>
 
-      {/* ── Main Layout ────────────────────────────────────────────────────── */}
+      {/* ── Body ────────────────────────────────────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden">
 
-        {/* Left Panel — Controls */}
-        <aside className={`
+        {/* ── Left: Wizard panel ──────────────────────────────────────────── */}
+        <div className={`
           ${showPreview ? 'hidden' : 'flex'} sm:flex
-          flex-col w-full sm:w-80 lg:w-96 bg-gray-900 border-r border-gray-800
-          overflow-y-auto flex-shrink-0
+          flex-col w-full sm:w-[400px] lg:w-[440px]
+          bg-gray-900 border-r border-gray-800 flex-shrink-0 overflow-hidden
         `}>
-          {/* Tab bar */}
-          <div className="flex border-b border-gray-800 sticky top-0 bg-gray-900 z-10">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-2.5 text-center transition-all border-b-2 ${
-                  activeTab === tab.id
-                    ? 'border-pink-500 text-pink-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-300'
-                }`}
-                title={tab.label}
-              >
-                <div className="text-base">{tab.icon}</div>
-                <div className="text-xs font-medium mt-0.5 hidden lg:block">{tab.label}</div>
-              </button>
-            ))}
-          </div>
-
-          {/* Tab content */}
-          <div className="flex-1 p-4 overflow-y-auto">
-            {/* Court info strip */}
-            <div className="flex items-center gap-2 mb-4 p-2 bg-gray-800/60 rounded-lg border border-gray-700 text-xs">
-              <span className="font-semibold text-pink-400">{config.type.charAt(0).toUpperCase() + config.type.slice(1)}</span>
-              <span className="text-gray-600">·</span>
-              <span className="text-gray-400">{selectedAreaStr}</span>
-              {accessoryCount > 0 && (
-                <>
-                  <span className="text-gray-600">·</span>
-                  <span className="text-gray-400">{accessoryCount} accessory{accessoryCount !== 1 ? 'ies' : ''}</span>
-                </>
-              )}
-            </div>
-
-            {activeTab === 'type' && (
-              <CourtTypeSelector
-                courtType={config.type}
-                propertyType={config.propertyType}
-                onCourtTypeChange={handleCourtTypeChange}
-                onPropertyTypeChange={handlePropertyTypeChange}
-              />
-            )}
-            {activeTab === 'size' && (
-              <DimensionsPanel
-                courtType={config.type}
-                dimensions={config.dimensions}
-                customDimensions={config.customDimensions}
-                onDimensionsChange={(d: CourtDimensions) => updateConfig('dimensions', d)}
-                onCustomToggle={(v: boolean) => updateConfig('customDimensions', v)}
-              />
-            )}
-            {activeTab === 'colors' && (
-              <ColorsPanel
-                courtType={config.type}
-                colors={config.colors}
-                surfaceFinish={config.surfaceFinish}
-                onColorsChange={(c: CourtColors) => updateConfig('colors', c)}
-                onSurfaceFinishChange={(f: SurfaceFinish) => updateConfig('surfaceFinish', f)}
-              />
-            )}
-            {activeTab === 'accessories' && (
-              <AccessoriesPanel
-                courtType={config.type}
-                selected={config.selectedAccessories}
-                onToggle={handleAccessoryToggle}
-              />
-            )}
-            {activeTab === 'quote' && (
-              <QuotePanel config={config} />
-            )}
-          </div>
-
-          {/* Next step CTA */}
-          {activeTab !== 'quote' && (
-            <div className="p-4 border-t border-gray-800">
-              <button
-                onClick={() => {
-                  const idx = TABS.findIndex((t) => t.id === activeTab);
-                  setActiveTab(TABS[Math.min(idx + 1, TABS.length - 1)].id);
-                }}
-                className="w-full py-2.5 bg-pink-600 hover:bg-pink-500 text-white font-semibold rounded-xl transition-all text-sm shadow-lg shadow-pink-900/30"
-              >
-                Next: {TABS[TABS.findIndex((t) => t.id === activeTab) + 1]?.label ?? 'Get Quote'} →
-              </button>
-            </div>
+          {step === -1 ? (
+            /* Done screen */
+            <StepDone
+              name={submitted?.name ?? ''}
+              email={submitted?.email ?? ''}
+              onReset={handleReset}
+            />
+          ) : (
+            <>
+              {/* Progress bar */}
+              <StepProgress current={step} />
+              {/* Step content */}
+              <div className="flex-1 overflow-hidden">
+                {renderStep()}
+              </div>
+            </>
           )}
-        </aside>
+        </div>
 
-        {/* Right Panel — Court Preview */}
-        <main className={`
+        {/* ── Right: Live court preview ────────────────────────────────────── */}
+        <div className={`
           ${showPreview ? 'flex' : 'hidden'} sm:flex
           flex-1 flex-col bg-gray-950 overflow-hidden
         `}>
           {/* Preview header */}
-          <div className="px-6 py-3 border-b border-gray-800 flex items-center justify-between bg-gray-900/50">
+          <div className="px-6 py-3 border-b border-gray-800 flex items-center justify-between bg-gray-900/50 flex-shrink-0">
             <div>
               <h2 className="text-sm font-semibold text-white">Live Court Preview</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Updates in real-time as you configure</p>
+              <p className="text-xs text-gray-500 mt-0.5">Updates as you configure your court</p>
             </div>
             <div className="flex items-center gap-3 text-xs text-gray-500">
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
                 Live
               </span>
@@ -240,7 +233,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* SVG Canvas */}
+          {/* SVG canvas */}
           <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
             <div className="w-full max-w-4xl aspect-[16/10]">
               <CourtSVG config={config} width={900} height={560} />
@@ -248,39 +241,47 @@ export default function App() {
           </div>
 
           {/* Legend */}
-          <div className="px-6 py-3 border-t border-gray-800 bg-gray-900/30">
-            <CourtLegend config={config} />
+          <div className="px-6 py-3 border-t border-gray-800 bg-gray-900/30 flex-shrink-0">
+            <CourtLegend config={config} step={step} />
           </div>
-        </main>
+        </div>
+
       </div>
     </div>
   );
 }
 
-// ─── Legend ─────────────────────────────────────────────────────────────────
-const COURT_DESCRIPTIONS: Record<string, string> = {
-  basketball:  'Asphalt basketball court with regulation markings, key areas, and three-point arcs.',
-  tennis:      'Asphalt tennis court with service boxes, singles and doubles sidelines.',
-  pickleball:  'Asphalt pickleball court with NVZ kitchen zones and centerline markings.',
-  'multi-sport': 'Multi-sport asphalt surface combining basketball + 2 pickleball courts (yellow overlay).',
+// ─── Legend ──────────────────────────────────────────────────────────────────
+const COURT_DESC: Record<string, string> = {
+  basketball:  'Basketball court · key areas · three-point arcs · free throw circles',
+  tennis:      'Tennis court · service boxes · singles & doubles sidelines',
+  pickleball:  'Pickleball court · NVZ kitchen zones · centerline',
+  'multi-sport': 'Multi-sport surface · basketball + 2 pickleball overlays (yellow)',
 };
 
-function CourtLegend({ config }: { config: CourtConfig }) {
+const STEP_HINTS: Record<number, string> = {
+  0: 'Choose your property type to get started.',
+  1: 'Select the sport — the court lines update live.',
+  2: 'Pick a standard size or enter custom dimensions.',
+  3: 'Tap any color swatch to change the court colors.',
+  4: 'Add lighting, nets, hoops, fencing, and more.',
+  5: 'Fill in your info and submit to get a free quote.',
+};
+
+function CourtLegend({ config, step }: { config: CourtConfig; step: number }) {
   const area = config.dimensions.length * config.dimensions.width;
-  const perim = 2 * (config.dimensions.length + config.dimensions.width);
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-gray-500">
-      <span>{COURT_DESCRIPTIONS[config.type]}</span>
-      <span className="text-gray-700">·</span>
-      <span>Perimeter: <span className="text-gray-300">{perim} ft</span></span>
-      <span className="text-gray-700">·</span>
-      <span>Area: <span className="text-gray-300">{area.toLocaleString()} sq ft</span></span>
-      {config.selectedAccessories.length > 0 && (
-        <>
-          <span className="text-gray-700">·</span>
-          <span>Accessories: <span className="text-gray-300">{config.selectedAccessories.length}</span></span>
-        </>
-      )}
+    <div className="text-xs text-gray-600 space-y-0.5">
+      <p>{COURT_DESC[config.type]}</p>
+      <p className="flex gap-3">
+        <span>{config.dimensions.length} × {config.dimensions.width} ft</span>
+        <span>·</span>
+        <span>{area.toLocaleString()} sq ft</span>
+        {config.selectedAccessories.length > 0 && (
+          <><span>·</span><span>{config.selectedAccessories.length} accessor{config.selectedAccessories.length === 1 ? 'y' : 'ies'}</span></>
+        )}
+      </p>
+      {step >= 0 && <p className="text-pink-900">{STEP_HINTS[step]}</p>}
     </div>
   );
 }

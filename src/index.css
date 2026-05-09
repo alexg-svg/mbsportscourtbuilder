@@ -39,9 +39,42 @@
     }
   }
 
+  /* Canvas grid pattern */
+  :root {
+    --grid-line: rgba(0, 0, 0, 0.06);
+    --orb-pink:  rgba(236, 72, 153, 0.07);
+    --orb-cyan:  rgba(34, 211, 238, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --grid-line: rgba(255, 255, 255, 0.04);
+      --orb-pink:  rgba(236, 72, 153, 0.14);
+      --orb-cyan:  rgba(34, 211, 238, 0.09);
+    }
+  }
+
+  .canvas-grid {
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
   /* Custom scrollbar */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: var(--bg-panel); }
   ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+}
+
+/* Orb float keyframes (registered in tailwind but defined here for full control) */
+@keyframes orb-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(50px, -35px) scale(1.08); }
+  66%       { transform: translate(-30px, 25px) scale(0.94); }
+}
+@keyframes orb-float-alt {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(-45px, 30px) scale(1.06); }
+  66%       { transform: translate(35px, -20px) scale(0.96); }
 }

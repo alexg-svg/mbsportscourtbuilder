@@ -13,10 +13,10 @@ interface Props {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const OPTIONS: { id: CourtType; label: string; Icon: React.ComponentType<any>; desc: string }[] = [
-  { id: 'basketball',  label: 'Basketball',  Icon: MdSportsBasketball,    desc: 'Half court or full court' },
-  { id: 'tennis',      label: 'Tennis',      Icon: MdSportsTennis,        desc: 'Singles or doubles' },
+  { id: 'basketball',  label: 'Basketball',  Icon: MdSportsBasketball,     desc: 'Half court or full court' },
+  { id: 'tennis',      label: 'Tennis',      Icon: MdSportsTennis,         desc: 'Singles or doubles' },
   { id: 'pickleball',  label: 'Pickleball',  Icon: FaTableTennisPaddleBall, desc: 'Standard or with clearance zones' },
-  { id: 'multi-sport', label: 'Multi-Sport', Icon: MdSports,              desc: 'Basketball + Pickleball combo' },
+  { id: 'multi-sport', label: 'Multi-Sport', Icon: MdSports,               desc: 'Basketball + Pickleball combo' },
 ];
 
 export const Step2CourtType: React.FC<Props> = ({ courtType, onChange, onBack, onNext }) => (
@@ -31,11 +31,11 @@ export const Step2CourtType: React.FC<Props> = ({ courtType, onChange, onBack, o
       {OPTIONS.map(({ id, label, Icon, desc }) => (
         <button
           key={id}
-          onClick={() => onChange(id)}
+          onClick={() => { onChange(id); setTimeout(onNext, 250); }}
           className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-[0.97] ${
             courtType === id
-              ? 'border-pink-500 bg-pink-600/15 text-theme-primary shadow-lg shadow-pink-900/20'
-              : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-pink-500/40 hover:text-theme-primary hover:shadow-md'
+              ? 'border-pink-500 bg-pink-600/15 text-theme-primary shadow-lg shadow-pink-500/25 ring-1 ring-pink-500/30'
+              : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-pink-500/50 hover:text-theme-primary hover:shadow-md hover:shadow-pink-500/10'
           }`}
         >
           <Icon size={28} className={`mb-3 ${courtType === id ? 'text-pink-400' : 'text-theme-muted'}`} />

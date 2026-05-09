@@ -46,13 +46,16 @@ export const StepShell: React.FC<Props> = ({
       <button
         onClick={onNext}
         disabled={nextDisabled}
-        className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+        className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all relative overflow-hidden group ${
           nextDisabled
             ? 'bg-theme-raised text-theme-faint cursor-not-allowed'
-            : 'bg-pink-600 hover:bg-pink-500 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-theme-primary shadow-lg shadow-pink-900/30 active:shadow-md'
+            : 'bg-pink-600 hover:bg-pink-500 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-theme-primary shadow-lg shadow-pink-900/30 hover:shadow-pink-500/40 hover:shadow-xl active:shadow-md'
         }`}
       >
         {nextLabel}
+        {!nextDisabled && (
+          <span className="absolute inset-0 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+        )}
       </button>
     </div>
   </div>

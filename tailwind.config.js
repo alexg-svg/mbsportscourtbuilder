@@ -41,6 +41,8 @@ export default {
         'fade-in':         'fade-in 0.3s ease-out both',
         'scale-in':        'scale-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both',
         'slide-up':        'slide-up 0.3s ease-out both',
+        'orb-float':       'orb-float 20s ease-in-out infinite',
+        'orb-float-alt':   'orb-float-alt 26s ease-in-out infinite',
       },
       keyframes: {
         'step-enter': {

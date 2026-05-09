@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { CourtConfig } from '../../types/court';
 
 interface Props {
@@ -7,7 +7,19 @@ interface Props {
   height?: number;
 }
 
+interface HotspotDef {
+  id: string;
+  svgX: number;
+  svgY: number;
+  title: string;
+  lines: string[];
+  tipDir: 'right' | 'left';
+}
+
 const PADDING = 40;
+const TIP_W = 188;
+const TIP_H = 62;
+const MARKER_R = 8;
 
 export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 }) => {
   const { type, dimensions, colors, selectedAccessories } = config;
@@ -46,6 +58,238 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
   const ls = { stroke: colors.lines, strokeWidth: Math.max(1.5, scale * 0.08) };
 
   const hasAcc = (id: string) => selectedAccessories.includes(id as never);
+
+  // ─── HOTSPOT STATE ────────────────────────────────────────────────────────
+  const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
+  useEffect(() => { setActiveHotspot(null); }, [type]);
+
+  // ─── HOTSPOT DEFINITIONS ─────────────────────────────────────────────────
+  const getHotspots = (): HotspotDef[] => {
+    switch (type) {
+      case 'basketball': {
+        const keyW    = 16;
+        const keyLen  = 19;
+        const basketX = 5.25;
+        const r3pt    = 23.75;
+        const corner22 = 22;
+        const ftY     = cW / 2;
+        const arcBreakX = basketX + Math.sqrt(r3pt * r3pt - corner22 * corner22);
+        return [
+          {
+            id: 'key', title: 'Paint (Key Area)',
+            svgX: px(keyLen * 0.32), svgY: py(ftY - keyW * 0.32),
+            lines: [`${keyW} ft wide · ${keyLen} ft deep`, 'Restricted scoring zone'],
+            tipDir: 'right',
+          },
+          {
+            id: 'ft', title: 'Free Throw Line',
+            svgX: px(keyLen + 2), svgY: py(ftY - 9),
+            lines: ['15 ft from the backboard', 'Uncontested shot on fouls'],
+            tipDir: 'right',
+          },
+          {
+            id: '3pt', title: 'Three-Point Arc',
+            svgX: px(basketX + r3pt * 0.55), svgY: py(ftY - corner22 * 0.55),
+            lines: ['23.75 ft radius from basket', '22 ft straight at the corners'],
+            tipDir: 'right',
+          },
+          {
+            id: 'arc-break', title: 'Corner Three',
+            svgX: px(arcBreakX * 0.6), svgY: py((cW - corner22 * 2) / 2 + 2.5),
+            lines: ['Straight segment at 22 ft', 'Shortest three-point shot'],
+            tipDir: 'right',
+          },
+          {
+            id: 'center', title: 'Center Circle',
+            svgX: px(cL / 2), svgY: py(ftY - 9),
+            lines: ['12 ft diameter jump circle', 'Opens each quarter / period'],
+            tipDir: 'left',
+          },
+        ];
+      }
+
+      case 'tennis': {
+        const singlesW = 27;
+        const sOff     = (cW - singlesW) / 2;
+        const svcLen   = (cL - 42) / 2;
+        const halfW    = cW / 2;
+        return [
+          {
+            id: 'net', title: 'Net',
+            svgX: px(cL / 2), svgY: py(sOff * 0.45),
+            lines: ['3 ft high at center', '3.5 ft high at the posts'],
+            tipDir: 'left',
+          },
+          {
+            id: 'svc-box', title: 'Service Box',
+            svgX: px(svcLen / 2), svgY: py(sOff + singlesW * 0.25),
+            lines: ['Serve must land here', '21 ft from the net'],
+            tipDir: 'right',
+          },
+          {
+            id: 'alley', title: 'Doubles Alley',
+            svgX: px(cL * 0.22), svgY: py(sOff * 0.4),
+            lines: ['4.5 ft wide side strip', 'Active in doubles play only'],
+            tipDir: 'right',
+          },
+          {
+            id: 'baseline', title: 'Baseline',
+            svgX: px(4), svgY: py(halfW),
+            lines: ['Back court boundary', '39 ft from the net'],
+            tipDir: 'right',
+          },
+        ];
+      }
+
+      case 'pickleball': {
+        const playW = Math.min(cW, 20);
+        const playL = Math.min(cL, 44);
+        const offX  = (cL - playL) / 2;
+        const offY  = (cW - playW) / 2;
+        const nvz   = 7;
+        const netX  = playL / 2;
+        return [
+          {
+            id: 'kitchen', title: 'Kitchen (NVZ)',
+            svgX: px(offX + nvz * 0.42), svgY: py(offY + playW * 0.28),
+            lines: ['7 ft no-volley zone from net', 'Must let ball bounce here'],
+            tipDir: 'right',
+          },
+          {
+            id: 'net', title: 'Net',
+            svgX: px(offX + netX), svgY: py(offY + playW * 0.15),
+            lines: ['34 in high at center', '36 in high at the posts'],
+            tipDir: 'left',
+          },
+          {
+            id: 'service', title: 'Service Area',
+            svgX: px(offX + nvz + (playL / 2 - nvz) * 0.45), svgY: py(offY + playW * 0.78),
+            lines: ['Serve cross-court diagonally', 'Ball must clear the kitchen'],
+            tipDir: 'right',
+          },
+          {
+            id: 'centerline', title: 'Center Line',
+            svgX: px(offX + playL * 0.72), svgY: py(offY + playW * 0.5),
+            lines: ['Splits each half lengthwise', 'Determines service box sides'],
+            tipDir: 'left',
+          },
+        ];
+      }
+
+      case 'multi-sport': {
+        const keyLen  = 19;
+        const keyW    = 16;
+        const pklX1   = cL * 0.08;
+        const pklLen  = 44;
+        const pklY    = (cW - 20) / 2;
+        return [
+          {
+            id: 'bball-key', title: 'Basketball Key',
+            svgX: px(keyLen * 0.35), svgY: py(cW / 2 - keyW * 0.32),
+            lines: [`${keyW}×${keyLen} ft paint zone`, 'NBA-standard dimensions'],
+            tipDir: 'right',
+          },
+          {
+            id: 'pkl-court', title: 'Pickleball Courts',
+            svgX: px(pklX1 + pklLen * 0.5), svgY: py(pklY + 2),
+            lines: ['20×44 ft USAPA standard', '2 courts overlaid in yellow'],
+            tipDir: 'right',
+          },
+          {
+            id: 'center', title: 'Center Circle',
+            svgX: px(cL / 2), svgY: py(cW / 2 - 9),
+            lines: ['12 ft jump-ball circle', 'Shared basketball marking'],
+            tipDir: 'left',
+          },
+        ];
+      }
+    }
+  };
+
+  // ─── HOTSPOT RENDER ──────────────────────────────────────────────────────
+  const renderHotspots = () => {
+    const hotspots = getHotspots();
+    const FONT = 'Inter, system-ui, sans-serif';
+
+    return hotspots.map((h) => {
+      const isActive = activeHotspot === h.id;
+
+      // Tooltip top-left corner
+      let tx = h.svgX + MARKER_R + 10;
+      let ty = h.svgY - TIP_H / 2;
+      if (h.tipDir === 'left') tx = h.svgX - MARKER_R - 10 - TIP_W;
+      tx = Math.max(4, Math.min(width - TIP_W - 4, tx));
+      ty = Math.max(4, Math.min(height - TIP_H - 4, ty));
+
+      return (
+        <g key={h.id}>
+          {/* Pulse ring */}
+          <circle cx={h.svgX} cy={h.svgY} r={MARKER_R} fill="none" stroke="#ec4899" strokeWidth={1.5}>
+            <animate attributeName="r"       values={`${MARKER_R};${MARKER_R + 9};${MARKER_R}`} dur="2.4s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.7;0;0.7"                                  dur="2.4s" repeatCount="indefinite" />
+          </circle>
+
+          {/* Marker */}
+          <circle
+            cx={h.svgX} cy={h.svgY} r={MARKER_R}
+            fill={isActive ? '#be185d' : '#ec4899'}
+            stroke="white" strokeWidth={1.5}
+            style={{ cursor: 'pointer' }}
+            onClick={() => setActiveHotspot(isActive ? null : h.id)}
+          />
+          <text
+            x={h.svgX} y={h.svgY + 0.5}
+            textAnchor="middle" dominantBaseline="middle"
+            fill="white" fontSize={9} fontWeight="bold" fontFamily={FONT}
+            style={{ pointerEvents: 'none', userSelect: 'none' }}
+          >
+            i
+          </text>
+
+          {/* Tooltip */}
+          {isActive && (
+            <g>
+              {/* Drop shadow */}
+              <rect x={tx + 3} y={ty + 3} width={TIP_W} height={TIP_H} rx={7} fill="black" opacity={0.25} />
+              {/* Box */}
+              <rect x={tx} y={ty} width={TIP_W} height={TIP_H} rx={7}
+                fill="#0f172a" fillOpacity={0.97} stroke="#ec4899" strokeWidth={1.2} />
+              {/* Pink top accent */}
+              <rect x={tx} y={ty} width={TIP_W} height={3} rx={0}
+                fill="#ec4899" opacity={0.6}
+                style={{ borderTopLeftRadius: 7, borderTopRightRadius: 7 }}
+              />
+              {/* Title */}
+              <text x={tx + 12} y={ty + 18} fill="#f9fafb" fontSize={11} fontWeight="700" fontFamily={FONT}>
+                {h.title}
+              </text>
+              {/* Body lines */}
+              {h.lines.map((line, i) => (
+                <text key={i} x={tx + 12} y={ty + 33 + i * 14} fill="#94a3b8" fontSize={10} fontFamily={FONT}>
+                  {line}
+                </text>
+              ))}
+              {/* Close button */}
+              <circle
+                cx={tx + TIP_W - 13} cy={ty + 13} r={8}
+                fill="#1e293b" stroke="#334155" strokeWidth={1}
+                style={{ cursor: 'pointer' }}
+                onClick={() => setActiveHotspot(null)}
+              />
+              <text
+                x={tx + TIP_W - 13} y={ty + 13.5}
+                textAnchor="middle" dominantBaseline="middle"
+                fill="#64748b" fontSize={8} fontWeight="bold" fontFamily={FONT}
+                style={{ pointerEvents: 'none', userSelect: 'none' }}
+              >
+                ✕
+              </text>
+            </g>
+          )}
+        </g>
+      );
+    });
+  };
 
   // ─── LIGHTING POLES ───────────────────────────────────────────────────────
   const renderLighting = () => {
@@ -121,13 +365,12 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
 
   // ─── BASKETBALL ───────────────────────────────────────────────────────────
   const renderBasketball = () => {
-    const keyW   = 16;                // paint width (ft)
-    const keyLen = 19;                // paint length from baseline (ft)
-    const ftY    = cW / 2;            // free throw circle center Y (midcourt width)
-    const basketX = 5.25;            // basket center from baseline (ft)
-    const r3pt   = 23.75;             // 3-pt arc radius (ft)
-    // x where 3-pt straight corner (22 ft from basket) meets the arc
-    const corner22 = 22;             // straight 3-pt distance from basket center
+    const keyW   = 16;
+    const keyLen = 19;
+    const ftY    = cW / 2;
+    const basketX = 5.25;
+    const r3pt   = 23.75;
+    const corner22 = 22;
     const arcBreakX = basketX + Math.sqrt(r3pt * r3pt - corner22 * corner22);
 
     return (
@@ -155,24 +398,20 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
         <circle cx={px(cL - keyLen)} cy={py(ftY)} r={6 * scale} fill="none" {...ls} />
 
         {/* Three-point lines: straight corners + arc */}
-        {/* Left side */}
         <line {...lp(0, (cW - corner22 * 2) / 2, arcBreakX, (cW - corner22 * 2) / 2)} {...ls} />
         <line {...lp(0, (cW + corner22 * 2) / 2, arcBreakX, (cW + corner22 * 2) / 2)} {...ls} />
         <path
-          fill="none"
-          {...ls}
+          fill="none" {...ls}
           d={[
             `M ${px(arcBreakX)} ${py((cW - corner22 * 2) / 2)}`,
             `A ${r3pt * scale} ${r3pt * scale} 0 0 1`,
             `${px(arcBreakX)} ${py((cW + corner22 * 2) / 2)}`,
           ].join(' ')}
         />
-        {/* Right side */}
         <line {...lp(cL, (cW - corner22 * 2) / 2, cL - arcBreakX, (cW - corner22 * 2) / 2)} {...ls} />
         <line {...lp(cL, (cW + corner22 * 2) / 2, cL - arcBreakX, (cW + corner22 * 2) / 2)} {...ls} />
         <path
-          fill="none"
-          {...ls}
+          fill="none" {...ls}
           d={[
             `M ${px(cL - arcBreakX)} ${py((cW - corner22 * 2) / 2)}`,
             `A ${r3pt * scale} ${r3pt * scale} 0 0 0`,
@@ -181,14 +420,10 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
         />
 
         {/* Restricted area arcs */}
-        <path
-          fill="none" {...ls}
-          d={`M ${px(basketX)} ${py(ftY - 4)} A ${4 * scale} ${4 * scale} 0 0 1 ${px(basketX)} ${py(ftY + 4)}`}
-        />
-        <path
-          fill="none" {...ls}
-          d={`M ${px(cL - basketX)} ${py(ftY - 4)} A ${4 * scale} ${4 * scale} 0 0 0 ${px(cL - basketX)} ${py(ftY + 4)}`}
-        />
+        <path fill="none" {...ls}
+          d={`M ${px(basketX)} ${py(ftY - 4)} A ${4 * scale} ${4 * scale} 0 0 1 ${px(basketX)} ${py(ftY + 4)}`} />
+        <path fill="none" {...ls}
+          d={`M ${px(cL - basketX)} ${py(ftY - 4)} A ${4 * scale} ${4 * scale} 0 0 0 ${px(cL - basketX)} ${py(ftY + 4)}`} />
 
         {/* Border */}
         <rect {...rp(0, 0, cL, cW)} fill="none" stroke={colors.border} strokeWidth={scale * 0.4} />
@@ -206,18 +441,18 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
 
   // ─── TENNIS ───────────────────────────────────────────────────────────────
   const renderTennis = () => {
-    const singlesW  = 27;                        // singles court width (ft)
-    const sOff      = (cW - singlesW) / 2;       // offset from outer edge to singles line
-    const svcLen    = (cL - 42) / 2;             // baseline → service line (ft); 42 = 2×21
+    const singlesW  = 27;
+    const sOff      = (cW - singlesW) / 2;
+    const svcLen    = (cL - 42) / 2;
     const netX      = cL / 2;
-    const halfW     = cW / 2;                    // = sOff + singlesW/2 when symmetric
+    const halfW     = cW / 2;
 
     return (
       <g>
         {/* Surface */}
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
 
-        {/* Service box tints (x=from baseline, y=from singles sideline) */}
+        {/* Service box tints */}
         <rect {...rp(0,        sOff,            svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.8} />
         <rect {...rp(0,        sOff + singlesW / 2, svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.65} />
         <rect {...rp(cL - svcLen, sOff,            svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.65} />
@@ -226,7 +461,7 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
         {/* Border */}
         <rect {...rp(0, 0, cL, cW)} fill="none" stroke={colors.border} strokeWidth={scale * 0.4} />
 
-        {/* Doubles sidelines (outer boundary) */}
+        {/* Doubles sidelines */}
         <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
         {/* Singles sidelines */}
         <line {...lp(0, sOff, cL, sOff)} {...ls} />
@@ -234,7 +469,7 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
         {/* Service lines */}
         <line {...lp(svcLen, sOff, svcLen, sOff + singlesW)} {...ls} />
         <line {...lp(cL - svcLen, sOff, cL - svcLen, sOff + singlesW)} {...ls} />
-        {/* Center service line (parallel to sidelines, from service line to service line through center) */}
+        {/* Center service line */}
         <line {...lp(svcLen, halfW, cL - svcLen, halfW)} {...ls} />
 
         {/* Net */}
@@ -256,12 +491,11 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
 
   // ─── PICKLEBALL ───────────────────────────────────────────────────────────
   const renderPickleball = () => {
-    // Official play area: 20×44 ft; may have extra clearance around it
     const playW = Math.min(cW, 20);
     const playL = Math.min(cL, 44);
     const offX  = (cL - playL) / 2;
     const offY  = (cW - playW) / 2;
-    const nvz   = 7;                   // no-volley zone depth (ft)
+    const nvz   = 7;
     const netX  = playL / 2;
 
     return (
@@ -278,7 +512,7 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
 
         {/* Playing area boundary */}
         <rect {...rp(offX, offY, playL, playW)} fill="none" {...ls} />
-        {/* Center line (lengthwise, splits court into two halves) */}
+        {/* Center line */}
         <line {...lp(offX, offY + playW / 2, offX + playL, offY + playW / 2)} {...ls} />
         {/* NVZ lines */}
         <line {...lp(offX + nvz,           offY, offX + nvz,           offY + playW)} {...ls} />
@@ -366,11 +600,9 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
     const arrowColor = '#4B5563';
     return (
       <g fontFamily="Inter, sans-serif" fontSize={11}>
-        {/* Length label (bottom) */}
         <text x={ox + svgCW / 2} y={oy + svgCH + 24} textAnchor="middle" fill={labelColor}>
           {cL} ft
         </text>
-        {/* Width label (left, rotated) */}
         <text
           x={ox - 20} y={oy + svgCH / 2}
           textAnchor="middle" dominantBaseline="middle" fill={labelColor}
@@ -378,7 +610,6 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
         >
           {cW} ft
         </text>
-        {/* Arrow along top */}
         <line x1={ox} y1={oy - 10} x2={ox + svgCW} y2={oy - 10} stroke={arrowColor} strokeWidth={1} />
         <polygon points={`${ox - 5},${oy - 10} ${ox + 5},${oy - 6} ${ox + 5},${oy - 14}`} fill={arrowColor} />
         <polygon points={`${ox + svgCW + 5},${oy - 10} ${ox + svgCW - 5},${oy - 6} ${ox + svgCW - 5},${oy - 14}`} fill={arrowColor} />
@@ -415,6 +646,7 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
       {renderCourt()}
       {renderBenches()}
       {renderLabels()}
+      {renderHotspots()}
     </svg>
   );
 };

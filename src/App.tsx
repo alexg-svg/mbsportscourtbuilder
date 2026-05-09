@@ -34,12 +34,13 @@ const TOTAL_STEPS = 6;
 
 export default function App() {
   const [step, setStep]           = useState(0);
+  const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const [config, setConfig]       = useState<CourtConfig>(initialConfig);
   const [submitted, setSubmitted] = useState<ContactData | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
-  const next = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
-  const back = () => setStep((s) => Math.max(s - 1, 0));
+  const next = () => { setDirection('forward'); setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1)); };
+  const back = () => { setDirection('back');    setStep((s) => Math.max(s - 1, 0)); };
 
   const update = useCallback(<K extends keyof CourtConfig>(key: K, value: CourtConfig[K]) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
@@ -159,7 +160,12 @@ export default function App() {
           ) : (
             <>
               <StepProgress current={step} />
-              <div className="flex-1 overflow-hidden">{renderStep()}</div>
+              <div
+                key={step}
+                className={`flex-1 overflow-hidden ${direction === 'forward' ? 'animate-step-enter' : 'animate-step-enter-back'}`}
+              >
+                {renderStep()}
+              </div>
             </>
           )}
         </div>
@@ -185,7 +191,7 @@ export default function App() {
           </div>
 
           <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
-            <div className="w-full max-w-4xl aspect-[16/10]">
+            <div key={config.type} className="w-full max-w-4xl aspect-[16/10] animate-fade-in">
               <CourtSVG config={config} width={900} height={560} />
             </div>
           </div>

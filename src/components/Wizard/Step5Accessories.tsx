@@ -1,8 +1,11 @@
 import React from 'react';
 import {
-  Target, Minus, Zap, Grid2X2, Square, Wind,
+  Minus, Zap, Grid2X2, Square, Wind,
   Armchair, Droplets, ClipboardList, Check,
 } from 'lucide-react';
+import { GiBasketballBasket } from 'react-icons/gi';
+import { MdSportsTennis } from 'react-icons/md';
+import { FaTableTennisPaddleBall } from 'react-icons/fa6';
 import type { AccessoryId, CourtType } from '../../types/court';
 import { ACCESSORIES, ACCESSORY_CATEGORIES } from '../../utils/courtData';
 import { StepShell } from './StepShell';
@@ -15,11 +18,12 @@ interface Props {
   onNext: () => void;
 }
 
-const ACC_ICONS: Record<AccessoryId, React.FC<{ className?: string }>> = {
-  'basketball-hoop-single': Target,
-  'basketball-hoop-double': Target,
-  'tennis-net':             Minus,
-  'pickleball-net':         Minus,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ACC_ICONS: Record<AccessoryId, React.ComponentType<any>> = {
+  'basketball-hoop-single': GiBasketballBasket,
+  'basketball-hoop-double': GiBasketballBasket,
+  'tennis-net':             MdSportsTennis,
+  'pickleball-net':         FaTableTennisPaddleBall,
   'lighting-2-pole':        Zap,
   'lighting-4-pole':        Zap,
   'lighting-6-pole':        Zap,
@@ -66,10 +70,10 @@ export const Step5Accessories: React.FC<Props> = ({ courtType, selected, onToggl
                     <button
                       key={acc.id}
                       onClick={() => onToggle(acc.id)}
-                      className={`w-full p-3 rounded-xl border-2 text-left flex items-start gap-3 transition-all ${
+                      className={`w-full p-3 rounded-xl border-2 text-left flex items-start gap-3 transition-all active:scale-[0.98] ${
                         isSelected
-                          ? 'border-pink-500 bg-pink-600/15 text-theme-primary'
-                          : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-theme-mid hover:text-theme-primary'
+                          ? 'border-pink-500 bg-pink-600/15 text-theme-primary shadow-md shadow-pink-900/20'
+                          : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-pink-500/30 hover:text-theme-primary'
                       }`}
                     >
                       {/* Checkbox */}
@@ -79,7 +83,7 @@ export const Step5Accessories: React.FC<Props> = ({ courtType, selected, onToggl
                         {isSelected && <Check className="w-2.5 h-2.5 text-theme-primary" strokeWidth={3} />}
                       </div>
 
-                      <Icon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isSelected ? 'text-pink-400' : 'text-theme-muted'}`} />
+                      <Icon size={16} className={`mt-0.5 flex-shrink-0 ${isSelected ? 'text-pink-400' : 'text-theme-muted'}`} />
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">

@@ -38,7 +38,7 @@ export const StepShell: React.FC<Props> = ({
       {onBack && (
         <button
           onClick={onBack}
-          className="px-4 py-2.5 text-sm text-theme-muted hover:text-theme-primary border border-theme-mid hover:border-theme-mid rounded-xl transition-all"
+          className="px-4 py-2.5 text-sm text-theme-muted hover:text-theme-primary border border-theme-mid hover:border-theme-mid rounded-xl transition-all active:scale-[0.96]"
         >
           ← Back
         </button>
@@ -49,7 +49,7 @@ export const StepShell: React.FC<Props> = ({
         className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
           nextDisabled
             ? 'bg-theme-raised text-theme-faint cursor-not-allowed'
-            : 'bg-pink-600 hover:bg-pink-500 text-theme-primary shadow-lg shadow-pink-900/30'
+            : 'bg-pink-600 hover:bg-pink-500 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-theme-primary shadow-lg shadow-pink-900/30 active:shadow-md'
         }`}
       >
         {nextLabel}

@@ -30,10 +30,10 @@ export const Step2CourtType: React.FC<Props> = ({ courtType, onChange, onBack, o
         <button
           key={id}
           onClick={() => onChange(id)}
-          className={`p-4 rounded-2xl border-2 text-left transition-all ${
+          className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-[0.97] ${
             courtType === id
-              ? 'border-pink-500 bg-pink-600/15 text-theme-primary'
-              : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-theme-mid hover:text-theme-primary'
+              ? 'border-pink-500 bg-pink-600/15 text-theme-primary shadow-lg shadow-pink-900/20'
+              : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-pink-500/40 hover:text-theme-primary hover:shadow-md'
           }`}
         >
           <Icon className={`w-7 h-7 mb-3 ${courtType === id ? 'text-pink-400' : 'text-theme-muted'}`} />

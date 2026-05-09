@@ -167,7 +167,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Basketball Hoop (1)',
     description: 'Single adjustable in-ground hoop with breakaway rim',
     category: 'sport-equipment',
-    icon: '🏀',
     compatibleCourts: ['basketball', 'multi-sport'],
   },
   {
@@ -175,7 +174,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Basketball Hoops (2)',
     description: 'Pair of adjustable in-ground hoops – full court setup',
     category: 'sport-equipment',
-    icon: '🏀',
     compatibleCourts: ['basketball', 'multi-sport'],
   },
   {
@@ -183,7 +181,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Tennis Net & Posts',
     description: 'Center strap net with steel posts, regulation height',
     category: 'sport-equipment',
-    icon: '🎾',
     compatibleCourts: ['tennis', 'multi-sport'],
   },
   {
@@ -191,7 +188,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Pickleball Net & Posts',
     description: 'Portable or permanent net system, 34" center height',
     category: 'sport-equipment',
-    icon: '🏓',
     compatibleCourts: ['pickleball', 'multi-sport'],
   },
   // Lighting
@@ -200,7 +196,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Lighting – 2 Poles',
     description: 'Two 20-ft light poles, ideal for half court or pickleball',
     category: 'lighting',
-    icon: '💡',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -208,7 +203,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Lighting – 4 Poles',
     description: 'Four 20-ft poles for full coverage on full courts',
     category: 'lighting',
-    icon: '💡',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -216,7 +210,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Lighting – 6 Poles',
     description: 'Six 20-ft poles for commercial-grade full-court lighting',
     category: 'lighting',
-    icon: '💡',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   // Fencing
@@ -225,7 +218,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Chain Link Fence',
     description: 'Galvanized steel chain-link perimeter fencing, 10 ft high',
     category: 'fencing',
-    icon: '🔲',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -233,7 +225,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Vinyl Fence',
     description: 'White vinyl perimeter fencing, low-maintenance',
     category: 'fencing',
-    icon: '🔲',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -241,7 +232,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Windscreen',
     description: 'UV-resistant privacy & wind-reduction screen for fence',
     category: 'fencing',
-    icon: '🛡️',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   // Amenities
@@ -250,7 +240,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Player Benches (2)',
     description: 'Two aluminum bleacher benches, seats 4–6 each',
     category: 'amenities',
-    icon: '🪑',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -258,7 +247,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Player Benches (4)',
     description: 'Four aluminum benches for larger commercial courts',
     category: 'amenities',
-    icon: '🪑',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -266,7 +254,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Water Fountain',
     description: 'Outdoor-rated drinking fountain with drain connection',
     category: 'amenities',
-    icon: '💧',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
   {
@@ -274,7 +261,6 @@ export const ACCESSORIES: Accessory[] = [
     name: 'Scoreboard',
     description: 'LED electronic scoreboard with remote, weatherproof',
     category: 'amenities',
-    icon: '📋',
     compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
   },
 ];

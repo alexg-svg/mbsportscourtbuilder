@@ -20,7 +20,7 @@ const Swatch: React.FC<{ color: string; label: string; selected: boolean; onClic
     onClick={onClick}
     title={label}
     className={`w-8 h-8 rounded-lg border-2 transition-all ${
-      selected ? 'border-white scale-110 shadow-lg' : 'border-transparent hover:border-gray-400 hover:scale-105'
+      selected ? 'border-white scale-110 shadow-lg' : 'border-transparent hover:border-theme-mid hover:scale-105'
     }`}
     style={{ backgroundColor: color }}
   />
@@ -56,7 +56,7 @@ export const Step4Colors: React.FC<Props> = ({
 
         {/* Surface */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-theme-muted mb-2">
             Court Surface
           </label>
           <div className="flex flex-wrap gap-2 mb-2">
@@ -68,16 +68,16 @@ export const Step4Colors: React.FC<Props> = ({
           <div className="flex gap-2 items-center">
             <input type="color" value={colors.surface}
               onChange={(e) => onColorsChange({ ...colors, surface: e.target.value })}
-              className="w-8 h-8 rounded cursor-pointer border border-gray-600 bg-gray-800" />
+              className="w-8 h-8 rounded cursor-pointer border border-theme-mid bg-theme-raised" />
             <input type="text" value={colors.surface}
               onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) onColorsChange({ ...colors, surface: e.target.value }); }}
-              className="w-24 bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs text-gray-300 font-mono focus:outline-none focus:border-pink-500" />
+              className="w-24 bg-theme-panel border border-theme-mid rounded-lg px-2 py-1 text-xs text-theme-primary/80 font-mono focus:outline-none focus:border-pink-500" />
           </div>
         </div>
 
         {/* Lines */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-theme-muted mb-2">
             Court Lines
           </label>
           <div className="flex flex-wrap gap-2">
@@ -90,7 +90,7 @@ export const Step4Colors: React.FC<Props> = ({
 
         {/* Border */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-theme-muted mb-2">
             Border / Out-of-Bounds
           </label>
           <div className="flex flex-wrap gap-2">
@@ -103,7 +103,7 @@ export const Step4Colors: React.FC<Props> = ({
 
         {/* Zone color */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-theme-muted mb-2">
             {zoneLabel}
           </label>
           <div className="flex flex-wrap gap-2">
@@ -116,7 +116,7 @@ export const Step4Colors: React.FC<Props> = ({
 
         {/* Surface finish */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-theme-muted mb-2">
             Surface Finish
           </label>
           <div className="grid grid-cols-3 gap-2">
@@ -124,12 +124,12 @@ export const Step4Colors: React.FC<Props> = ({
               <button key={f.id} onClick={() => onSurfaceFinishChange(f.id)}
                 className={`py-2.5 px-2 rounded-xl border-2 text-center transition-all ${
                   surfaceFinish === f.id
-                    ? 'border-pink-500 bg-pink-600/15 text-white'
-                    : 'border-gray-700 bg-gray-800/60 text-gray-300 hover:border-gray-500'
+                    ? 'border-pink-500 bg-pink-600/15 text-theme-primary'
+                    : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-theme-mid'
                 }`}
               >
                 <div className="text-xs font-semibold">{f.label}</div>
-                <div className={`text-xs mt-0.5 ${surfaceFinish === f.id ? 'text-pink-200' : 'text-gray-500'}`}>{f.desc}</div>
+                <div className={`text-xs mt-0.5 ${surfaceFinish === f.id ? 'text-pink-200' : 'text-theme-muted'}`}>{f.desc}</div>
               </button>
             ))}
           </div>
@@ -138,7 +138,7 @@ export const Step4Colors: React.FC<Props> = ({
         {/* Reset */}
         <button
           onClick={() => onColorsChange(DEFAULT_COLORS[courtType])}
-          className="w-full py-2 text-xs text-gray-500 hover:text-white border border-gray-800 hover:border-gray-600 rounded-xl transition-all"
+          className="w-full py-2 text-xs text-theme-muted hover:text-theme-primary border border-theme-border hover:border-theme-mid rounded-xl transition-all"
         >
           Reset to defaults
         </button>

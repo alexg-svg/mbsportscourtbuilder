@@ -1,4 +1,5 @@
 import React from 'react';
+import { Volleyball, Activity, Disc3, Layers } from 'lucide-react';
 import type { CourtType } from '../../types/court';
 import { StepShell } from './StepShell';
 
@@ -9,11 +10,11 @@ interface Props {
   onNext: () => void;
 }
 
-const OPTIONS: { id: CourtType; label: string; icon: string; desc: string }[] = [
-  { id: 'basketball',  label: 'Basketball',  icon: '🏀', desc: 'Half court or full court' },
-  { id: 'tennis',      label: 'Tennis',      icon: '🎾', desc: 'Singles or doubles' },
-  { id: 'pickleball',  label: 'Pickleball',  icon: '🏓', desc: 'Standard or with clearance zones' },
-  { id: 'multi-sport', label: 'Multi-Sport', icon: '🏆', desc: 'Basketball + Pickleball combo' },
+const OPTIONS: { id: CourtType; label: string; Icon: React.FC<{ className?: string }>; desc: string }[] = [
+  { id: 'basketball',  label: 'Basketball',  Icon: Volleyball, desc: 'Half court or full court' },
+  { id: 'tennis',      label: 'Tennis',      Icon: Activity, desc: 'Singles or doubles' },
+  { id: 'pickleball',  label: 'Pickleball',  Icon: Disc3,    desc: 'Standard or with clearance zones' },
+  { id: 'multi-sport', label: 'Multi-Sport', Icon: Layers,   desc: 'Basketball + Pickleball combo' },
 ];
 
 export const Step2CourtType: React.FC<Props> = ({ courtType, onChange, onBack, onNext }) => (
@@ -25,21 +26,19 @@ export const Step2CourtType: React.FC<Props> = ({ courtType, onChange, onBack, o
     onNext={onNext}
   >
     <div className="grid grid-cols-2 gap-3 mt-2">
-      {OPTIONS.map((opt) => (
+      {OPTIONS.map(({ id, label, Icon, desc }) => (
         <button
-          key={opt.id}
-          onClick={() => onChange(opt.id)}
+          key={id}
+          onClick={() => onChange(id)}
           className={`p-4 rounded-2xl border-2 text-left transition-all ${
-            courtType === opt.id
-              ? 'border-pink-500 bg-pink-600/15 text-white'
-              : 'border-gray-700 bg-gray-800/60 text-gray-300 hover:border-gray-500 hover:text-white'
+            courtType === id
+              ? 'border-pink-500 bg-pink-600/15 text-theme-primary'
+              : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-theme-mid hover:text-theme-primary'
           }`}
         >
-          <div className="text-3xl mb-2">{opt.icon}</div>
-          <div className="text-sm font-bold">{opt.label}</div>
-          <div className={`text-xs mt-1 leading-snug ${courtType === opt.id ? 'text-pink-200' : 'text-gray-500'}`}>
-            {opt.desc}
-          </div>
+          <Icon className={`w-7 h-7 mb-3 ${courtType === id ? 'text-pink-400' : 'text-theme-muted'}`} />
+          <div className="text-sm font-bold">{label}</div>
+          <div className={`text-xs mt-1 leading-snug ${courtType === id ? 'text-pink-200' : 'text-theme-muted'}`}>{desc}</div>
         </button>
       ))}
     </div>

@@ -3,31 +3,45 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    box-sizing: border-box;
-  }
-  html, body, #root {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-  }
+  * { box-sizing: border-box; }
+  html, body, #root { height: 100%; margin: 0; padding: 0; }
   body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  /* ── CSS custom properties for light/dark theming ── */
+  :root {
+    --bg-base:     #f8fafc;
+    --bg-panel:    #ffffff;
+    --bg-raised:   #f1f5f9;
+    --bg-input:    #f8fafc;
+    --border:      #e2e8f0;
+    --border-mid:  #cbd5e1;
+    --text-primary:#0f172a;
+    --text-muted:  #64748b;
+    --text-faint:  #94a3b8;
+    --canvas-bg:   #e2e8f0;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-base:     #030712;
+      --bg-panel:    #111827;
+      --bg-raised:   #1f2937;
+      --bg-input:    #111827;
+      --border:      #1f2937;
+      --border-mid:  #374151;
+      --text-primary:#f9fafb;
+      --text-muted:  #9ca3af;
+      --text-faint:  #4b5563;
+      --canvas-bg:   #030712;
+    }
+  }
+
   /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: #111827;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #374151;
-    border-radius: 3px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #4B5563;
-  }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg-panel); }
+  ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
 }

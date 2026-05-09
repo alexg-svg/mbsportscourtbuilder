@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { Eye, ClipboardList } from 'lucide-react';
+import { Eye, ClipboardList, Box, Map } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES } from './utils/courtData';
 import { CourtSVG } from './components/Court/CourtSVG';
+import { Court3D } from './components/Court/Court3D';
 import { StepProgress } from './components/Wizard/StepProgress';
 import { Step1Property } from './components/Wizard/Step1Property';
 import { Step2CourtType } from './components/Wizard/Step2CourtType';
@@ -38,6 +39,7 @@ export default function App() {
   const [config, setConfig]       = useState<CourtConfig>(initialConfig);
   const [submitted, setSubmitted] = useState<ContactData | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [view3D, setView3D]       = useState(false);
 
   const next = () => { setDirection('forward'); setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1)); };
   const back = () => { setDirection('back');    setStep((s) => Math.max(s - 1, 0)); };
@@ -196,13 +198,31 @@ export default function App() {
               </span>
               <span>·</span>
               <span className="font-mono">{config.dimensions.length} × {config.dimensions.width} ft</span>
+              <span>·</span>
+              <button
+                onClick={() => setView3D((v) => !v)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all ${
+                  view3D
+                    ? 'border-pink-500 bg-pink-600/15 text-pink-400'
+                    : 'border-theme-mid bg-theme-raised text-theme-muted hover:border-pink-500/50 hover:text-theme-primary'
+                }`}
+              >
+                {view3D ? <Map className="w-3 h-3" /> : <Box className="w-3 h-3" />}
+                {view3D ? '2D' : '3D'}
+              </button>
             </div>
           </div>
 
           <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
-            <div key={config.type} className="w-full max-w-4xl aspect-[16/10] animate-fade-in">
-              <CourtSVG config={config} width={900} height={560} />
-            </div>
+            {view3D ? (
+              <div key={`3d-${config.type}`} className="w-full h-full animate-fade-in rounded-xl overflow-hidden">
+                <Court3D config={config} />
+              </div>
+            ) : (
+              <div key={config.type} className="w-full max-w-4xl aspect-[16/10] animate-fade-in">
+                <CourtSVG config={config} width={900} height={560} />
+              </div>
+            )}
           </div>
 
           <div className="px-6 py-3 border-t border-theme-border bg-theme-panel/50 flex-shrink-0">

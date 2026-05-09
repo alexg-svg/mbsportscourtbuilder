@@ -18,13 +18,13 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
   const availH = height - PADDING * 2;
   const scale  = Math.min(availW / cL, availH / cW);
 
-  const svgCW = cL * scale; // SVG pixels wide
-  const svgCH = cW * scale; // SVG pixels tall
+  const svgCW = cL * scale; // SVG width  (px)
+  const svgCH = cW * scale; // SVG height (px)
 
-  const ox = (width  - svgCW) / 2; // origin X
-  const oy = (height - svgCH) / 2; // origin Y
+  const ox = (width  - svgCW) / 2; // canvas origin X
+  const oy = (height - svgCH) / 2; // canvas origin Y
 
-  // Helpers – convert court-space feet to SVG props
+  // Convert court-feet → SVG pixel props
   const rp = (x: number, y: number, w: number, h: number) => ({
     x:      ox + x * scale,
     y:      oy + y * scale,
@@ -39,15 +39,11 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
     y2: oy + y2 * scale,
   });
 
-  const cx_ = (x: number) => ox + x * scale;
-  const cy_ = (y: number) => oy + y * scale;
+  const px = (x: number) => ox + x * scale;
+  const py = (y: number) => oy + y * scale;
 
-  // Note: no `fill` here – elements that need fill="none" must set it explicitly
-  // to avoid TS2783 "fill specified more than once" when spreading alongside fill props.
-  const lineStyle = {
-    stroke:      colors.lines,
-    strokeWidth: Math.max(1.5, scale * 0.08),
-  };
+  // Line props without fill so spread doesn't conflict with explicit fill attrs
+  const ls = { stroke: colors.lines, strokeWidth: Math.max(1.5, scale * 0.08) };
 
   const hasAcc = (id: string) => selectedAccessories.includes(id as never);
 
@@ -57,23 +53,23 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
     const off = 6 * scale;
     if (hasAcc('lighting-2-pole')) {
       poles.push(
-        { px: ox - off,        py: oy + svgCH / 2 },
+        { px: ox - off,         py: oy + svgCH / 2 },
         { px: ox + svgCW + off, py: oy + svgCH / 2 },
       );
     }
     if (hasAcc('lighting-4-pole')) {
       poles.push(
-        { px: ox - off,        py: oy + svgCH * 0.25 },
-        { px: ox - off,        py: oy + svgCH * 0.75 },
+        { px: ox - off,         py: oy + svgCH * 0.25 },
+        { px: ox - off,         py: oy + svgCH * 0.75 },
         { px: ox + svgCW + off, py: oy + svgCH * 0.25 },
         { px: ox + svgCW + off, py: oy + svgCH * 0.75 },
       );
     }
     if (hasAcc('lighting-6-pole')) {
       poles.push(
-        { px: ox - off,        py: oy + svgCH * 0.15 },
-        { px: ox - off,        py: oy + svgCH * 0.5  },
-        { px: ox - off,        py: oy + svgCH * 0.85 },
+        { px: ox - off,         py: oy + svgCH * 0.15 },
+        { px: ox - off,         py: oy + svgCH * 0.5  },
+        { px: ox - off,         py: oy + svgCH * 0.85 },
         { px: ox + svgCW + off, py: oy + svgCH * 0.15 },
         { px: ox + svgCW + off, py: oy + svgCH * 0.5  },
         { px: ox + svgCW + off, py: oy + svgCH * 0.85 },
@@ -82,7 +78,7 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
     return poles.map((p, i) => (
       <g key={`pole-${i}`}>
         <rect x={p.px - 3} y={p.py - 20} width={6} height={20} fill="#78716C" rx={2} />
-        <circle cx={p.px} cy={p.py - 22} r={6} fill="#FCD34D" opacity={0.9} />
+        <circle cx={p.px} cy={p.py - 22} r={6}  fill="#FCD34D" opacity={0.9} />
         <circle cx={p.px} cy={p.py - 22} r={10} fill="#FCD34D" opacity={0.15} />
       </g>
     ));
@@ -92,14 +88,14 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
   const renderFencing = () => {
     if (!hasAcc('chain-link-fence') && !hasAcc('vinyl-fence')) return null;
     const gap = 5 * scale;
-    const fenceColor = hasAcc('vinyl-fence') ? '#E5E7EB' : '#9CA3AF';
     return (
       <rect
         x={ox - gap} y={oy - gap}
         width={svgCW + gap * 2} height={svgCH + gap * 2}
         fill={hasAcc('windscreen') ? '#166534' : 'none'}
         fillOpacity={0.08}
-        stroke={fenceColor} strokeWidth={2}
+        stroke={hasAcc('vinyl-fence') ? '#E5E7EB' : '#9CA3AF'}
+        strokeWidth={2}
         strokeDasharray={hasAcc('chain-link-fence') ? '5,3' : undefined}
         rx={4}
       />
@@ -109,15 +105,15 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
   // ─── BENCHES ──────────────────────────────────────────────────────────────
   const renderBenches = () => {
     if (!hasAcc('bench-2') && !hasAcc('bench-4')) return null;
-    const count  = hasAcc('bench-4') ? 4 : 2;
-    const bW     = Math.max(30, svgCW * 0.12);
-    const bH     = 8;
-    const frac   = count === 2 ? [0.35, 0.65] : [0.15, 0.38, 0.62, 0.85];
+    const count = hasAcc('bench-4') ? 4 : 2;
+    const bW    = Math.max(30, svgCW * 0.12);
+    const frac  = count === 2 ? [0.35, 0.65] : [0.15, 0.38, 0.62, 0.85];
     return frac.map((f, i) => (
-      <rect key={`bench-${i}`}
+      <rect
+        key={`bench-${i}`}
         x={ox + svgCW * f - bW / 2}
         y={oy + svgCH + 12}
-        width={bW} height={bH}
+        width={bW} height={8}
         fill="#92400E" rx={2}
       />
     ));
@@ -125,44 +121,73 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
 
   // ─── BASKETBALL ───────────────────────────────────────────────────────────
   const renderBasketball = () => {
-    const keyW   = 16;
-    const keyLen = 19;
-    const ftX    = 15 + keyLen;
+    const keyW   = 16;                // paint width (ft)
+    const keyLen = 19;                // paint length from baseline (ft)
+    const ftY    = cW / 2;            // free throw circle center Y (midcourt width)
+    const basketX = 5.25;            // basket center from baseline (ft)
+    const r3pt   = 23.75;             // 3-pt arc radius (ft)
+    // x where 3-pt straight corner (22 ft from basket) meets the arc
+    const corner22 = 22;             // straight 3-pt distance from basket center
+    const arcBreakX = basketX + Math.sqrt(r3pt * r3pt - corner22 * corner22);
 
     return (
       <g>
+        {/* Surface */}
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        <rect {...rp(0, (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? colors.border} opacity={0.6} />
-        <rect {...rp(cL - keyLen, (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? colors.border} opacity={0.6} />
 
-        <rect {...rp(0, 0, cL, cW)} fill="none" {...lineStyle} />
-        <line {...lp(cL / 2, 0, cL / 2, cW)} {...lineStyle} />
-        <ellipse cx={cx_(cL / 2)} cy={cy_(cW / 2)} rx={6 * scale} ry={6 * scale} {...lineStyle} />
+        {/* Key / paint areas */}
+        <rect {...rp(0, (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? colors.border} opacity={0.55} />
+        <rect {...rp(cL - keyLen, (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? colors.border} opacity={0.55} />
 
-        <rect {...rp(0, (cW - keyW) / 2, keyLen, keyW)} fill="none" {...lineStyle} />
-        <rect {...rp(cL - keyLen, (cW - keyW) / 2, keyLen, keyW)} fill="none" {...lineStyle} />
+        {/* Boundary */}
+        <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
 
-        <ellipse cx={cx_(ftX)} cy={cy_(cW / 2)} rx={6 * scale} ry={6 * scale} {...lineStyle} />
-        <ellipse cx={cx_(cL - ftX)} cy={cy_(cW / 2)} rx={6 * scale} ry={6 * scale} {...lineStyle} />
+        {/* Center line + circle */}
+        <line {...lp(cL / 2, 0, cL / 2, cW)} {...ls} />
+        <circle cx={px(cL / 2)} cy={py(ftY)} r={6 * scale} fill="none" {...ls} />
 
-        {/* 3-pt arcs (straight corner segments already drawn by boundary) */}
+        {/* Key outlines */}
+        <rect {...rp(0, (cW - keyW) / 2, keyLen, keyW)} fill="none" {...ls} />
+        <rect {...rp(cL - keyLen, (cW - keyW) / 2, keyLen, keyW)} fill="none" {...ls} />
+
+        {/* Free throw circles */}
+        <circle cx={px(keyLen)} cy={py(ftY)} r={6 * scale} fill="none" {...ls} />
+        <circle cx={px(cL - keyLen)} cy={py(ftY)} r={6 * scale} fill="none" {...ls} />
+
+        {/* Three-point lines: straight corners + arc */}
+        {/* Left side */}
+        <line {...lp(0, (cW - corner22 * 2) / 2, arcBreakX, (cW - corner22 * 2) / 2)} {...ls} />
+        <line {...lp(0, (cW + corner22 * 2) / 2, arcBreakX, (cW + corner22 * 2) / 2)} {...ls} />
         <path
-          d={`M ${cx_(0)} ${cy_((cW - 22) / 2)} A ${23.75 * scale} ${23.75 * scale} 0 0 1 ${cx_(0)} ${cy_((cW + 22) / 2)}`}
-          {...lineStyle}
+          fill="none"
+          {...ls}
+          d={[
+            `M ${px(arcBreakX)} ${py((cW - corner22 * 2) / 2)}`,
+            `A ${r3pt * scale} ${r3pt * scale} 0 0 1`,
+            `${px(arcBreakX)} ${py((cW + corner22 * 2) / 2)}`,
+          ].join(' ')}
+        />
+        {/* Right side */}
+        <line {...lp(cL, (cW - corner22 * 2) / 2, cL - arcBreakX, (cW - corner22 * 2) / 2)} {...ls} />
+        <line {...lp(cL, (cW + corner22 * 2) / 2, cL - arcBreakX, (cW + corner22 * 2) / 2)} {...ls} />
+        <path
+          fill="none"
+          {...ls}
+          d={[
+            `M ${px(cL - arcBreakX)} ${py((cW - corner22 * 2) / 2)}`,
+            `A ${r3pt * scale} ${r3pt * scale} 0 0 0`,
+            `${px(cL - arcBreakX)} ${py((cW + corner22 * 2) / 2)}`,
+          ].join(' ')}
+        />
+
+        {/* Restricted area arcs */}
+        <path
+          fill="none" {...ls}
+          d={`M ${px(basketX)} ${py(ftY - 4)} A ${4 * scale} ${4 * scale} 0 0 1 ${px(basketX)} ${py(ftY + 4)}`}
         />
         <path
-          d={`M ${cx_(cL)} ${cy_((cW - 22) / 2)} A ${23.75 * scale} ${23.75 * scale} 0 0 0 ${cx_(cL)} ${cy_((cW + 22) / 2)}`}
-          {...lineStyle}
-        />
-
-        {/* Restricted area */}
-        <path
-          d={`M ${cx_(4)} ${cy_((cW - 8) / 2)} A ${4 * scale} ${4 * scale} 0 0 1 ${cx_(4)} ${cy_((cW + 8) / 2)}`}
-          {...lineStyle}
-        />
-        <path
-          d={`M ${cx_(cL - 4)} ${cy_((cW - 8) / 2)} A ${4 * scale} ${4 * scale} 0 0 0 ${cx_(cL - 4)} ${cy_((cW + 8) / 2)}`}
-          {...lineStyle}
+          fill="none" {...ls}
+          d={`M ${px(cL - basketX)} ${py(ftY - 4)} A ${4 * scale} ${4 * scale} 0 0 0 ${px(cL - basketX)} ${py(ftY + 4)}`}
         />
 
         {/* Border */}
@@ -170,10 +195,10 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
 
         {/* Hoops */}
         {(hasAcc('basketball-hoop-single') || hasAcc('basketball-hoop-double')) && (
-          <circle cx={cx_(5.25)} cy={cy_(cW / 2)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
+          <circle cx={px(basketX)} cy={py(ftY)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
         )}
         {hasAcc('basketball-hoop-double') && (
-          <circle cx={cx_(cL - 5.25)} cy={cy_(cW / 2)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
+          <circle cx={px(cL - basketX)} cy={py(ftY)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
         )}
       </g>
     );
@@ -181,30 +206,36 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
 
   // ─── TENNIS ───────────────────────────────────────────────────────────────
   const renderTennis = () => {
-    const singlesW   = 27;
-    const singleOff  = (cW - singlesW) / 2;
-    const svcLen     = (cL - 42) / 2; // service box length from baseline
-    const netX       = cL / 2;
+    const singlesW  = 27;                        // singles court width (ft)
+    const sOff      = (cW - singlesW) / 2;       // offset from outer edge to singles line
+    const svcLen    = (cL - 42) / 2;             // baseline → service line (ft); 42 = 2×21
+    const netX      = cL / 2;
+    const halfW     = cW / 2;                    // = sOff + singlesW/2 when symmetric
 
     return (
       <g>
+        {/* Surface */}
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {/* Service box tints */}
-        <rect {...rp(singleOff, 0, svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.85} />
-        <rect {...rp(singleOff, singlesW / 2, svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.72} />
-        <rect {...rp(cL - singleOff - svcLen, 0, svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.72} />
-        <rect {...rp(cL - singleOff - svcLen, singlesW / 2, svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.85} />
+
+        {/* Service box tints (x=from baseline, y=from singles sideline) */}
+        <rect {...rp(0,        sOff,            svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.8} />
+        <rect {...rp(0,        sOff + singlesW / 2, svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.65} />
+        <rect {...rp(cL - svcLen, sOff,            svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.65} />
+        <rect {...rp(cL - svcLen, sOff + singlesW / 2, svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.8} />
 
         {/* Border */}
         <rect {...rp(0, 0, cL, cW)} fill="none" stroke={colors.border} strokeWidth={scale * 0.4} />
 
-        {/* Lines */}
-        <rect {...rp(0, 0, cL, cW)} fill="none" {...lineStyle} />
-        <line {...lp(0, singleOff, cL, singleOff)} {...lineStyle} />
-        <line {...lp(0, singleOff + singlesW, cL, singleOff + singlesW)} {...lineStyle} />
-        <line {...lp(svcLen, singleOff, svcLen, singleOff + singlesW)} {...lineStyle} />
-        <line {...lp(cL - svcLen, singleOff, cL - svcLen, singleOff + singlesW)} {...lineStyle} />
-        <line {...lp(svcLen, cW / 2, cL - svcLen, cW / 2)} {...lineStyle} />
+        {/* Doubles sidelines (outer boundary) */}
+        <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
+        {/* Singles sidelines */}
+        <line {...lp(0, sOff, cL, sOff)} {...ls} />
+        <line {...lp(0, sOff + singlesW, cL, sOff + singlesW)} {...ls} />
+        {/* Service lines */}
+        <line {...lp(svcLen, sOff, svcLen, sOff + singlesW)} {...ls} />
+        <line {...lp(cL - svcLen, sOff, cL - svcLen, sOff + singlesW)} {...ls} />
+        {/* Center service line (parallel to sidelines, from service line to service line through center) */}
+        <line {...lp(svcLen, halfW, cL - svcLen, halfW)} {...ls} />
 
         {/* Net */}
         <line
@@ -215,8 +246,8 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
         />
         {hasAcc('tennis-net') && (
           <>
-            <circle cx={cx_(netX)} cy={oy}         r={4} fill="#6B7280" />
-            <circle cx={cx_(netX)} cy={oy + svgCH} r={4} fill="#6B7280" />
+            <circle cx={px(netX)} cy={oy}         r={4} fill="#6B7280" />
+            <circle cx={px(netX)} cy={oy + svgCH} r={4} fill="#6B7280" />
           </>
         )}
       </g>
@@ -225,25 +256,33 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
 
   // ─── PICKLEBALL ───────────────────────────────────────────────────────────
   const renderPickleball = () => {
-    const playW  = Math.min(cW, 20);
-    const playL  = Math.min(cL, 44);
-    const offX   = (cL - playL) / 2;
-    const offY   = (cW - playW) / 2;
-    const nvz    = 7;
-    const netX   = playL / 2;
+    // Official play area: 20×44 ft; may have extra clearance around it
+    const playW = Math.min(cW, 20);
+    const playL = Math.min(cL, 44);
+    const offX  = (cL - playL) / 2;
+    const offY  = (cW - playW) / 2;
+    const nvz   = 7;                   // no-volley zone depth (ft)
+    const netX  = playL / 2;
 
     return (
       <g>
+        {/* Surface */}
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {/* NVZ kitchen zones */}
-        <rect {...rp(offX, offY, nvz, playW)} fill={colors.kitchen ?? '#60A5FA'} opacity={0.55} />
-        <rect {...rp(offX + playL - nvz, offY, nvz, playW)} fill={colors.kitchen ?? '#60A5FA'} opacity={0.55} />
 
+        {/* NVZ kitchen zones */}
+        <rect {...rp(offX,              offY, nvz,    playW)} fill={colors.kitchen ?? '#60A5FA'} opacity={0.5} />
+        <rect {...rp(offX + playL - nvz, offY, nvz,  playW)} fill={colors.kitchen ?? '#60A5FA'} opacity={0.5} />
+
+        {/* Border */}
         <rect {...rp(0, 0, cL, cW)} fill="none" stroke={colors.border} strokeWidth={scale * 0.4} />
-        <rect {...rp(offX, offY, playL, playW)} fill="none" {...lineStyle} />
-        <line {...lp(offX, offY + playW / 2, offX + playL, offY + playW / 2)} {...lineStyle} />
-        <line {...lp(offX + nvz, offY, offX + nvz, offY + playW)} {...lineStyle} />
-        <line {...lp(offX + playL - nvz, offY, offX + playL - nvz, offY + playW)} {...lineStyle} />
+
+        {/* Playing area boundary */}
+        <rect {...rp(offX, offY, playL, playW)} fill="none" {...ls} />
+        {/* Center line (lengthwise, splits court into two halves) */}
+        <line {...lp(offX, offY + playW / 2, offX + playL, offY + playW / 2)} {...ls} />
+        {/* NVZ lines */}
+        <line {...lp(offX + nvz,           offY, offX + nvz,           offY + playW)} {...ls} />
+        <line {...lp(offX + playL - nvz,   offY, offX + playL - nvz,   offY + playW)} {...ls} />
 
         {/* Net */}
         <line
@@ -254,8 +293,8 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
         />
         {hasAcc('pickleball-net') && (
           <>
-            <circle cx={cx_(offX + netX)} cy={cy_(offY)}         r={4} fill="#6B7280" />
-            <circle cx={cx_(offX + netX)} cy={cy_(offY + playW)} r={4} fill="#6B7280" />
+            <circle cx={px(offX + netX)} cy={py(offY)}         r={4} fill="#6B7280" />
+            <circle cx={px(offX + netX)} cy={py(offY + playW)} r={4} fill="#6B7280" />
           </>
         )}
       </g>
@@ -264,40 +303,42 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
 
   // ─── MULTI-SPORT ──────────────────────────────────────────────────────────
   const renderMultiSport = () => {
-    const keyW   = 16;
-    const keyLen = 19;
-    const pklW   = 20;
-    const pklLen = 44;
-    const pklY   = (cW - pklW) / 2;
-    const pklX1  = cL * 0.12;
-    const pklX2  = cL * 0.55;
-    const pklLine = {
-      stroke: '#FCD34D',
-      strokeWidth: Math.max(1, scale * 0.06),
-    };
+    const keyW    = 16;
+    const keyLen  = 19;
+    const basketX = 5.25;
+    const midY    = cW / 2;
+    const pklW    = 20;
+    const pklLen  = 44;
+    const pklY    = (cW - pklW) / 2;
+    const pklX1   = cL * 0.08;
+    const pklX2   = cL * 0.52;
+    const pklSty  = { stroke: '#FCD34D', strokeWidth: Math.max(1, scale * 0.06) };
 
     return (
       <g>
+        {/* Surface */}
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        <rect {...rp(0, (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? '#1A3A6B'} opacity={0.5} />
+
+        {/* Paint areas */}
+        <rect {...rp(0,        (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? '#1A3A6B'} opacity={0.5} />
         <rect {...rp(cL - keyLen, (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? '#1A3A6B'} opacity={0.5} />
 
         {/* Basketball lines */}
-        <rect {...rp(0, 0, cL, cW)} fill="none" {...lineStyle} />
-        <line {...lp(cL / 2, 0, cL / 2, cW)} {...lineStyle} />
-        <ellipse cx={cx_(cL / 2)} cy={cy_(cW / 2)} rx={6 * scale} ry={6 * scale} {...lineStyle} />
-        <rect {...rp(0, (cW - keyW) / 2, keyLen, keyW)} fill="none" {...lineStyle} />
-        <rect {...rp(cL - keyLen, (cW - keyW) / 2, keyLen, keyW)} fill="none" {...lineStyle} />
+        <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
+        <line {...lp(cL / 2, 0, cL / 2, cW)} {...ls} />
+        <circle cx={px(cL / 2)} cy={py(midY)} r={6 * scale} fill="none" {...ls} />
+        <rect {...rp(0,        (cW - keyW) / 2, keyLen, keyW)} fill="none" {...ls} />
+        <rect {...rp(cL - keyLen, (cW - keyW) / 2, keyLen, keyW)} fill="none" {...ls} />
 
-        {/* Pickleball courts overlay (yellow) */}
-        {[pklX1, pklX2].map((px, i) => (
+        {/* Pickleball overlays (yellow) */}
+        {[pklX1, pklX2].map((bx, i) => (
           <g key={`pkl-${i}`}>
-            <rect {...rp(px, pklY, pklLen, pklW)} fill="none" {...pklLine} />
-            <line {...lp(px, pklY + pklW / 2, px + pklLen, pklY + pklW / 2)} {...pklLine} />
-            <line {...lp(px + 7, pklY, px + 7, pklY + pklW)} {...pklLine} />
-            <line {...lp(px + pklLen - 7, pklY, px + pklLen - 7, pklY + pklW)} {...pklLine} />
+            <rect {...rp(bx, pklY, pklLen, pklW)} fill="none" {...pklSty} />
+            <line {...lp(bx, pklY + pklW / 2, bx + pklLen, pklY + pklW / 2)} {...pklSty} />
+            <line {...lp(bx + 7, pklY, bx + 7, pklY + pklW)} {...pklSty} />
+            <line {...lp(bx + pklLen - 7, pklY, bx + pklLen - 7, pklY + pklW)} {...pklSty} />
             <line
-              {...lp(px + pklLen / 2, pklY, px + pklLen / 2, pklY + pklW)}
+              {...lp(bx + pklLen / 2, pklY, bx + pklLen / 2, pklY + pklW)}
               stroke="#FCD34D"
               strokeWidth={Math.max(1.5, scale * 0.1)}
               strokeDasharray={`${scale * 0.4} ${scale * 0.25}`}
@@ -305,43 +346,45 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
           </g>
         ))}
 
+        {/* Border */}
         <rect {...rp(0, 0, cL, cW)} fill="none" stroke={colors.border} strokeWidth={scale * 0.4} />
 
+        {/* Hoops */}
         {(hasAcc('basketball-hoop-single') || hasAcc('basketball-hoop-double')) && (
-          <circle cx={cx_(5.25)} cy={cy_(cW / 2)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
+          <circle cx={px(basketX)} cy={py(midY)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
         )}
         {hasAcc('basketball-hoop-double') && (
-          <circle cx={cx_(cL - 5.25)} cy={cy_(cW / 2)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
+          <circle cx={px(cL - basketX)} cy={py(midY)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
         )}
       </g>
     );
   };
 
   // ─── DIMENSION LABELS ─────────────────────────────────────────────────────
-  const renderLabels = () => (
-    <g fill="#6B7280" fontSize={11} fontFamily="Inter, sans-serif">
-      <text
-        x={ox - 18} y={oy + svgCH / 2}
-        textAnchor="middle" dominantBaseline="middle"
-        transform={`rotate(-90, ${ox - 18}, ${oy + svgCH / 2})`}
-      >
-        {cW} ft
-      </text>
-      <text x={ox + svgCW / 2} y={oy + svgCH + 22} textAnchor="middle">
-        {cL} ft
-      </text>
-      {/* Width arrow */}
-      <line x1={ox} y1={oy - 8} x2={ox + svgCW} y2={oy - 8} stroke="#4B5563" strokeWidth={1} />
-      <polygon
-        points={`${ox},${oy - 12} ${ox + 6},${oy - 4} ${ox - 6},${oy - 4}`}
-        fill="#4B5563"
-      />
-      <polygon
-        points={`${ox + svgCW},${oy - 12} ${ox + svgCW + 6},${oy - 4} ${ox + svgCW - 6},${oy - 4}`}
-        fill="#4B5563"
-      />
-    </g>
-  );
+  const renderLabels = () => {
+    const labelColor = '#6B7280';
+    const arrowColor = '#4B5563';
+    return (
+      <g fontFamily="Inter, sans-serif" fontSize={11}>
+        {/* Length label (bottom) */}
+        <text x={ox + svgCW / 2} y={oy + svgCH + 24} textAnchor="middle" fill={labelColor}>
+          {cL} ft
+        </text>
+        {/* Width label (left, rotated) */}
+        <text
+          x={ox - 20} y={oy + svgCH / 2}
+          textAnchor="middle" dominantBaseline="middle" fill={labelColor}
+          transform={`rotate(-90, ${ox - 20}, ${oy + svgCH / 2})`}
+        >
+          {cW} ft
+        </text>
+        {/* Arrow along top */}
+        <line x1={ox} y1={oy - 10} x2={ox + svgCW} y2={oy - 10} stroke={arrowColor} strokeWidth={1} />
+        <polygon points={`${ox - 5},${oy - 10} ${ox + 5},${oy - 6} ${ox + 5},${oy - 14}`} fill={arrowColor} />
+        <polygon points={`${ox + svgCW + 5},${oy - 10} ${ox + svgCW - 5},${oy - 6} ${ox + svgCW - 5},${oy - 14}`} fill={arrowColor} />
+      </g>
+    );
+  };
 
   const renderCourt = () => {
     switch (type) {

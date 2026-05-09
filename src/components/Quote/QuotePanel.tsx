@@ -27,11 +27,6 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
   const { dimensions, type, propertyType, surfaceFinish, selectedAccessories } = config;
   const area = dimensions.length * dimensions.width;
 
-  // Rough cost estimate
-  const baseCostPerSqFt = propertyType === 'commercial' ? 8 : 6;
-  const finishMultiplier = { smooth: 1, textured: 1.15, cushioned: 1.4 }[surfaceFinish];
-  const surfaceCost = Math.round(area * baseCostPerSqFt * finishMultiplier);
-
   const presetName =
     COURT_PRESETS.find(
       (p) =>
@@ -58,7 +53,7 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
           detailed quote for your {COURT_LABELS[type]} court.
         </p>
         <button
-          className="mt-6 text-xs text-sky-400 hover:text-sky-300 underline"
+          className="mt-6 text-xs text-pink-400 hover:text-pink-300 underline"
           onClick={() => setFormState((s) => ({ ...s, submitted: false }))}
         >
           Submit another request
@@ -71,43 +66,27 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
     <div className="space-y-5">
       {/* Summary */}
       <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-        <div className="bg-sky-700 px-4 py-2">
+        <div className="bg-pink-700 px-4 py-2">
           <h3 className="text-sm font-bold text-white">Your Court Summary</h3>
         </div>
         <div className="p-4 space-y-2 text-sm">
-          <Row label="Court Type"     value={COURT_LABELS[type]} />
-          <Row label="Size"           value={`${dimensions.length} × ${dimensions.width} ft (${presetName})`} />
-          <Row label="Area"           value={`${area.toLocaleString()} sq ft`} />
-          <Row label="Property"       value={propertyType.charAt(0).toUpperCase() + propertyType.slice(1)} />
-          <Row label="Surface"        value={FINISH_LABELS[surfaceFinish]} />
+          <Row label="Court Type" value={COURT_LABELS[type]} />
+          <Row label="Size"       value={`${dimensions.length} × ${dimensions.width} ft (${presetName})`} />
+          <Row label="Area"       value={`${area.toLocaleString()} sq ft`} />
+          <Row label="Property"   value={propertyType.charAt(0).toUpperCase() + propertyType.slice(1)} />
+          <Row label="Surface"    value={FINISH_LABELS[surfaceFinish]} />
           <div className="border-t border-gray-700 pt-2 mt-2">
             <div className="text-xs text-gray-400 mb-1">Selected Accessories</div>
             {selectedAccessoryItems.length === 0 ? (
               <div className="text-gray-500 text-xs">None selected</div>
             ) : (
               selectedAccessoryItems.map((a) => (
-                <div key={a.id} className="flex justify-between text-xs py-0.5">
-                  <span className="text-gray-300">{a.icon} {a.name}</span>
-                  <span className="text-gray-500">{a.priceEstimate}</span>
+                <div key={a.id} className="text-xs py-0.5 text-gray-300">
+                  {a.icon} {a.name}
                 </div>
               ))
             )}
           </div>
-        </div>
-
-        {/* Estimate band */}
-        <div className="px-4 py-3 bg-sky-900/30 border-t border-sky-800/40">
-          <div className="text-xs text-sky-400 font-medium uppercase tracking-wide mb-0.5">
-            Estimated Surface Cost
-          </div>
-          <div className="text-2xl font-bold text-white">
-            ${surfaceCost.toLocaleString()}
-            <span className="text-sm font-normal text-gray-400 ml-1">– ${Math.round(surfaceCost * 1.25).toLocaleString()}</span>
-          </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Estimate covers asphalt surface & line markings. Accessories and site prep billed separately.
-            Final quote after site evaluation.
-          </p>
         </div>
       </div>
 
@@ -126,7 +105,7 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
               value={formState.name}
               onChange={(e) => setFormState((s) => ({ ...s, name: e.target.value }))}
               placeholder="Jane Smith"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500"
             />
           </div>
           <div className="col-span-2 sm:col-span-1">
@@ -136,7 +115,7 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
               value={formState.phone}
               onChange={(e) => setFormState((s) => ({ ...s, phone: e.target.value }))}
               placeholder="(555) 000-0000"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500"
             />
           </div>
           <div className="col-span-2">
@@ -147,7 +126,7 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
               value={formState.email}
               onChange={(e) => setFormState((s) => ({ ...s, email: e.target.value }))}
               placeholder="jane@example.com"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500"
             />
           </div>
           <div className="col-span-2">
@@ -158,7 +137,7 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
               value={formState.zip}
               onChange={(e) => setFormState((s) => ({ ...s, zip: e.target.value }))}
               placeholder="e.g. 90210"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500"
             />
           </div>
           <div className="col-span-2">
@@ -168,14 +147,14 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
               value={formState.message}
               onChange={(e) => setFormState((s) => ({ ...s, message: e.target.value }))}
               placeholder="Any site conditions, timeline, special requests..."
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500 resize-none"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500 resize-none"
             />
           </div>
         </div>
 
         <button
           type="submit"
-          className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-sky-900/30 text-sm"
+          className="w-full py-3 bg-pink-600 hover:bg-pink-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-pink-900/30 text-sm"
         >
           Get My Free Quote →
         </button>

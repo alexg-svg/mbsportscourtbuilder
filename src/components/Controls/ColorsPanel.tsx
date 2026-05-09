@@ -105,7 +105,7 @@ export const ColorsPanel: React.FC<Props> = ({
                 const val = e.target.value;
                 if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) onColorsChange({ ...colors, [section.key]: val });
               }}
-              className="flex-1 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-xs text-gray-300 font-mono focus:outline-none focus:border-sky-500"
+              className="flex-1 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-xs text-gray-300 font-mono focus:outline-none focus:border-pink-500"
               placeholder="#RRGGBB"
             />
           </div>
@@ -132,12 +132,12 @@ export const ColorsPanel: React.FC<Props> = ({
               onClick={() => onSurfaceFinishChange(f.id)}
               className={`p-2 rounded-lg text-center border transition-all ${
                 surfaceFinish === f.id
-                  ? 'bg-sky-600 border-sky-500 text-white'
+                  ? 'bg-pink-600 border-pink-500 text-white'
                   : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500'
               }`}
             >
               <div className="text-sm font-medium">{f.label}</div>
-              <div className={`text-xs mt-0.5 ${surfaceFinish === f.id ? 'text-sky-200' : 'text-gray-500'}`}>{f.desc}</div>
+              <div className={`text-xs mt-0.5 ${surfaceFinish === f.id ? 'text-pink-200' : 'text-gray-500'}`}>{f.desc}</div>
             </button>
           ))}
         </div>

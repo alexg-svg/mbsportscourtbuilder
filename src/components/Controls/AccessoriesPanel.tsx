@@ -34,14 +34,14 @@ export const AccessoriesPanel: React.FC<Props> = ({ courtType, selected, onToggl
                     onClick={() => onToggle(acc.id)}
                     className={`w-full p-3 rounded-lg text-left border transition-all flex items-start gap-3 ${
                       isSelected
-                        ? 'bg-sky-600/20 border-sky-500 text-white'
+                        ? 'bg-pink-600/20 border-pink-500 text-white'
                         : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white'
                     }`}
                   >
                     {/* Checkbox */}
                     <div
                       className={`mt-0.5 w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-all ${
-                        isSelected ? 'bg-sky-500 border-sky-400' : 'border-gray-600'
+                        isSelected ? 'bg-pink-500 border-pink-400' : 'border-gray-600'
                       }`}
                     >
                       {isSelected && (
@@ -60,15 +60,11 @@ export const AccessoriesPanel: React.FC<Props> = ({ courtType, selected, onToggl
                           <span className="text-xs text-gray-500 ml-1">(select one)</span>
                         )}
                       </div>
-                      <div className={`text-xs mt-0.5 leading-snug ${isSelected ? 'text-sky-200' : 'text-gray-500'}`}>
+                      <div className={`text-xs mt-0.5 leading-snug ${isSelected ? 'text-pink-200' : 'text-gray-500'}`}>
                         {acc.description}
                       </div>
                     </div>
 
-                    {/* Price */}
-                    <div className={`text-xs font-medium whitespace-nowrap ml-1 ${isSelected ? 'text-sky-300' : 'text-gray-500'}`}>
-                      {acc.priceEstimate}
-                    </div>
                   </button>
                 );
               })}

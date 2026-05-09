@@ -34,7 +34,7 @@ export const Step3Size: React.FC<Props> = ({
         {presets.map((preset) => (
           <button
             key={preset.id}
-            onClick={() => { onCustomToggle(false); onDimensionsChange(preset.dimensions); }}
+            onClick={() => { onCustomToggle(false); onDimensionsChange(preset.dimensions); setTimeout(onNext, 250); }}
             className={`w-full px-4 py-3.5 rounded-xl border-2 text-left flex items-center justify-between transition-all ${
               isMatch(preset.dimensions)
                 ? 'border-pink-500 bg-pink-600/15 text-theme-primary'

@@ -25,7 +25,7 @@ export const Step1Property: React.FC<Props> = ({ propertyType, onChange, onNext 
       {OPTIONS.map(({ id, label, Icon, desc }) => (
         <button
           key={id}
-          onClick={() => onChange(id)}
+          onClick={() => { onChange(id); setTimeout(onNext, 250); }}
           className={`w-full p-5 rounded-2xl border-2 text-left transition-all flex items-start gap-4 active:scale-[0.98] ${
             propertyType === id
               ? 'border-pink-500 bg-pink-600/15 text-theme-primary shadow-lg shadow-pink-900/20'

@@ -32,7 +32,7 @@ export const CourtTypeSelector: React.FC<Props> = ({
               onClick={() => onPropertyTypeChange(pt)}
               className={`py-2 px-3 rounded-lg text-sm font-medium transition-all border ${
                 propertyType === pt
-                  ? 'bg-sky-600 border-sky-500 text-white shadow-lg shadow-sky-900/30'
+                  ? 'bg-pink-600 border-pink-500 text-white shadow-lg shadow-pink-900/30'
                   : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white'
               }`}
             >
@@ -54,13 +54,13 @@ export const CourtTypeSelector: React.FC<Props> = ({
               onClick={() => onCourtTypeChange(ct.id)}
               className={`p-3 rounded-lg text-left transition-all border ${
                 courtType === ct.id
-                  ? 'bg-sky-600 border-sky-500 text-white shadow-lg shadow-sky-900/30'
+                  ? 'bg-pink-600 border-pink-500 text-white shadow-lg shadow-pink-900/30'
                   : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500 hover:text-white'
               }`}
             >
               <div className="text-xl mb-1">{ct.icon}</div>
               <div className="text-sm font-semibold leading-tight">{ct.label}</div>
-              <div className={`text-xs mt-0.5 leading-tight ${courtType === ct.id ? 'text-sky-200' : 'text-gray-500'}`}>
+              <div className={`text-xs mt-0.5 leading-tight ${courtType === ct.id ? 'text-pink-200' : 'text-gray-500'}`}>
                 {ct.desc}
               </div>
             </button>

@@ -34,15 +34,15 @@ export const DimensionsPanel: React.FC<Props> = ({
                 onClick={() => { onCustomToggle(false); onDimensionsChange(preset.dimensions); }}
                 className={`w-full p-2.5 rounded-lg text-left transition-all border flex items-center justify-between ${
                   active
-                    ? 'bg-sky-600 border-sky-500 text-white'
+                    ? 'bg-pink-600 border-pink-500 text-white'
                     : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500'
                 }`}
               >
                 <div>
                   <div className="text-sm font-medium">{preset.name}</div>
-                  <div className={`text-xs ${active ? 'text-sky-200' : 'text-gray-500'}`}>{preset.description}</div>
+                  <div className={`text-xs ${active ? 'text-pink-200' : 'text-gray-500'}`}>{preset.description}</div>
                 </div>
-                <div className={`text-xs font-mono ml-2 whitespace-nowrap ${active ? 'text-sky-200' : 'text-gray-500'}`}>
+                <div className={`text-xs font-mono ml-2 whitespace-nowrap ${active ? 'text-pink-200' : 'text-gray-500'}`}>
                   {preset.dimensions.length}×{preset.dimensions.width} ft
                 </div>
               </button>
@@ -57,14 +57,14 @@ export const DimensionsPanel: React.FC<Props> = ({
           onClick={() => onCustomToggle(true)}
           className={`w-full p-2.5 rounded-lg text-left transition-all border flex items-center gap-2 ${
             customDimensions
-              ? 'bg-sky-600 border-sky-500 text-white'
+              ? 'bg-pink-600 border-pink-500 text-white'
               : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500'
           }`}
         >
           <span className="text-lg">📐</span>
           <div>
             <div className="text-sm font-medium">Custom Dimensions</div>
-            <div className={`text-xs ${customDimensions ? 'text-sky-200' : 'text-gray-500'}`}>Enter your own size</div>
+            <div className={`text-xs ${customDimensions ? 'text-pink-200' : 'text-gray-500'}`}>Enter your own size</div>
           </div>
         </button>
 
@@ -78,7 +78,7 @@ export const DimensionsPanel: React.FC<Props> = ({
                 max={200}
                 value={dimensions.length}
                 onChange={(e) => onDimensionsChange({ ...dimensions, length: Math.max(20, +e.target.value) })}
-                className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white focus:outline-none focus:border-sky-500"
+                className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white focus:outline-none focus:border-pink-500"
               />
             </div>
             <div>
@@ -89,7 +89,7 @@ export const DimensionsPanel: React.FC<Props> = ({
                 max={100}
                 value={dimensions.width}
                 onChange={(e) => onDimensionsChange({ ...dimensions, width: Math.max(10, +e.target.value) })}
-                className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white focus:outline-none focus:border-sky-500"
+                className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white focus:outline-none focus:border-pink-500"
               />
             </div>
             <div className="col-span-2 text-xs text-gray-500 bg-gray-900/50 rounded p-2">

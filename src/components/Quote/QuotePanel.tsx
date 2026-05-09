@@ -58,7 +58,7 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
           detailed quote for your {COURT_LABELS[type]} court.
         </p>
         <button
-          className="mt-6 text-xs text-sky-400 hover:text-sky-300 underline"
+          className="mt-6 text-xs text-pink-400 hover:text-pink-300 underline"
           onClick={() => setFormState((s) => ({ ...s, submitted: false }))}
         >
           Submit another request
@@ -71,7 +71,7 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
     <div className="space-y-5">
       {/* Summary */}
       <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
-        <div className="bg-sky-700 px-4 py-2">
+        <div className="bg-pink-700 px-4 py-2">
           <h3 className="text-sm font-bold text-white">Your Court Summary</h3>
         </div>
         <div className="p-4 space-y-2 text-sm">
@@ -96,8 +96,8 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
         </div>
 
         {/* Estimate band */}
-        <div className="px-4 py-3 bg-sky-900/30 border-t border-sky-800/40">
-          <div className="text-xs text-sky-400 font-medium uppercase tracking-wide mb-0.5">
+        <div className="px-4 py-3 bg-pink-900/30 border-t border-pink-800/40">
+          <div className="text-xs text-pink-400 font-medium uppercase tracking-wide mb-0.5">
             Estimated Surface Cost
           </div>
           <div className="text-2xl font-bold text-white">
@@ -126,7 +126,7 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
               value={formState.name}
               onChange={(e) => setFormState((s) => ({ ...s, name: e.target.value }))}
               placeholder="Jane Smith"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500"
             />
           </div>
           <div className="col-span-2 sm:col-span-1">
@@ -136,7 +136,7 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
               value={formState.phone}
               onChange={(e) => setFormState((s) => ({ ...s, phone: e.target.value }))}
               placeholder="(555) 000-0000"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500"
             />
           </div>
           <div className="col-span-2">
@@ -147,7 +147,7 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
               value={formState.email}
               onChange={(e) => setFormState((s) => ({ ...s, email: e.target.value }))}
               placeholder="jane@example.com"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500"
             />
           </div>
           <div className="col-span-2">
@@ -158,7 +158,7 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
               value={formState.zip}
               onChange={(e) => setFormState((s) => ({ ...s, zip: e.target.value }))}
               placeholder="e.g. 90210"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500"
             />
           </div>
           <div className="col-span-2">
@@ -168,14 +168,14 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
               value={formState.message}
               onChange={(e) => setFormState((s) => ({ ...s, message: e.target.value }))}
               placeholder="Any site conditions, timeline, special requests..."
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500 resize-none"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500 resize-none"
             />
           </div>
         </div>
 
         <button
           type="submit"
-          className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-sky-900/30 text-sm"
+          className="w-full py-3 bg-pink-600 hover:bg-pink-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-pink-900/30 text-sm"
         >
           Get My Free Quote →
         </button>

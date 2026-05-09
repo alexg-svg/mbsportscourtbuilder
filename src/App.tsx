@@ -95,20 +95,23 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-950 text-white font-sans flex flex-col">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header className="bg-gray-900 border-b border-gray-800 px-4 py-3 flex items-center justify-between">
+      <header className="bg-gray-900 border-b border-gray-800 px-4 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-sky-600 rounded-xl flex items-center justify-center text-xl shadow-lg shadow-sky-900/40">
-            🏟️
+          {/* Oval logo badge */}
+          <div className="flex flex-col items-center justify-center px-3 py-1 rounded-full border-2 border-black bg-pink-600 shadow-lg shadow-pink-900/40 min-w-[52px]">
+            <span className="text-white font-extrabold text-[9px] tracking-tight leading-tight">MB</span>
+            <span className="text-cyan-300 font-extrabold text-[9px] tracking-tight leading-tight">SPORTS</span>
+            <span className="text-white font-extrabold text-[9px] tracking-tight leading-tight">BUILDERS</span>
           </div>
           <div>
-            <div className="font-bold text-white text-sm leading-tight">MB Sports Court Builder</div>
-            <div className="text-xs text-gray-500">Asphalt Court Installation</div>
+            <div className="font-bold text-white text-sm leading-tight">Court Builder</div>
+            <div className="text-xs text-gray-500">Design your custom asphalt court</div>
           </div>
         </div>
-        <div className="hidden sm:flex items-center gap-4 text-xs text-gray-500">
-          <span>📍 Residential &amp; Commercial</span>
-          <span>·</span>
-          <span>Tennis · Basketball · Pickleball</span>
+        <div className="hidden sm:flex items-center gap-4 text-xs">
+          <span className="text-pink-400 font-semibold">mbsportsbuilders.com</span>
+          <span className="text-gray-700">·</span>
+          <span className="text-gray-500">Tennis · Basketball · Pickleball</span>
         </div>
         {/* Mobile preview toggle */}
         <button
@@ -136,7 +139,7 @@ export default function App() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 py-2.5 text-center transition-all border-b-2 ${
                   activeTab === tab.id
-                    ? 'border-sky-500 text-sky-400'
+                    ? 'border-pink-500 text-pink-400'
                     : 'border-transparent text-gray-500 hover:text-gray-300'
                 }`}
                 title={tab.label}
@@ -151,7 +154,7 @@ export default function App() {
           <div className="flex-1 p-4 overflow-y-auto">
             {/* Court info strip */}
             <div className="flex items-center gap-2 mb-4 p-2 bg-gray-800/60 rounded-lg border border-gray-700 text-xs">
-              <span className="font-semibold text-sky-400">{config.type.charAt(0).toUpperCase() + config.type.slice(1)}</span>
+              <span className="font-semibold text-pink-400">{config.type.charAt(0).toUpperCase() + config.type.slice(1)}</span>
               <span className="text-gray-600">·</span>
               <span className="text-gray-400">{selectedAreaStr}</span>
               {accessoryCount > 0 && (
@@ -208,7 +211,7 @@ export default function App() {
                   const idx = TABS.findIndex((t) => t.id === activeTab);
                   setActiveTab(TABS[Math.min(idx + 1, TABS.length - 1)].id);
                 }}
-                className="w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl transition-all text-sm shadow-lg shadow-sky-900/30"
+                className="w-full py-2.5 bg-pink-600 hover:bg-pink-500 text-white font-semibold rounded-xl transition-all text-sm shadow-lg shadow-pink-900/30"
               >
                 Next: {TABS[TABS.findIndex((t) => t.id === activeTab) + 1]?.label ?? 'Get Quote'} →
               </button>
@@ -229,7 +232,7 @@ export default function App() {
             </div>
             <div className="flex items-center gap-3 text-xs text-gray-500">
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
                 Live
               </span>
               <span>·</span>

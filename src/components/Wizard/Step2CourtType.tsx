@@ -1,5 +1,5 @@
 import React from 'react';
-import { Volleyball, Activity, Disc3, Layers } from 'lucide-react';
+import { Target, Crosshair, Disc3, LayoutGrid } from 'lucide-react';
 import type { CourtType } from '../../types/court';
 import { StepShell } from './StepShell';
 
@@ -11,10 +11,10 @@ interface Props {
 }
 
 const OPTIONS: { id: CourtType; label: string; Icon: React.FC<{ className?: string }>; desc: string }[] = [
-  { id: 'basketball',  label: 'Basketball',  Icon: Volleyball, desc: 'Half court or full court' },
-  { id: 'tennis',      label: 'Tennis',      Icon: Activity, desc: 'Singles or doubles' },
-  { id: 'pickleball',  label: 'Pickleball',  Icon: Disc3,    desc: 'Standard or with clearance zones' },
-  { id: 'multi-sport', label: 'Multi-Sport', Icon: Layers,   desc: 'Basketball + Pickleball combo' },
+  { id: 'basketball',  label: 'Basketball',  Icon: Target,     desc: 'Half court or full court' },
+  { id: 'tennis',      label: 'Tennis',      Icon: Crosshair,  desc: 'Singles or doubles' },
+  { id: 'pickleball',  label: 'Pickleball',  Icon: Disc3,      desc: 'Standard or with clearance zones' },
+  { id: 'multi-sport', label: 'Multi-Sport', Icon: LayoutGrid, desc: 'Basketball + Pickleball combo' },
 ];
 
 export const Step2CourtType: React.FC<Props> = ({ courtType, onChange, onBack, onNext }) => (

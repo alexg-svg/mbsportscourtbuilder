@@ -54,7 +54,6 @@ export const AccessoriesPanel: React.FC<Props> = ({ courtType, selected, onToggl
                     {/* Icon + Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-base">{acc.icon}</span>
                         <span className="text-sm font-medium leading-tight">{acc.name}</span>
                         {(isLighting || isHoop) && (
                           <span className="text-xs text-gray-500 ml-1">(select one)</span>

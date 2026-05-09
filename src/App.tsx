@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { Eye, ClipboardList } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES } from './utils/courtData';
 import { CourtSVG } from './components/Court/CourtSVG';
@@ -32,10 +33,10 @@ const initialConfig: CourtConfig = {
 const TOTAL_STEPS = 6;
 
 export default function App() {
-  const [step, setStep]         = useState(0);           // 0–5 = wizard steps; -1 = done
-  const [config, setConfig]     = useState<CourtConfig>(initialConfig);
+  const [step, setStep]           = useState(0);
+  const [config, setConfig]       = useState<CourtConfig>(initialConfig);
   const [submitted, setSubmitted] = useState<ContactData | null>(null);
-  const [showPreview, setShowPreview] = useState(false); // mobile toggle
+  const [showPreview, setShowPreview] = useState(false);
 
   const next = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
   const back = () => setStep((s) => Math.max(s - 1, 0));
@@ -81,82 +82,40 @@ export default function App() {
     });
   }, []);
 
-  const handleSubmit = (data: ContactData) => {
-    setSubmitted(data);
-    setStep(-1);
-  };
-
-  const handleReset = () => {
-    setConfig(initialConfig);
-    setSubmitted(null);
-    setStep(0);
-    setShowPreview(false);
-  };
+  const handleSubmit = (data: ContactData) => { setSubmitted(data); setStep(-1); };
+  const handleReset  = () => { setConfig(initialConfig); setSubmitted(null); setStep(0); setShowPreview(false); };
 
   const renderStep = () => {
     switch (step) {
-      case 0: return (
-        <Step1Property
-          propertyType={config.propertyType}
-          onChange={handlePropertyChange}
-          onNext={next}
-        />
-      );
-      case 1: return (
-        <Step2CourtType
-          courtType={config.type}
-          onChange={handleCourtTypeChange}
-          onBack={back}
-          onNext={next}
-        />
-      );
+      case 0: return <Step1Property propertyType={config.propertyType} onChange={handlePropertyChange} onNext={next} />;
+      case 1: return <Step2CourtType courtType={config.type} onChange={handleCourtTypeChange} onBack={back} onNext={next} />;
       case 2: return (
         <Step3Size
-          courtType={config.type}
-          dimensions={config.dimensions}
-          customDimensions={config.customDimensions}
+          courtType={config.type} dimensions={config.dimensions} customDimensions={config.customDimensions}
           onDimensionsChange={(d: CourtDimensions) => update('dimensions', d)}
           onCustomToggle={(v: boolean) => update('customDimensions', v)}
-          onBack={back}
-          onNext={next}
+          onBack={back} onNext={next}
         />
       );
       case 3: return (
         <Step4Colors
-          courtType={config.type}
-          colors={config.colors}
-          surfaceFinish={config.surfaceFinish}
+          courtType={config.type} colors={config.colors} surfaceFinish={config.surfaceFinish}
           onColorsChange={(c: CourtColors) => update('colors', c)}
           onSurfaceFinishChange={(f: SurfaceFinish) => update('surfaceFinish', f)}
-          onBack={back}
-          onNext={next}
+          onBack={back} onNext={next}
         />
       );
-      case 4: return (
-        <Step5Accessories
-          courtType={config.type}
-          selected={config.selectedAccessories}
-          onToggle={handleAccessoryToggle}
-          onBack={back}
-          onNext={next}
-        />
-      );
-      case 5: return (
-        <Step6Contact
-          config={config}
-          onBack={back}
-          onSubmit={handleSubmit}
-        />
-      );
+      case 4: return <Step5Accessories courtType={config.type} selected={config.selectedAccessories} onToggle={handleAccessoryToggle} onBack={back} onNext={next} />;
+      case 5: return <Step6Contact config={config} onBack={back} onSubmit={handleSubmit} />;
       default: return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white font-sans flex flex-col">
+    <div className="min-h-screen bg-theme-base text-theme-primary font-sans flex flex-col">
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header className="bg-gray-900 border-b border-gray-800 px-4 py-2.5 flex items-center justify-between flex-shrink-0">
+      <header className="bg-theme-panel border-b border-theme-border px-4 py-2.5 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-center justify-center px-3 py-1 rounded-full border-2 border-black bg-pink-600 shadow-lg shadow-pink-900/40 min-w-[52px]">
             <span className="text-white font-extrabold text-[9px] tracking-tight leading-tight">MB</span>
@@ -164,22 +123,24 @@ export default function App() {
             <span className="text-white font-extrabold text-[9px] tracking-tight leading-tight">BUILDERS</span>
           </div>
           <div>
-            <div className="font-bold text-white text-sm leading-tight">Court Builder</div>
-            <div className="text-xs text-gray-500">Design your custom asphalt court</div>
+            <div className="font-bold text-theme-primary text-sm leading-tight">Court Builder</div>
+            <div className="text-xs text-theme-muted">Design your custom asphalt court</div>
           </div>
         </div>
         <div className="hidden sm:flex items-center gap-4 text-xs">
-          <span className="text-pink-400 font-semibold">mbsportsbuilders.com</span>
-          <span className="text-gray-700">·</span>
-          <span className="text-gray-500">Tennis · Basketball · Pickleball</span>
+          <span className="text-pink-500 font-semibold">mbsportsbuilders.com</span>
+          <span className="text-theme-faint">·</span>
+          <span className="text-theme-muted">Tennis · Basketball · Pickleball</span>
         </div>
-        {/* Mobile: toggle between form and preview */}
         {step >= 0 && (
           <button
-            className="sm:hidden text-xs bg-gray-800 border border-gray-700 px-3 py-1.5 rounded-lg"
+            className="sm:hidden text-xs bg-theme-raised border border-theme-border px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-theme-muted"
             onClick={() => setShowPreview((v) => !v)}
           >
-            {showPreview ? '📝 Form' : '👁️ Preview'}
+            {showPreview
+              ? <><ClipboardList className="w-3.5 h-3.5" />Form</>
+              : <><Eye className="w-3.5 h-3.5" />Preview</>
+            }
           </button>
         )}
       </header>
@@ -187,43 +148,33 @@ export default function App() {
       {/* ── Body ────────────────────────────────────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden">
 
-        {/* ── Left: Wizard panel ──────────────────────────────────────────── */}
+        {/* Left: Wizard panel */}
         <div className={`
           ${showPreview ? 'hidden' : 'flex'} sm:flex
           flex-col w-full sm:w-[400px] lg:w-[440px]
-          bg-gray-900 border-r border-gray-800 flex-shrink-0 overflow-hidden
+          bg-theme-panel border-r border-theme-border flex-shrink-0 overflow-hidden
         `}>
           {step === -1 ? (
-            /* Done screen */
-            <StepDone
-              name={submitted?.name ?? ''}
-              email={submitted?.email ?? ''}
-              onReset={handleReset}
-            />
+            <StepDone name={submitted?.name ?? ''} email={submitted?.email ?? ''} onReset={handleReset} />
           ) : (
             <>
-              {/* Progress bar */}
               <StepProgress current={step} />
-              {/* Step content */}
-              <div className="flex-1 overflow-hidden">
-                {renderStep()}
-              </div>
+              <div className="flex-1 overflow-hidden">{renderStep()}</div>
             </>
           )}
         </div>
 
-        {/* ── Right: Live court preview ────────────────────────────────────── */}
+        {/* Right: Live court preview */}
         <div className={`
           ${showPreview ? 'flex' : 'hidden'} sm:flex
-          flex-1 flex-col bg-gray-950 overflow-hidden
+          flex-1 flex-col bg-theme-canvas overflow-hidden
         `}>
-          {/* Preview header */}
-          <div className="px-6 py-3 border-b border-gray-800 flex items-center justify-between bg-gray-900/50 flex-shrink-0">
+          <div className="px-6 py-3 border-b border-theme-border flex items-center justify-between bg-theme-panel/70 flex-shrink-0">
             <div>
-              <h2 className="text-sm font-semibold text-white">Live Court Preview</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Updates as you configure your court</p>
+              <h2 className="text-sm font-semibold text-theme-primary">Live Court Preview</h2>
+              <p className="text-xs text-theme-muted mt-0.5">Updates as you configure your court</p>
             </div>
-            <div className="flex items-center gap-3 text-xs text-gray-500">
+            <div className="flex items-center gap-3 text-xs text-theme-muted">
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
                 Live
@@ -233,30 +184,26 @@ export default function App() {
             </div>
           </div>
 
-          {/* SVG canvas */}
           <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
             <div className="w-full max-w-4xl aspect-[16/10]">
               <CourtSVG config={config} width={900} height={560} />
             </div>
           </div>
 
-          {/* Legend */}
-          <div className="px-6 py-3 border-t border-gray-800 bg-gray-900/30 flex-shrink-0">
+          <div className="px-6 py-3 border-t border-theme-border bg-theme-panel/50 flex-shrink-0">
             <CourtLegend config={config} step={step} />
           </div>
         </div>
-
       </div>
     </div>
   );
 }
 
-// ─── Legend ──────────────────────────────────────────────────────────────────
 const COURT_DESC: Record<string, string> = {
   basketball:  'Basketball court · key areas · three-point arcs · free throw circles',
   tennis:      'Tennis court · service boxes · singles & doubles sidelines',
   pickleball:  'Pickleball court · NVZ kitchen zones · centerline',
-  'multi-sport': 'Multi-sport surface · basketball + 2 pickleball overlays (yellow)',
+  'multi-sport': 'Multi-sport surface · basketball + 2 pickleball overlays',
 };
 
 const STEP_HINTS: Record<number, string> = {
@@ -271,7 +218,7 @@ const STEP_HINTS: Record<number, string> = {
 function CourtLegend({ config, step }: { config: CourtConfig; step: number }) {
   const area = config.dimensions.length * config.dimensions.width;
   return (
-    <div className="text-xs text-gray-600 space-y-0.5">
+    <div className="text-xs text-theme-faint space-y-0.5">
       <p>{COURT_DESC[config.type]}</p>
       <p className="flex gap-3">
         <span>{config.dimensions.length} × {config.dimensions.width} ft</span>
@@ -281,7 +228,7 @@ function CourtLegend({ config, step }: { config: CourtConfig; step: number }) {
           <><span>·</span><span>{config.selectedAccessories.length} accessor{config.selectedAccessories.length === 1 ? 'y' : 'ies'}</span></>
         )}
       </p>
-      {step >= 0 && <p className="text-pink-900">{STEP_HINTS[step]}</p>}
+      {step >= 0 && <p className="text-pink-400/60">{STEP_HINTS[step]}</p>}
     </div>
   );
 }

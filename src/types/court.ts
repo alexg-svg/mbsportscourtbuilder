@@ -37,7 +37,6 @@ export interface Accessory {
   name: string;
   description: string;
   category: 'sport-equipment' | 'lighting' | 'fencing' | 'amenities';
-  icon: string;
   compatibleCourts: CourtType[];
 }
 

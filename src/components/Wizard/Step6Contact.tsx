@@ -52,8 +52,8 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit }) => {
     >
       <div className="space-y-4 mt-2">
         {/* Mini summary */}
-        <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-3 space-y-1 text-xs">
-          <div className="text-gray-400 font-semibold uppercase tracking-wider mb-2">Your Design Summary</div>
+        <div className="bg-theme-raised/60 border border-theme-mid rounded-xl p-3 space-y-1 text-xs">
+          <div className="text-theme-muted font-semibold uppercase tracking-wider mb-2">Your Design Summary</div>
           <SumRow label="Court"    value={`${COURT_LABELS[type]} · ${propertyType}`} />
           <SumRow label="Size"     value={`${dimensions.length}×${dimensions.width} ft (${presetName})`} />
           <SumRow label="Surface"  value={FINISH_LABELS[surfaceFinish]} />
@@ -64,45 +64,45 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit }) => {
             <div className="w-4 h-4 rounded border" style={{ backgroundColor: config.colors.surface }} />
             <div className="w-4 h-4 rounded border" style={{ backgroundColor: config.colors.border }} />
             <div className="w-4 h-4 rounded border" style={{ backgroundColor: config.colors.lines }} />
-            <span className="text-gray-500">Selected colors</span>
+            <span className="text-theme-muted">Selected colors</span>
           </div>
         </div>
 
         {/* Form fields */}
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2 sm:col-span-1">
-            <label className="block text-xs text-gray-400 mb-1">Full Name *</label>
+            <label className="block text-xs text-theme-muted mb-1">Full Name *</label>
             <input required type="text" value={form.name} onChange={set('name')}
               placeholder="Jane Smith"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500" />
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500" />
           </div>
           <div className="col-span-2 sm:col-span-1">
-            <label className="block text-xs text-gray-400 mb-1">Phone</label>
+            <label className="block text-xs text-theme-muted mb-1">Phone</label>
             <input type="tel" value={form.phone} onChange={set('phone')}
               placeholder="(555) 000-0000"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500" />
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500" />
           </div>
           <div className="col-span-2">
-            <label className="block text-xs text-gray-400 mb-1">Email *</label>
+            <label className="block text-xs text-theme-muted mb-1">Email *</label>
             <input required type="email" value={form.email} onChange={set('email')}
               placeholder="jane@example.com"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500" />
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500" />
           </div>
           <div className="col-span-2">
-            <label className="block text-xs text-gray-400 mb-1">ZIP Code *</label>
+            <label className="block text-xs text-theme-muted mb-1">ZIP Code *</label>
             <input required type="text" value={form.zip} onChange={set('zip')}
               placeholder="e.g. 90210"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500" />
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500" />
           </div>
           <div className="col-span-2">
-            <label className="block text-xs text-gray-400 mb-1">Notes (optional)</label>
+            <label className="block text-xs text-theme-muted mb-1">Notes (optional)</label>
             <textarea rows={2} value={form.message} onChange={set('message')}
               placeholder="Timeline, site conditions, questions..."
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500 resize-none" />
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500 resize-none" />
           </div>
         </div>
 
-        <p className="text-xs text-gray-600 text-center">
+        <p className="text-xs text-theme-faint text-center">
           No commitment required · We respond within 24–48 hours
         </p>
       </div>
@@ -112,7 +112,7 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit }) => {
 
 const SumRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="flex gap-2">
-    <span className="text-gray-500 w-14 flex-shrink-0">{label}</span>
-    <span className="text-gray-300">{value}</span>
+    <span className="text-theme-muted w-14 flex-shrink-0">{label}</span>
+    <span className="text-theme-primary/80">{value}</span>
   </div>
 );

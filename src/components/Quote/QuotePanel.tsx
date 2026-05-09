@@ -46,10 +46,10 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
     return (
       <div className="text-center py-8 px-4">
         <div className="text-5xl mb-4">✅</div>
-        <h3 className="text-xl font-bold text-white mb-2">Request Submitted!</h3>
-        <p className="text-gray-400 text-sm">
-          Thank you, <span className="text-white">{formState.name}</span>. Our team will reach out
-          to <span className="text-white">{formState.email}</span> within 24–48 hours with a
+        <h3 className="text-xl font-bold text-theme-primary mb-2">Request Submitted!</h3>
+        <p className="text-theme-muted text-sm">
+          Thank you, <span className="text-theme-primary">{formState.name}</span>. Our team will reach out
+          to <span className="text-theme-primary">{formState.email}</span> within 24–48 hours with a
           detailed quote for your {COURT_LABELS[type]} court.
         </p>
         <button
@@ -65,9 +65,9 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
   return (
     <div className="space-y-5">
       {/* Summary */}
-      <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+      <div className="bg-theme-raised rounded-xl border border-theme-mid overflow-hidden">
         <div className="bg-pink-700 px-4 py-2">
-          <h3 className="text-sm font-bold text-white">Your Court Summary</h3>
+          <h3 className="text-sm font-bold text-theme-primary">Your Court Summary</h3>
         </div>
         <div className="p-4 space-y-2 text-sm">
           <Row label="Court Type" value={COURT_LABELS[type]} />
@@ -75,14 +75,14 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
           <Row label="Area"       value={`${area.toLocaleString()} sq ft`} />
           <Row label="Property"   value={propertyType.charAt(0).toUpperCase() + propertyType.slice(1)} />
           <Row label="Surface"    value={FINISH_LABELS[surfaceFinish]} />
-          <div className="border-t border-gray-700 pt-2 mt-2">
-            <div className="text-xs text-gray-400 mb-1">Selected Accessories</div>
+          <div className="border-t border-theme-mid pt-2 mt-2">
+            <div className="text-xs text-theme-muted mb-1">Selected Accessories</div>
             {selectedAccessoryItems.length === 0 ? (
-              <div className="text-gray-500 text-xs">None selected</div>
+              <div className="text-theme-muted text-xs">None selected</div>
             ) : (
               selectedAccessoryItems.map((a) => (
-                <div key={a.id} className="text-xs py-0.5 text-gray-300">
-                  {a.icon} {a.name}
+                <div key={a.id} className="text-xs py-0.5 text-theme-primary/80">
+                  · {a.name}
                 </div>
               ))
             )}
@@ -92,74 +92,74 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
 
       {/* Contact form */}
       <form onSubmit={handleSubmit} className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-theme-primary/80 uppercase tracking-wider">
           Request a Free Quote
         </h3>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2 sm:col-span-1">
-            <label className="block text-xs text-gray-400 mb-1">Full Name *</label>
+            <label className="block text-xs text-theme-muted mb-1">Full Name *</label>
             <input
               required
               type="text"
               value={formState.name}
               onChange={(e) => setFormState((s) => ({ ...s, name: e.target.value }))}
               placeholder="Jane Smith"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500"
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500"
             />
           </div>
           <div className="col-span-2 sm:col-span-1">
-            <label className="block text-xs text-gray-400 mb-1">Phone</label>
+            <label className="block text-xs text-theme-muted mb-1">Phone</label>
             <input
               type="tel"
               value={formState.phone}
               onChange={(e) => setFormState((s) => ({ ...s, phone: e.target.value }))}
               placeholder="(555) 000-0000"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500"
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500"
             />
           </div>
           <div className="col-span-2">
-            <label className="block text-xs text-gray-400 mb-1">Email *</label>
+            <label className="block text-xs text-theme-muted mb-1">Email *</label>
             <input
               required
               type="email"
               value={formState.email}
               onChange={(e) => setFormState((s) => ({ ...s, email: e.target.value }))}
               placeholder="jane@example.com"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500"
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500"
             />
           </div>
           <div className="col-span-2">
-            <label className="block text-xs text-gray-400 mb-1">ZIP Code *</label>
+            <label className="block text-xs text-theme-muted mb-1">ZIP Code *</label>
             <input
               required
               type="text"
               value={formState.zip}
               onChange={(e) => setFormState((s) => ({ ...s, zip: e.target.value }))}
               placeholder="e.g. 90210"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500"
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500"
             />
           </div>
           <div className="col-span-2">
-            <label className="block text-xs text-gray-400 mb-1">Additional Notes</label>
+            <label className="block text-xs text-theme-muted mb-1">Additional Notes</label>
             <textarea
               rows={3}
               value={formState.message}
               onChange={(e) => setFormState((s) => ({ ...s, message: e.target.value }))}
               placeholder="Any site conditions, timeline, special requests..."
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-pink-500 resize-none"
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500 resize-none"
             />
           </div>
         </div>
 
         <button
           type="submit"
-          className="w-full py-3 bg-pink-600 hover:bg-pink-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-pink-900/30 text-sm"
+          className="w-full py-3 bg-pink-600 hover:bg-pink-500 text-theme-primary font-semibold rounded-xl transition-all shadow-lg shadow-pink-900/30 text-sm"
         >
           Get My Free Quote →
         </button>
 
-        <p className="text-xs text-gray-600 text-center">
+        <p className="text-xs text-theme-faint text-center">
           No commitment required. We'll contact you within 24–48 hours.
         </p>
       </form>
@@ -169,7 +169,7 @@ export const QuotePanel: React.FC<Props> = ({ config }) => {
 
 const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="flex justify-between">
-    <span className="text-gray-400">{label}</span>
-    <span className="text-white font-medium text-right ml-4">{value}</span>
+    <span className="text-theme-muted">{label}</span>
+    <span className="text-theme-primary font-medium text-right ml-4">{value}</span>
   </div>
 );

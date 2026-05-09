@@ -1,4 +1,8 @@
 import React from 'react';
+import {
+  Target, Minus, Zap, Grid2X2, Square, Wind,
+  Armchair, Droplets, ClipboardList, Check,
+} from 'lucide-react';
 import type { AccessoryId, CourtType } from '../../types/court';
 import { ACCESSORIES, ACCESSORY_CATEGORIES } from '../../utils/courtData';
 import { StepShell } from './StepShell';
@@ -10,6 +14,23 @@ interface Props {
   onBack: () => void;
   onNext: () => void;
 }
+
+const ACC_ICONS: Record<AccessoryId, React.FC<{ className?: string }>> = {
+  'basketball-hoop-single': Target,
+  'basketball-hoop-double': Target,
+  'tennis-net':             Minus,
+  'pickleball-net':         Minus,
+  'lighting-2-pole':        Zap,
+  'lighting-4-pole':        Zap,
+  'lighting-6-pole':        Zap,
+  'chain-link-fence':       Grid2X2,
+  'vinyl-fence':            Square,
+  'windscreen':             Wind,
+  'bench-2':                Armchair,
+  'bench-4':                Armchair,
+  'water-fountain':         Droplets,
+  'scoreboards':            ClipboardList,
+};
 
 export const Step5Accessories: React.FC<Props> = ({ courtType, selected, onToggle, onBack, onNext }) => {
   const compatible = ACCESSORIES.filter((a) => a.compatibleCourts.includes(courtType));
@@ -29,12 +50,13 @@ export const Step5Accessories: React.FC<Props> = ({ courtType, selected, onToggl
           if (!items.length) return null;
           return (
             <div key={cat.id}>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-theme-muted mb-2">
                 {cat.label}
               </label>
               <div className="space-y-2">
                 {items.map((acc) => {
                   const isSelected = selected.includes(acc.id);
+                  const Icon = ACC_ICONS[acc.id];
                   const isExclusive =
                     acc.category === 'lighting' ||
                     acc.id === 'basketball-hoop-single' ||
@@ -46,30 +68,27 @@ export const Step5Accessories: React.FC<Props> = ({ courtType, selected, onToggl
                       onClick={() => onToggle(acc.id)}
                       className={`w-full p-3 rounded-xl border-2 text-left flex items-start gap-3 transition-all ${
                         isSelected
-                          ? 'border-pink-500 bg-pink-600/15 text-white'
-                          : 'border-gray-700 bg-gray-800/60 text-gray-300 hover:border-gray-500 hover:text-white'
+                          ? 'border-pink-500 bg-pink-600/15 text-theme-primary'
+                          : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-theme-mid hover:text-theme-primary'
                       }`}
                     >
                       {/* Checkbox */}
                       <div className={`mt-0.5 w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all ${
-                        isSelected ? 'bg-pink-500 border-pink-400' : 'border-gray-600'
+                        isSelected ? 'bg-pink-500 border-pink-400' : 'border-theme-mid'
                       }`}>
-                        {isSelected && (
-                          <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
+                        {isSelected && <Check className="w-2.5 h-2.5 text-theme-primary" strokeWidth={3} />}
                       </div>
+
+                      <Icon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isSelected ? 'text-pink-400' : 'text-theme-muted'}`} />
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span>{acc.icon}</span>
                           <span className="text-sm font-medium">{acc.name}</span>
                           {isExclusive && (
-                            <span className="text-xs text-gray-600">(pick one)</span>
+                            <span className="text-xs text-theme-faint">(pick one)</span>
                           )}
                         </div>
-                        <div className={`text-xs mt-0.5 leading-snug ${isSelected ? 'text-pink-200' : 'text-gray-500'}`}>
+                        <div className={`text-xs mt-0.5 leading-snug ${isSelected ? 'text-pink-200' : 'text-theme-muted'}`}>
                           {acc.description}
                         </div>
                       </div>
@@ -81,8 +100,8 @@ export const Step5Accessories: React.FC<Props> = ({ courtType, selected, onToggl
           );
         })}
 
-        <p className="text-xs text-gray-600 text-center pt-1">
-          Not sure? No problem — skip this step and we'll discuss options during your consultation.
+        <p className="text-xs text-theme-faint text-center pt-1">
+          Not sure? Skip this step — we'll discuss options during your consultation.
         </p>
       </div>
     </StepShell>

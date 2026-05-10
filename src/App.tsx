@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Eye, ClipboardList, Box, Map } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES } from './utils/courtData';
@@ -40,6 +40,31 @@ export default function App() {
   const [submitted, setSubmitted] = useState<ContactData | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [view3D, setView3D]       = useState(false);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  const getCaptureImage = useCallback(async (): Promise<string | undefined> => {
+    const svg = svgRef.current;
+    if (!svg) return undefined;
+    try {
+      const xml = new XMLSerializer().serializeToString(svg);
+      const uri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(xml)}`;
+      return await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 900; canvas.height = 560;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) { reject(new Error('no ctx')); return; }
+          ctx.drawImage(img, 0, 0, 900, 560);
+          resolve(canvas.toDataURL('image/jpeg', 0.88).split(',')[1]);
+        };
+        img.onerror = reject;
+        img.src = uri;
+      });
+    } catch {
+      return undefined;
+    }
+  }, []);
 
   const next = () => { setDirection('forward'); setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1)); };
   const back = () => { setDirection('back');    setStep((s) => Math.max(s - 1, 0)); };
@@ -109,7 +134,7 @@ export default function App() {
         />
       );
       case 4: return <Step5Accessories courtType={config.type} selected={config.selectedAccessories} onToggle={handleAccessoryToggle} onBack={back} onNext={next} />;
-      case 5: return <Step6Contact config={config} onBack={back} onSubmit={handleSubmit} />;
+      case 5: return <Step6Contact config={config} onBack={back} onSubmit={handleSubmit} getCaptureImage={getCaptureImage} />;
       default: return null;
     }
   };
@@ -243,6 +268,13 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {/* Off-screen SVG kept in DOM from step 1 onward for email image capture */}
+      {step > 0 && (
+        <div aria-hidden style={{ position: 'fixed', left: '-9999px', top: 0, width: '900px', height: '560px', overflow: 'hidden', pointerEvents: 'none' }}>
+          <CourtSVG ref={svgRef} config={config} width={900} height={560} />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import type { CourtConfig } from '../../types/court';
 
 interface Props {
@@ -21,7 +21,7 @@ const TIP_W = 188;
 const TIP_H = 62;
 const MARKER_R = 8;
 
-export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 }) => {
+export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ config, width = 800, height = 560 }, ref) {
   const { type, dimensions, colors, selectedAccessories, surfaceFinish } = config;
   const cW = dimensions.width;   // court width  (feet)
   const cL = dimensions.length;  // court length (feet)
@@ -786,6 +786,7 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
 
   return (
     <svg
+      ref={ref}
       viewBox={`0 0 ${width} ${height}`}
       width="100%" height="100%"
       style={{ maxHeight: '100%', maxWidth: '100%' }}
@@ -816,6 +817,6 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
       {renderHotspots()}
     </svg>
   );
-};
+});
 
 export default CourtSVG;

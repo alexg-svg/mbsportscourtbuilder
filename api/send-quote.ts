@@ -59,6 +59,7 @@ const schema = z.object({
     }),
     selectedAccessories: z.array(z.enum(ACCESSORY_IDS)).max(20),
   }),
+  courtImageBase64: z.string().max(700_000).optional(),
 });
 
 // ─── Simple per-instance rate limiter (10 req / 5 min per IP) ─────────────────
@@ -91,7 +92,7 @@ function swatch(color: string) {
   return `<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${color};border:1px solid #ddd;vertical-align:middle;margin-right:4px;"></span>${color}`;
 }
 
-function buildHtml(data: z.infer<typeof schema>): string {
+function buildHtml(data: z.infer<typeof schema>, hasImage: boolean): string {
   const { contact, config } = data;
   const { dimensions: dims, colors } = config;
   const acc = config.selectedAccessories.join(', ') || 'None';
@@ -111,6 +112,14 @@ function buildHtml(data: z.infer<typeof schema>): string {
             <h1 style="margin:6px 0 0;color:#ffffff;font-size:22px;font-weight:800;">New Quote Request</h1>
           </td>
         </tr>
+
+        ${hasImage ? `
+        <tr>
+          <td style="padding:20px 32px 0;">
+            <img src="cid:court-preview" alt="Court Preview" width="536"
+              style="width:100%;border-radius:8px;display:block;border:1px solid #e2e8f0;" />
+          </td>
+        </tr>` : ''}
 
         <tr>
           <td style="padding:28px 32px 0;">
@@ -219,7 +228,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
   }
 
-  const { contact } = parsed.data;
+  const { contact, courtImageBase64 } = parsed.data;
+  const imgBuf = courtImageBase64 ? Buffer.from(courtImageBase64, 'base64') : undefined;
 
   try {
     await transporter.sendMail({
@@ -229,7 +239,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       bcc:     process.env.QUOTE_TO_BCC || undefined,
       replyTo: contact.email,
       subject: `New Court Quote – ${contact.name} (${contact.zip})`,
-      html:    buildHtml(parsed.data),
+      html:    buildHtml(parsed.data, !!imgBuf),
+      attachments: imgBuf ? [{
+        filename:    'court-preview.jpg',
+        content:     imgBuf,
+        contentType: 'image/jpeg',
+        cid:         'court-preview',
+      }] : undefined,
     });
 
     return res.status(200).json({ ok: true });

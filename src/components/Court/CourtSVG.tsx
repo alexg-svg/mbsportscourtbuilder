@@ -22,7 +22,7 @@ const TIP_H = 62;
 const MARKER_R = 8;
 
 export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 }) => {
-  const { type, dimensions, colors, selectedAccessories } = config;
+  const { type, dimensions, colors, selectedAccessories, surfaceFinish } = config;
   const cW = dimensions.width;   // court width  (feet)
   const cL = dimensions.length;  // court length (feet)
 
@@ -378,6 +378,7 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
       <g>
         {/* Surface */}
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
 
         {/* Key / paint areas */}
         <rect {...rp(0, (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? colors.border} opacity={0.55} />
@@ -436,9 +437,6 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
             d={`M ${px(cL - basketX)} ${py(ftY - 4)} A ${4 * scale} ${4 * scale} 0 0 0 ${px(cL - basketX)} ${py(ftY + 4)}`} />
         )}
 
-        {/* Border */}
-        <rect {...rp(0, 0, cL, cW)} fill="none" stroke={colors.border} strokeWidth={scale * 0.4} />
-
         {/* Hoops */}
         {(hasAcc('basketball-hoop-single') || hasAcc('basketball-hoop-double')) && (
           <circle cx={px(basketX)} cy={py(ftY)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
@@ -462,15 +460,13 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
       <g>
         {/* Surface */}
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
 
         {/* Service box tints */}
         <rect {...rp(0,        sOff,            svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.8} />
         <rect {...rp(0,        sOff + singlesW / 2, svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.65} />
         <rect {...rp(cL - svcLen, sOff,            svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.65} />
         <rect {...rp(cL - svcLen, sOff + singlesW / 2, svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.8} />
-
-        {/* Border */}
-        <rect {...rp(0, 0, cL, cW)} fill="none" stroke={colors.border} strokeWidth={scale * 0.4} />
 
         {/* Doubles sidelines */}
         <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
@@ -513,13 +509,11 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
       <g>
         {/* Surface */}
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
 
         {/* NVZ kitchen zones */}
         <rect {...rp(offX,              offY, nvz,    playW)} fill={colors.kitchen ?? '#60A5FA'} opacity={0.5} />
         <rect {...rp(offX + playL - nvz, offY, nvz,  playW)} fill={colors.kitchen ?? '#60A5FA'} opacity={0.5} />
-
-        {/* Border */}
-        <rect {...rp(0, 0, cL, cW)} fill="none" stroke={colors.border} strokeWidth={scale * 0.4} />
 
         {/* Playing area boundary */}
         <rect {...rp(offX, offY, playL, playW)} fill="none" {...ls} />
@@ -563,6 +557,7 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
       <g>
         {/* Surface */}
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
 
         {/* Paint areas */}
         <rect {...rp(0,        (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? '#1A3A6B'} opacity={0.5} />
@@ -590,9 +585,6 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
             />
           </g>
         ))}
-
-        {/* Border */}
-        <rect {...rp(0, 0, cL, cW)} fill="none" stroke={colors.border} strokeWidth={scale * 0.4} />
 
         {/* Hoops */}
         {(hasAcc('basketball-hoop-single') || hasAcc('basketball-hoop-double')) && (
@@ -645,13 +637,20 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <pattern id="ground" patternUnits="userSpaceOnUse" width="20" height="20">
-          <rect width="20" height="20" fill="#1C1917" />
-          <rect width="10" height="10" fill="#1F1B19" />
-          <rect x="10" y="10" width="10" height="10" fill="#1F1B19" />
-        </pattern>
+        {surfaceFinish === 'textured' && (
+          <pattern id="surface-finish" patternUnits="userSpaceOnUse" width="6" height="6">
+            <circle cx="3" cy="3" r="1" fill="rgba(0,0,0,0.22)" />
+          </pattern>
+        )}
+        {surfaceFinish === 'cushioned' && (
+          <pattern id="surface-finish" patternUnits="userSpaceOnUse" width="12" height="12">
+            <rect width="6" height="6" fill="rgba(255,255,255,0.09)" />
+            <rect x="6" y="6" width="6" height="6" fill="rgba(255,255,255,0.09)" />
+            <rect width="12" height="12" fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="0.5" />
+          </pattern>
+        )}
       </defs>
-      <rect width={width} height={height} fill="url(#ground)" rx={8} />
+      <rect width={width} height={height} fill={colors.border} rx={8} />
       {renderFencing()}
       {renderLighting()}
       {renderCourt()}

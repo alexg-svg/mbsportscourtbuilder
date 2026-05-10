@@ -156,42 +156,40 @@ function BasketballCourt({ config }: { config: CourtConfig }) {
   const lc = colors.lines;
   const kc = colors.keyArea ?? colors.border;
   const arcA = Math.atan2(c22, arcBX - bX);
+  const half = L < 60;
 
   return (
     <group>
-      {/* Surface */}
       <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} />
-      {/* Key / paint zones */}
       <Slab x={0}        y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.55} />
-      <Slab x={L - keyLen} y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.55} />
-      {/* Boundary */}
+      {!half && <Slab x={L - keyLen} y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.55} />}
       <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
-      {/* Center line */}
-      <Seg x1={L / 2} y1={0} x2={L / 2} y2={W} L={L} W={W} color={lc} />
-      {/* Center circle */}
-      <ArcLine cxFt={L / 2} cyFt={ftY} r={6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
-      {/* Key outlines */}
-      <Border x={0}        y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={lc} />
-      <Border x={L - keyLen} y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={lc} />
-      {/* Free throw circles */}
-      <ArcLine cxFt={keyLen}     cyFt={ftY} r={6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
-      <ArcLine cxFt={L - keyLen} cyFt={ftY} r={6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
-      {/* Corner 3pt straight lines */}
-      <Seg x1={0}        y1={(W - c22 * 2) / 2} x2={arcBX}    y2={(W - c22 * 2) / 2} L={L} W={W} color={lc} />
-      <Seg x1={0}        y1={(W + c22 * 2) / 2} x2={arcBX}    y2={(W + c22 * 2) / 2} L={L} W={W} color={lc} />
-      <Seg x1={L}        y1={(W - c22 * 2) / 2} x2={L - arcBX} y2={(W - c22 * 2) / 2} L={L} W={W} color={lc} />
-      <Seg x1={L}        y1={(W + c22 * 2) / 2} x2={L - arcBX} y2={(W + c22 * 2) / 2} L={L} W={W} color={lc} />
-      {/* Three-point arcs (left faces right through 0°, right faces left through π) */}
-      <ArcLine cxFt={bX}     cyFt={ftY} r={r3} a0={-arcA}            a1={arcA}              L={L} W={W} color={lc} />
-      <ArcLine cxFt={L - bX} cyFt={ftY} r={r3} a0={Math.PI + arcA}   a1={Math.PI - arcA}    L={L} W={W} color={lc} />
-      {/* Restricted area arcs */}
-      <ArcLine cxFt={bX}     cyFt={ftY} r={4} a0={-Math.PI / 2}  a1={Math.PI / 2}     L={L} W={W} color={lc} />
-      <ArcLine cxFt={L - bX} cyFt={ftY} r={4} a0={Math.PI / 2}   a1={Math.PI * 3 / 2} L={L} W={W} color={lc} />
-      {/* Hoops */}
-      {(acc.includes('basketball-hoop-single') || acc.includes('basketball-hoop-double')) && (
-        <ArcLine cxFt={bX}     cyFt={ftY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={3} />
+      {!half && (
+        <>
+          <Seg x1={L / 2} y1={0} x2={L / 2} y2={W} L={L} W={W} color={lc} />
+          <ArcLine cxFt={L / 2} cyFt={ftY} r={6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
+        </>
       )}
-      {acc.includes('basketball-hoop-double') && (
+      <Border x={0}        y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={lc} />
+      {!half && <Border x={L - keyLen} y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={lc} />}
+      <ArcLine cxFt={keyLen} cyFt={ftY} r={6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
+      {!half && <ArcLine cxFt={L - keyLen} cyFt={ftY} r={6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />}
+      <Seg x1={0}   y1={(W - c22 * 2) / 2} x2={arcBX}     y2={(W - c22 * 2) / 2} L={L} W={W} color={lc} />
+      <Seg x1={0}   y1={(W + c22 * 2) / 2} x2={arcBX}     y2={(W + c22 * 2) / 2} L={L} W={W} color={lc} />
+      <ArcLine cxFt={bX} cyFt={ftY} r={r3} a0={-arcA} a1={arcA} L={L} W={W} color={lc} />
+      {!half && (
+        <>
+          <Seg x1={L} y1={(W - c22 * 2) / 2} x2={L - arcBX} y2={(W - c22 * 2) / 2} L={L} W={W} color={lc} />
+          <Seg x1={L} y1={(W + c22 * 2) / 2} x2={L - arcBX} y2={(W + c22 * 2) / 2} L={L} W={W} color={lc} />
+          <ArcLine cxFt={L - bX} cyFt={ftY} r={r3} a0={Math.PI + arcA} a1={Math.PI - arcA} L={L} W={W} color={lc} />
+        </>
+      )}
+      <ArcLine cxFt={bX} cyFt={ftY} r={4} a0={-Math.PI / 2} a1={Math.PI / 2} L={L} W={W} color={lc} />
+      {!half && <ArcLine cxFt={L - bX} cyFt={ftY} r={4} a0={Math.PI / 2} a1={Math.PI * 3 / 2} L={L} W={W} color={lc} />}
+      {(acc.includes('basketball-hoop-single') || acc.includes('basketball-hoop-double')) && (
+        <ArcLine cxFt={bX} cyFt={ftY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={3} />
+      )}
+      {acc.includes('basketball-hoop-double') && !half && (
         <ArcLine cxFt={L - bX} cyFt={ftY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={3} />
       )}
     </group>

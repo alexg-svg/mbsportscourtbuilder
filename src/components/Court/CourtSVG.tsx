@@ -365,13 +365,14 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
 
   // ─── BASKETBALL ───────────────────────────────────────────────────────────
   const renderBasketball = () => {
-    const keyW   = 16;
-    const keyLen = 19;
-    const ftY    = cW / 2;
-    const basketX = 5.25;
-    const r3pt   = 23.75;
+    const keyW     = 16;
+    const keyLen   = 19;
+    const ftY      = cW / 2;
+    const basketX  = 5.25;
+    const r3pt     = 23.75;
     const corner22 = 22;
     const arcBreakX = basketX + Math.sqrt(r3pt * r3pt - corner22 * corner22);
+    const half     = cL < 60; // half-court: only draw one end
 
     return (
       <g>
@@ -380,50 +381,60 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
 
         {/* Key / paint areas */}
         <rect {...rp(0, (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? colors.border} opacity={0.55} />
-        <rect {...rp(cL - keyLen, (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? colors.border} opacity={0.55} />
+        {!half && <rect {...rp(cL - keyLen, (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? colors.border} opacity={0.55} />}
 
         {/* Boundary */}
         <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
 
-        {/* Center line + circle */}
-        <line {...lp(cL / 2, 0, cL / 2, cW)} {...ls} />
-        <circle cx={px(cL / 2)} cy={py(ftY)} r={6 * scale} fill="none" {...ls} />
+        {/* Center line + circle (full court only) */}
+        {!half && (
+          <>
+            <line {...lp(cL / 2, 0, cL / 2, cW)} {...ls} />
+            <circle cx={px(cL / 2)} cy={py(ftY)} r={6 * scale} fill="none" {...ls} />
+          </>
+        )}
 
         {/* Key outlines */}
         <rect {...rp(0, (cW - keyW) / 2, keyLen, keyW)} fill="none" {...ls} />
-        <rect {...rp(cL - keyLen, (cW - keyW) / 2, keyLen, keyW)} fill="none" {...ls} />
+        {!half && <rect {...rp(cL - keyLen, (cW - keyW) / 2, keyLen, keyW)} fill="none" {...ls} />}
 
         {/* Free throw circles */}
         <circle cx={px(keyLen)} cy={py(ftY)} r={6 * scale} fill="none" {...ls} />
-        <circle cx={px(cL - keyLen)} cy={py(ftY)} r={6 * scale} fill="none" {...ls} />
+        {!half && <circle cx={px(cL - keyLen)} cy={py(ftY)} r={6 * scale} fill="none" {...ls} />}
 
-        {/* Three-point lines: straight corners + arc */}
+        {/* Three-point: left end */}
         <line {...lp(0, (cW - corner22 * 2) / 2, arcBreakX, (cW - corner22 * 2) / 2)} {...ls} />
         <line {...lp(0, (cW + corner22 * 2) / 2, arcBreakX, (cW + corner22 * 2) / 2)} {...ls} />
-        <path
-          fill="none" {...ls}
+        <path fill="none" {...ls}
           d={[
             `M ${px(arcBreakX)} ${py((cW - corner22 * 2) / 2)}`,
             `A ${r3pt * scale} ${r3pt * scale} 0 0 1`,
             `${px(arcBreakX)} ${py((cW + corner22 * 2) / 2)}`,
           ].join(' ')}
         />
-        <line {...lp(cL, (cW - corner22 * 2) / 2, cL - arcBreakX, (cW - corner22 * 2) / 2)} {...ls} />
-        <line {...lp(cL, (cW + corner22 * 2) / 2, cL - arcBreakX, (cW + corner22 * 2) / 2)} {...ls} />
-        <path
-          fill="none" {...ls}
-          d={[
-            `M ${px(cL - arcBreakX)} ${py((cW - corner22 * 2) / 2)}`,
-            `A ${r3pt * scale} ${r3pt * scale} 0 0 0`,
-            `${px(cL - arcBreakX)} ${py((cW + corner22 * 2) / 2)}`,
-          ].join(' ')}
-        />
+
+        {/* Three-point: right end (full court only) */}
+        {!half && (
+          <>
+            <line {...lp(cL, (cW - corner22 * 2) / 2, cL - arcBreakX, (cW - corner22 * 2) / 2)} {...ls} />
+            <line {...lp(cL, (cW + corner22 * 2) / 2, cL - arcBreakX, (cW + corner22 * 2) / 2)} {...ls} />
+            <path fill="none" {...ls}
+              d={[
+                `M ${px(cL - arcBreakX)} ${py((cW - corner22 * 2) / 2)}`,
+                `A ${r3pt * scale} ${r3pt * scale} 0 0 0`,
+                `${px(cL - arcBreakX)} ${py((cW + corner22 * 2) / 2)}`,
+              ].join(' ')}
+            />
+          </>
+        )}
 
         {/* Restricted area arcs */}
         <path fill="none" {...ls}
           d={`M ${px(basketX)} ${py(ftY - 4)} A ${4 * scale} ${4 * scale} 0 0 1 ${px(basketX)} ${py(ftY + 4)}`} />
-        <path fill="none" {...ls}
-          d={`M ${px(cL - basketX)} ${py(ftY - 4)} A ${4 * scale} ${4 * scale} 0 0 0 ${px(cL - basketX)} ${py(ftY + 4)}`} />
+        {!half && (
+          <path fill="none" {...ls}
+            d={`M ${px(cL - basketX)} ${py(ftY - 4)} A ${4 * scale} ${4 * scale} 0 0 0 ${px(cL - basketX)} ${py(ftY + 4)}`} />
+        )}
 
         {/* Border */}
         <rect {...rp(0, 0, cL, cW)} fill="none" stroke={colors.border} strokeWidth={scale * 0.4} />
@@ -432,7 +443,7 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
         {(hasAcc('basketball-hoop-single') || hasAcc('basketball-hoop-double')) && (
           <circle cx={px(basketX)} cy={py(ftY)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
         )}
-        {hasAcc('basketball-hoop-double') && (
+        {hasAcc('basketball-hoop-double') && !half && (
           <circle cx={px(cL - basketX)} cy={py(ftY)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
         )}
       </g>

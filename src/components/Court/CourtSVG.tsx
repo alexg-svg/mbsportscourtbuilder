@@ -291,58 +291,75 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
     });
   };
 
+  const FONT = 'Inter, system-ui, sans-serif';
+  const accLabel = (x: number, y: number, text: string, anchor: 'middle' | 'start' | 'end' = 'middle') => (
+    <text x={x} y={y} textAnchor={anchor} fill="#CBD5E1" fontSize={9} fontWeight="600" fontFamily={FONT}
+      style={{ paintOrder: 'stroke', stroke: 'rgba(0,0,0,0.5)', strokeWidth: 3 }}>{text}</text>
+  );
+
   // ─── LIGHTING POLES ───────────────────────────────────────────────────────
   const renderLighting = () => {
     const poles: { px: number; py: number }[] = [];
-    const off = 6 * scale;
+    const lx = Math.max(16, ox * 0.55);
+    const rx = Math.min(width - 16, ox + svgCW + ox * 0.55);
     if (hasAcc('lighting-2-pole')) {
-      poles.push(
-        { px: ox - off,         py: oy + svgCH / 2 },
-        { px: ox + svgCW + off, py: oy + svgCH / 2 },
-      );
+      poles.push({ px: lx, py: oy + svgCH / 2 }, { px: rx, py: oy + svgCH / 2 });
     }
     if (hasAcc('lighting-4-pole')) {
       poles.push(
-        { px: ox - off,         py: oy + svgCH * 0.25 },
-        { px: ox - off,         py: oy + svgCH * 0.75 },
-        { px: ox + svgCW + off, py: oy + svgCH * 0.25 },
-        { px: ox + svgCW + off, py: oy + svgCH * 0.75 },
+        { px: lx, py: oy + svgCH * 0.25 }, { px: lx, py: oy + svgCH * 0.75 },
+        { px: rx, py: oy + svgCH * 0.25 }, { px: rx, py: oy + svgCH * 0.75 },
       );
     }
     if (hasAcc('lighting-6-pole')) {
       poles.push(
-        { px: ox - off,         py: oy + svgCH * 0.15 },
-        { px: ox - off,         py: oy + svgCH * 0.5  },
-        { px: ox - off,         py: oy + svgCH * 0.85 },
-        { px: ox + svgCW + off, py: oy + svgCH * 0.15 },
-        { px: ox + svgCW + off, py: oy + svgCH * 0.5  },
-        { px: ox + svgCW + off, py: oy + svgCH * 0.85 },
+        { px: lx, py: oy + svgCH * 0.15 }, { px: lx, py: oy + svgCH * 0.5 }, { px: lx, py: oy + svgCH * 0.85 },
+        { px: rx, py: oy + svgCH * 0.15 }, { px: rx, py: oy + svgCH * 0.5 }, { px: rx, py: oy + svgCH * 0.85 },
       );
     }
-    return poles.map((p, i) => (
-      <g key={`pole-${i}`}>
-        <rect x={p.px - 3} y={p.py - 20} width={6} height={20} fill="#78716C" rx={2} />
-        <circle cx={p.px} cy={p.py - 22} r={6}  fill="#FCD34D" opacity={0.9} />
-        <circle cx={p.px} cy={p.py - 22} r={10} fill="#FCD34D" opacity={0.15} />
+    if (!poles.length) return null;
+    return (
+      <g>
+        {poles.map((p, i) => (
+          <g key={`pole-${i}`}>
+            {/* Post */}
+            <rect x={p.px - 3} y={p.py - 30} width={6} height={30} fill="#9CA3AF" rx={2} />
+            {/* Arm */}
+            <rect x={p.px - 12} y={p.py - 33} width={24} height={4} fill="#9CA3AF" rx={2} />
+            {/* Light fixture */}
+            <rect x={p.px - 11} y={p.py - 41} width={22} height={8} fill="#FCD34D" rx={3} />
+            {/* Glow */}
+            <circle cx={p.px} cy={p.py - 37} r={18} fill="#FCD34D" opacity={0.12} />
+          </g>
+        ))}
+        {accLabel(poles[0].px, poles[0].py + 14, '⚡ Lighting')}
       </g>
-    ));
+    );
   };
 
   // ─── FENCING ──────────────────────────────────────────────────────────────
   const renderFencing = () => {
     if (!hasAcc('chain-link-fence') && !hasAcc('vinyl-fence')) return null;
-    const gap = 5 * scale;
+    const gap = Math.min(14, PADDING * 0.32);
+    const fX = ox - gap, fY = oy - gap;
+    const fW = svgCW + gap * 2, fH = svgCH + gap * 2;
+    const isVinyl = hasAcc('vinyl-fence');
+    const hasWind = hasAcc('windscreen');
+    const corners: [number, number][] = [[fX, fY], [fX + fW, fY], [fX, fY + fH], [fX + fW, fY + fH]];
     return (
-      <rect
-        x={ox - gap} y={oy - gap}
-        width={svgCW + gap * 2} height={svgCH + gap * 2}
-        fill={hasAcc('windscreen') ? '#166534' : 'none'}
-        fillOpacity={0.08}
-        stroke={hasAcc('vinyl-fence') ? '#E5E7EB' : '#9CA3AF'}
-        strokeWidth={2}
-        strokeDasharray={hasAcc('chain-link-fence') ? '5,3' : undefined}
-        rx={4}
-      />
+      <g>
+        <rect x={fX} y={fY} width={fW} height={fH}
+          fill={hasWind ? '#166534' : 'none'} fillOpacity={hasWind ? 0.18 : 0}
+          stroke={isVinyl ? '#E2E8F0' : '#94A3B8'} strokeWidth={isVinyl ? 3 : 2}
+          strokeDasharray={isVinyl ? undefined : '6,4'} rx={4}
+        />
+        {/* Corner posts */}
+        {corners.map(([cx, cy], i) => (
+          <circle key={i} cx={cx} cy={cy} r={4} fill={isVinyl ? '#CBD5E1' : '#6B7280'} />
+        ))}
+        {accLabel(fX + fW / 2, fY - 7,
+          hasWind ? '🌬 Fence + Windscreen' : isVinyl ? '▪ Vinyl Fence' : '⬡ Chain-Link Fence')}
+      </g>
     );
   };
 
@@ -350,17 +367,80 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
   const renderBenches = () => {
     if (!hasAcc('bench-2') && !hasAcc('bench-4')) return null;
     const count = hasAcc('bench-4') ? 4 : 2;
-    const bW    = Math.max(30, svgCW * 0.12);
-    const frac  = count === 2 ? [0.35, 0.65] : [0.15, 0.38, 0.62, 0.85];
-    return frac.map((f, i) => (
-      <rect
-        key={`bench-${i}`}
-        x={ox + svgCW * f - bW / 2}
-        y={oy + svgCH + 12}
-        width={bW} height={8}
-        fill="#92400E" rx={2}
-      />
-    ));
+    const bW   = Math.max(32, svgCW * 0.11);
+    const frac = count === 2 ? [0.3, 0.7] : [0.15, 0.38, 0.62, 0.85];
+    const by   = oy + svgCH + 10;
+    return (
+      <g>
+        {frac.map((f, i) => {
+          const bx = ox + svgCW * f - bW / 2;
+          return (
+            <g key={`bench-${i}`}>
+              {/* Back rest */}
+              <rect x={bx} y={by} width={bW} height={5} fill="#A16207" rx={1.5} />
+              {/* Seat */}
+              <rect x={bx} y={by + 7} width={bW} height={7} fill="#B45309" rx={1.5} />
+              {/* Legs */}
+              <rect x={bx + bW * 0.12} y={by + 14} width={3} height={6} fill="#92400E" />
+              <rect x={bx + bW * 0.82} y={by + 14} width={3} height={6} fill="#92400E" />
+            </g>
+          );
+        })}
+        {accLabel(ox + svgCW / 2, by + 27, `🪑 ${count} Benches`)}
+      </g>
+    );
+  };
+
+  // ─── SCOREBOARDS ──────────────────────────────────────────────────────────
+  const renderScoreboards = () => {
+    if (!hasAcc('scoreboards')) return null;
+    const sbW = Math.max(36, Math.min(54, ox * 0.85));
+    const sbH = Math.round(sbW * 0.62);
+    const boards = [
+      { x: Math.max(4, ox - sbW - 8), y: oy + svgCH / 2 - sbH / 2 },
+      { x: Math.min(width - sbW - 4, ox + svgCW + 8), y: oy + svgCH / 2 - sbH / 2 },
+    ];
+    return (
+      <g>
+        {boards.map((b, i) => (
+          <g key={i}>
+            {/* Cabinet */}
+            <rect x={b.x} y={b.y} width={sbW} height={sbH} fill="#1E293B" rx={4} stroke="#334155" strokeWidth={1} />
+            {/* Screen */}
+            <rect x={b.x + 4} y={b.y + 4} width={sbW - 8} height={sbH - 16} fill="#0F172A" rx={2} />
+            {/* Score rows */}
+            <rect x={b.x + 7} y={b.y + 8} width={sbW - 14} height={4} fill="#EF4444" rx={1} opacity={0.85} />
+            <rect x={b.x + 7} y={b.y + 14} width={sbW - 14} height={4} fill="#22C55E" rx={1} opacity={0.85} />
+            {/* Stand */}
+            <rect x={b.x + sbW / 2 - 2.5} y={b.y + sbH} width={5} height={8} fill="#475569" />
+            <rect x={b.x + sbW / 2 - 10} y={b.y + sbH + 7} width={20} height={3} fill="#475569" rx={1} />
+            {accLabel(b.x + sbW / 2, b.y + sbH + 20, '📋 Scoreboard')}
+          </g>
+        ))}
+      </g>
+    );
+  };
+
+  // ─── WATER FOUNTAIN ───────────────────────────────────────────────────────
+  const renderWaterFountain = () => {
+    if (!hasAcc('water-fountain')) return null;
+    const fx = Math.min(width - 20, ox + svgCW + Math.min(20, ox * 0.55));
+    const fy = oy + svgCH * 0.78;
+    return (
+      <g>
+        {/* Pedestal */}
+        <rect x={fx - 7} y={fy + 6} width={14} height={14} fill="#64748B" rx={3} />
+        {/* Basin */}
+        <ellipse cx={fx} cy={fy + 6} rx={9} ry={4.5} fill="#94A3B8" />
+        <ellipse cx={fx} cy={fy + 5} rx={7} ry={2.5} fill="#7DCCE8" opacity={0.7} />
+        {/* Spout arc */}
+        <path d={`M ${fx - 1} ${fy + 2} Q ${fx + 9} ${fy - 8} ${fx + 5} ${fy}`}
+          fill="none" stroke="#60A5FA" strokeWidth={2.5} strokeLinecap="round" opacity={0.9} />
+        {/* Water drop */}
+        <circle cx={fx + 5} cy={fy} r={2.5} fill="#60A5FA" opacity={0.85} />
+        {accLabel(fx, fy + 30, '💧 Water Fountain')}
+      </g>
+    );
   };
 
   // ─── BASKETBALL ───────────────────────────────────────────────────────────
@@ -438,12 +518,16 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
         )}
 
         {/* Hoops */}
-        {(hasAcc('basketball-hoop-single') || hasAcc('basketball-hoop-double')) && (
-          <circle cx={px(basketX)} cy={py(ftY)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
-        )}
-        {hasAcc('basketball-hoop-double') && !half && (
-          <circle cx={px(cL - basketX)} cy={py(ftY)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
-        )}
+        {(hasAcc('basketball-hoop-single') || hasAcc('basketball-hoop-double')) && (<>
+          <rect x={px(basketX) - 8} y={py(ftY) - 3} width={16} height={10} fill="white" opacity={0.85} rx={1} />
+          <circle cx={px(basketX)} cy={py(ftY)} r={Math.max(4, 1.4 * scale)} fill="none" stroke="#F97316" strokeWidth={3} />
+          {accLabel(px(basketX), py(ftY) - 10, 'Hoop')}
+        </>)}
+        {hasAcc('basketball-hoop-double') && !half && (<>
+          <rect x={px(cL - basketX) - 8} y={py(ftY) - 3} width={16} height={10} fill="white" opacity={0.85} rx={1} />
+          <circle cx={px(cL - basketX)} cy={py(ftY)} r={Math.max(4, 1.4 * scale)} fill="none" stroke="#F97316" strokeWidth={3} />
+          {accLabel(px(cL - basketX), py(ftY) - 10, 'Hoop')}
+        </>)}
       </g>
     );
   };
@@ -486,12 +570,13 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
           strokeWidth={Math.max(2, scale * 0.15)}
           strokeDasharray={`${scale * 0.5} ${scale * 0.3}`}
         />
-        {hasAcc('tennis-net') && (
-          <>
-            <circle cx={px(netX)} cy={oy}         r={4} fill="#6B7280" />
-            <circle cx={px(netX)} cy={oy + svgCH} r={4} fill="#6B7280" />
-          </>
-        )}
+        {hasAcc('tennis-net') && (<>
+          <rect x={px(netX) - 3} y={oy - 12} width={6} height={12} fill="#6B7280" rx={2} />
+          <rect x={px(netX) - 3} y={oy + svgCH} width={6} height={12} fill="#6B7280" rx={2} />
+          <circle cx={px(netX)} cy={oy - 12} r={5} fill="#94A3B8" />
+          <circle cx={px(netX)} cy={oy + svgCH + 12} r={5} fill="#94A3B8" />
+          {accLabel(px(netX) + 14, py(cW / 2), 'Net', 'start')}
+        </>)}
       </g>
     );
   };
@@ -530,12 +615,13 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
           strokeWidth={Math.max(2, scale * 0.18)}
           strokeDasharray={`${scale * 0.4} ${scale * 0.25}`}
         />
-        {hasAcc('pickleball-net') && (
-          <>
-            <circle cx={px(offX + netX)} cy={py(offY)}         r={4} fill="#6B7280" />
-            <circle cx={px(offX + netX)} cy={py(offY + playW)} r={4} fill="#6B7280" />
-          </>
-        )}
+        {hasAcc('pickleball-net') && (<>
+          <rect x={px(offX + netX) - 3} y={py(offY) - 12} width={6} height={12} fill="#6B7280" rx={2} />
+          <rect x={px(offX + netX) - 3} y={py(offY + playW)} width={6} height={12} fill="#6B7280" rx={2} />
+          <circle cx={px(offX + netX)} cy={py(offY) - 12} r={5} fill="#94A3B8" />
+          <circle cx={px(offX + netX)} cy={py(offY + playW) + 12} r={5} fill="#94A3B8" />
+          {accLabel(px(offX + netX) + 14, py(offY + playW / 2), 'Net', 'start')}
+        </>)}
       </g>
     );
   };
@@ -587,12 +673,16 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
         ))}
 
         {/* Hoops */}
-        {(hasAcc('basketball-hoop-single') || hasAcc('basketball-hoop-double')) && (
-          <circle cx={px(basketX)} cy={py(midY)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
-        )}
-        {hasAcc('basketball-hoop-double') && (
-          <circle cx={px(cL - basketX)} cy={py(midY)} r={0.75 * scale} fill="#F97316" stroke="#EA580C" strokeWidth={1} />
-        )}
+        {(hasAcc('basketball-hoop-single') || hasAcc('basketball-hoop-double')) && (<>
+          <rect x={px(basketX) - 8} y={py(midY) - 3} width={16} height={10} fill="white" opacity={0.85} rx={1} />
+          <circle cx={px(basketX)} cy={py(midY)} r={Math.max(4, 1.4 * scale)} fill="none" stroke="#F97316" strokeWidth={3} />
+          {accLabel(px(basketX), py(midY) - 10, 'Hoop')}
+        </>)}
+        {hasAcc('basketball-hoop-double') && (<>
+          <rect x={px(cL - basketX) - 8} y={py(midY) - 3} width={16} height={10} fill="white" opacity={0.85} rx={1} />
+          <circle cx={px(cL - basketX)} cy={py(midY)} r={Math.max(4, 1.4 * scale)} fill="none" stroke="#F97316" strokeWidth={3} />
+          {accLabel(px(cL - basketX), py(midY) - 10, 'Hoop')}
+        </>)}
       </g>
     );
   };
@@ -655,6 +745,8 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
       {renderLighting()}
       {renderCourt()}
       {renderBenches()}
+      {renderScoreboards()}
+      {renderWaterFountain()}
       {renderLabels()}
       {renderHotspots()}
     </svg>

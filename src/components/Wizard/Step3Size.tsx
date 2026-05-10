@@ -43,11 +43,11 @@ export const Step3Size: React.FC<Props> = ({
           >
             <div>
               <div className="text-sm font-semibold">{preset.name}</div>
-              <div className={`text-xs mt-0.5 ${isMatch(preset.dimensions) ? 'text-pink-200' : 'text-theme-muted'}`}>
+              <div className={`text-xs mt-0.5 ${isMatch(preset.dimensions) ? 'text-pink-700 dark:text-pink-200' : 'text-theme-muted'}`}>
                 {preset.description}
               </div>
             </div>
-            <div className={`text-xs font-mono ml-4 whitespace-nowrap ${isMatch(preset.dimensions) ? 'text-pink-300' : 'text-theme-muted'}`}>
+            <div className={`text-xs font-mono ml-4 whitespace-nowrap ${isMatch(preset.dimensions) ? 'text-pink-700 dark:text-pink-300' : 'text-theme-muted'}`}>
               {preset.dimensions.length} × {preset.dimensions.width} ft
             </div>
           </button>
@@ -65,7 +65,7 @@ export const Step3Size: React.FC<Props> = ({
           <Ruler className={`w-5 h-5 flex-shrink-0 ${customDimensions ? 'text-pink-400' : 'text-theme-muted'}`} />
           <div>
             <div className="text-sm font-semibold">Custom Dimensions</div>
-            <div className={`text-xs mt-0.5 ${customDimensions ? 'text-pink-200' : 'text-theme-muted'}`}>
+            <div className={`text-xs mt-0.5 ${customDimensions ? 'text-pink-700 dark:text-pink-200' : 'text-theme-muted'}`}>
               Enter your own length and width
             </div>
           </div>

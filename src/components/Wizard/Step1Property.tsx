@@ -35,7 +35,7 @@ export const Step1Property: React.FC<Props> = ({ propertyType, onChange, onNext 
           <Icon className={`w-8 h-8 mt-0.5 flex-shrink-0 ${propertyType === id ? 'text-pink-400' : 'text-theme-muted'}`} />
           <div>
             <div className="text-lg font-bold">{label}</div>
-            <div className={`text-sm mt-1 ${propertyType === id ? 'text-pink-200' : 'text-theme-muted'}`}>{desc}</div>
+            <div className={`text-sm mt-1 ${propertyType === id ? 'text-pink-700 dark:text-pink-200' : 'text-theme-muted'}`}>{desc}</div>
           </div>
         </button>
       ))}

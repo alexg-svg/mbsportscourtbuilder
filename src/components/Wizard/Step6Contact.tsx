@@ -8,6 +8,7 @@ interface Props {
   config: CourtConfig;
   onBack: () => void;
   onSubmit: (data: ContactData) => void;
+  getCaptureImage?: () => Promise<string | undefined>;
 }
 
 export interface ContactData {
@@ -27,7 +28,7 @@ const FINISH_LABELS: Record<string, string> = {
   smooth: 'Smooth Asphalt', textured: 'Textured Asphalt', cushioned: 'Cushioned Asphalt',
 };
 
-export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit }) => {
+export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCaptureImage }) => {
   const [form, setForm] = useState<ContactData>({ name: '', email: '', phone: '', zip: '', message: '' });
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,10 +50,11 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit }) => {
     setSending(true);
     setError(null);
     try {
+      const courtImageBase64 = await getCaptureImage?.();
       const res = await fetch('/api/send-quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact: form, config }),
+        body: JSON.stringify({ contact: form, config, courtImageBase64 }),
       });
       if (!res.ok) throw new Error('Server error');
       onSubmit(form);

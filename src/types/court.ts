@@ -17,6 +17,7 @@ export interface CourtColors {
 }
 
 export type AccessoryId =
+  | 'custom-logo'
   | 'basketball-hoop-single'
   | 'basketball-hoop-double'
   | 'tennis-net'
@@ -36,7 +37,7 @@ export interface Accessory {
   id: AccessoryId;
   name: string;
   description: string;
-  category: 'sport-equipment' | 'lighting' | 'fencing' | 'amenities';
+  category: 'customization' | 'sport-equipment' | 'lighting' | 'fencing' | 'amenities';
   compatibleCourts: CourtType[];
 }
 

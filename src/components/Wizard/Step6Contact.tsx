@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AlertCircle } from 'lucide-react';
 import type { CourtConfig } from '../../types/court';
 import { ACCESSORIES, COURT_PRESETS } from '../../utils/courtData';
 import { StepShell } from './StepShell';
@@ -28,6 +29,9 @@ const FINISH_LABELS: Record<string, string> = {
 
 export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit }) => {
   const [form, setForm] = useState<ContactData>({ name: '', email: '', phone: '', zip: '', message: '' });
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const set = (k: keyof ContactData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -38,7 +42,26 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit }) => {
     )?.name ?? 'Custom';
 
   const accItems = ACCESSORIES.filter((a) => selectedAccessories.includes(a.id));
-  const canSubmit = form.name.trim() && form.email.trim() && form.zip.trim();
+  const canSubmit = !sending && form.name.trim() && form.email.trim() && form.zip.trim();
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/send-quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contact: form, config }),
+      });
+      if (!res.ok) throw new Error('Server error');
+      onSubmit(form);
+    } catch {
+      setError('Something went wrong sending your quote. Please try again or call us directly.');
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <StepShell
@@ -46,8 +69,8 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit }) => {
       title="Almost there!"
       subtitle="Tell us how to reach you and we'll prepare your custom quote."
       onBack={onBack}
-      onNext={() => canSubmit && onSubmit(form)}
-      nextLabel="Submit My Design →"
+      onNext={handleSubmit}
+      nextLabel={sending ? 'Sending…' : 'Submit My Design →'}
       nextDisabled={!canSubmit}
     >
       <div className="space-y-4 mt-2">
@@ -101,6 +124,13 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit }) => {
               className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500 resize-none" />
           </div>
         </div>
+
+        {error && (
+          <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2.5 text-xs text-red-400">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            {error}
+          </div>
+        )}
 
         <p className="text-xs text-theme-faint text-center">
           No commitment required · We respond within 24–48 hours

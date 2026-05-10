@@ -1,6 +1,6 @@
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Line } from '@react-three/drei';
+import { OrbitControls, Line, Sky } from '@react-three/drei';
 import type { CourtConfig } from '../../types/court';
 
 const S = 0.1; // 1 foot = 0.1 THREE units
@@ -27,9 +27,9 @@ function Slab({ x, y, w, h, L, W, color, alpha = 1, yOff = 0.005 }: {
   L: number; W: number; color: string; alpha?: number; yOff?: number;
 }) {
   return (
-    <mesh position={[tx(y + h / 2, W), yOff, tz(x + w / 2, L)]}>
+    <mesh position={[tx(y + h / 2, W), yOff, tz(x + w / 2, L)]} receiveShadow>
       <boxGeometry args={[h * S, 0.01, w * S]} />
-      <meshStandardMaterial color={color} transparent={alpha < 1} opacity={alpha} />
+      <meshStandardMaterial color={color} transparent={alpha < 1} opacity={alpha} roughness={0.8} />
     </mesh>
   );
 }
@@ -75,14 +75,74 @@ function ArcLine({ cxFt, cyFt, r, a0, a1, L, W, color, lw = 1.5, n = 56 }: {
   return <Line points={pts} color={color} lineWidth={lw} />;
 }
 
-// ─── Ground ───────────────────────────────────────────────────────────────────
+// ─── Ground (grass) ───────────────────────────────────────────────────────────
 function Ground({ L, W }: { L: number; W: number }) {
-  const size = Math.max(L, W) * S * 3;
+  const size = Math.max(L, W) * S * 6;
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
       <planeGeometry args={[size, size]} />
-      <meshStandardMaterial color="#111827" />
+      <meshStandardMaterial color="#4a7c3f" roughness={0.95} />
     </mesh>
+  );
+}
+
+// ─── Tree ─────────────────────────────────────────────────────────────────────
+function Tree({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) {
+  const h = scale;
+  return (
+    <group position={position}>
+      <mesh position={[0, h * 0.15, 0]} castShadow>
+        <cylinderGeometry args={[0.045 * scale, 0.07 * scale, h * 0.3, 6]} />
+        <meshStandardMaterial color="#5c3d1e" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, h * 0.52, 0]} castShadow>
+        <coneGeometry args={[0.34 * scale, h * 0.55, 7]} />
+        <meshStandardMaterial color="#2d5a27" roughness={0.85} />
+      </mesh>
+      <mesh position={[0, h * 0.76, 0]} castShadow>
+        <coneGeometry args={[0.24 * scale, h * 0.42, 7]} />
+        <meshStandardMaterial color="#3a7a32" roughness={0.85} />
+      </mesh>
+      <mesh position={[0, h * 0.96, 0]} castShadow>
+        <coneGeometry args={[0.14 * scale, h * 0.30, 7]} />
+        <meshStandardMaterial color="#4d9445" roughness={0.85} />
+      </mesh>
+    </group>
+  );
+}
+
+// ─── Trees scattered around the court ─────────────────────────────────────────
+function Trees({ L, W }: { L: number; W: number }) {
+  const hw = (W * S) / 2;
+  const hl = (L * S) / 2;
+  const m  = Math.max(hw, hl) * 0.28;
+  const ts = Math.max(hw, hl) * 0.20;
+
+  const pts: [number, number, number][] = [
+    // far end (−Z)
+    [-hw - m * 0.5, -hl - m * 1.1, ts * 1.10],
+    [0,              -hl - m * 1.5, ts * 0.90],
+    [ hw + m * 0.3, -hl - m * 1.0, ts * 1.20],
+    // near end (+Z)
+    [-hw - m * 0.4,  hl + m * 1.2,  ts * 1.00],
+    [0,               hl + m * 1.6,  ts * 1.15],
+    [ hw + m * 0.5,  hl + m * 1.0,  ts * 0.85],
+    // left side (−X)
+    [-hw - m * 1.2, -hl * 0.55, ts * 1.30],
+    [-hw - m * 1.5,  0.1,         ts * 0.95],
+    [-hw - m * 1.1,  hl * 0.50,  ts * 1.10],
+    // right side (+X)
+    [ hw + m * 1.3, -hl * 0.45, ts * 1.00],
+    [ hw + m * 1.6,  0.2,         ts * 1.20],
+    [ hw + m * 1.2,  hl * 0.55,  ts * 0.90],
+  ];
+
+  return (
+    <>
+      {pts.map(([x, z, scale], i) => (
+        <Tree key={i} position={[x, 0, z]} scale={scale} />
+      ))}
+    </>
   );
 }
 
@@ -96,42 +156,40 @@ function BasketballCourt({ config }: { config: CourtConfig }) {
   const lc = colors.lines;
   const kc = colors.keyArea ?? colors.border;
   const arcA = Math.atan2(c22, arcBX - bX);
+  const half = L < 60;
 
   return (
     <group>
-      {/* Surface */}
       <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} />
-      {/* Key / paint zones */}
       <Slab x={0}        y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.55} />
-      <Slab x={L - keyLen} y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.55} />
-      {/* Boundary */}
+      {!half && <Slab x={L - keyLen} y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.55} />}
       <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
-      {/* Center line */}
-      <Seg x1={L / 2} y1={0} x2={L / 2} y2={W} L={L} W={W} color={lc} />
-      {/* Center circle */}
-      <ArcLine cxFt={L / 2} cyFt={ftY} r={6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
-      {/* Key outlines */}
-      <Border x={0}        y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={lc} />
-      <Border x={L - keyLen} y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={lc} />
-      {/* Free throw circles */}
-      <ArcLine cxFt={keyLen}     cyFt={ftY} r={6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
-      <ArcLine cxFt={L - keyLen} cyFt={ftY} r={6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
-      {/* Corner 3pt straight lines */}
-      <Seg x1={0}        y1={(W - c22 * 2) / 2} x2={arcBX}    y2={(W - c22 * 2) / 2} L={L} W={W} color={lc} />
-      <Seg x1={0}        y1={(W + c22 * 2) / 2} x2={arcBX}    y2={(W + c22 * 2) / 2} L={L} W={W} color={lc} />
-      <Seg x1={L}        y1={(W - c22 * 2) / 2} x2={L - arcBX} y2={(W - c22 * 2) / 2} L={L} W={W} color={lc} />
-      <Seg x1={L}        y1={(W + c22 * 2) / 2} x2={L - arcBX} y2={(W + c22 * 2) / 2} L={L} W={W} color={lc} />
-      {/* Three-point arcs (left faces right through 0°, right faces left through π) */}
-      <ArcLine cxFt={bX}     cyFt={ftY} r={r3} a0={-arcA}            a1={arcA}              L={L} W={W} color={lc} />
-      <ArcLine cxFt={L - bX} cyFt={ftY} r={r3} a0={Math.PI + arcA}   a1={Math.PI - arcA}    L={L} W={W} color={lc} />
-      {/* Restricted area arcs */}
-      <ArcLine cxFt={bX}     cyFt={ftY} r={4} a0={-Math.PI / 2}  a1={Math.PI / 2}     L={L} W={W} color={lc} />
-      <ArcLine cxFt={L - bX} cyFt={ftY} r={4} a0={Math.PI / 2}   a1={Math.PI * 3 / 2} L={L} W={W} color={lc} />
-      {/* Hoops */}
-      {(acc.includes('basketball-hoop-single') || acc.includes('basketball-hoop-double')) && (
-        <ArcLine cxFt={bX}     cyFt={ftY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={3} />
+      {!half && (
+        <>
+          <Seg x1={L / 2} y1={0} x2={L / 2} y2={W} L={L} W={W} color={lc} />
+          <ArcLine cxFt={L / 2} cyFt={ftY} r={6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
+        </>
       )}
-      {acc.includes('basketball-hoop-double') && (
+      <Border x={0}        y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={lc} />
+      {!half && <Border x={L - keyLen} y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={lc} />}
+      <ArcLine cxFt={keyLen} cyFt={ftY} r={6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
+      {!half && <ArcLine cxFt={L - keyLen} cyFt={ftY} r={6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />}
+      <Seg x1={0}   y1={(W - c22 * 2) / 2} x2={arcBX}     y2={(W - c22 * 2) / 2} L={L} W={W} color={lc} />
+      <Seg x1={0}   y1={(W + c22 * 2) / 2} x2={arcBX}     y2={(W + c22 * 2) / 2} L={L} W={W} color={lc} />
+      <ArcLine cxFt={bX} cyFt={ftY} r={r3} a0={-arcA} a1={arcA} L={L} W={W} color={lc} />
+      {!half && (
+        <>
+          <Seg x1={L} y1={(W - c22 * 2) / 2} x2={L - arcBX} y2={(W - c22 * 2) / 2} L={L} W={W} color={lc} />
+          <Seg x1={L} y1={(W + c22 * 2) / 2} x2={L - arcBX} y2={(W + c22 * 2) / 2} L={L} W={W} color={lc} />
+          <ArcLine cxFt={L - bX} cyFt={ftY} r={r3} a0={Math.PI + arcA} a1={Math.PI - arcA} L={L} W={W} color={lc} />
+        </>
+      )}
+      <ArcLine cxFt={bX} cyFt={ftY} r={4} a0={-Math.PI / 2} a1={Math.PI / 2} L={L} W={W} color={lc} />
+      {!half && <ArcLine cxFt={L - bX} cyFt={ftY} r={4} a0={Math.PI / 2} a1={Math.PI * 3 / 2} L={L} W={W} color={lc} />}
+      {(acc.includes('basketball-hoop-single') || acc.includes('basketball-hoop-double')) && (
+        <ArcLine cxFt={bX} cyFt={ftY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={3} />
+      )}
+      {acc.includes('basketball-hoop-double') && !half && (
         <ArcLine cxFt={L - bX} cyFt={ftY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={3} />
       )}
     </group>
@@ -286,17 +344,32 @@ export function Court3D({ config }: { config: CourtConfig }) {
   const camX = span * 0.85;
   const camY = span * 0.90;
   const camZ = span * 0.85;
+  const shadowRange = span * 2.2;
 
   return (
     <Canvas
+      shadows
       camera={{ position: [camX, camY, camZ], fov: 45, near: 0.01, far: 500 }}
       gl={{ antialias: true }}
     >
-      <color attach="background" args={['#0f172a']} />
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[8, 14, 8]}  intensity={0.9} />
-      <directionalLight position={[-5, 6, -5]} intensity={0.25} color="#7dd3fc" />
+      <fog attach="fog" color="#c8dfc8" near={span * 3} far={span * 9} />
+      <Sky sunPosition={[100, 30, 60]} turbidity={6} rayleigh={0.5} />
+      <ambientLight intensity={0.35} />
+      <hemisphereLight args={['#87ceeb', '#4a7c3f', 0.4]} />
+      <directionalLight
+        position={[span * 2, span * 3, span * 1.5]}
+        intensity={1.1}
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-near={0.5}
+        shadow-camera-far={span * 10}
+        shadow-camera-left={-shadowRange}
+        shadow-camera-right={shadowRange}
+        shadow-camera-top={shadowRange}
+        shadow-camera-bottom={-shadowRange}
+      />
       <Ground L={L} W={W} />
+      <Trees L={L} W={W} />
       <CourtScene config={config} />
       <OrbitControls
         target={[0, 0, 0]}

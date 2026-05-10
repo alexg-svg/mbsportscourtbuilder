@@ -118,13 +118,13 @@ export default function App() {
     <div className="min-h-screen bg-theme-base text-theme-primary font-sans flex flex-col">
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header className="bg-theme-panel border-b border-theme-border px-4 py-2.5 flex items-center justify-between flex-shrink-0">
+      <header className="bg-theme-panel border-b border-theme-border px-4 py-2 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="flex flex-col items-center justify-center px-3 py-1 rounded-full border-2 border-black bg-pink-600 shadow-lg shadow-pink-900/40 min-w-[52px]">
-            <span className="text-white font-extrabold text-[9px] tracking-tight leading-tight">MB</span>
-            <span className="text-cyan-300 font-extrabold text-[9px] tracking-tight leading-tight">SPORTS</span>
-            <span className="text-white font-extrabold text-[9px] tracking-tight leading-tight">BUILDERS</span>
-          </div>
+          <img
+            src="/mb-sports-builders-logo.webp"
+            alt="MB Sports Builders"
+            className="h-10 w-auto"
+          />
           <div>
             <div className="font-bold text-theme-primary text-sm leading-tight">Court Builder</div>
             <div className="text-xs text-theme-muted">Design your custom asphalt court</div>
@@ -191,30 +191,43 @@ export default function App() {
               <h2 className="text-sm font-semibold text-theme-primary">Live Court Preview</h2>
               <p className="text-xs text-theme-muted mt-0.5">Updates as you configure your court</p>
             </div>
-            <div className="flex items-center gap-3 text-xs text-theme-muted">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                Live
-              </span>
-              <span>·</span>
-              <span className="font-mono">{config.dimensions.length} × {config.dimensions.width} ft</span>
-              <span>·</span>
-              <button
-                onClick={() => setView3D((v) => !v)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all ${
-                  view3D
-                    ? 'border-pink-500 bg-pink-600/15 text-pink-400'
-                    : 'border-theme-mid bg-theme-raised text-theme-muted hover:border-pink-500/50 hover:text-theme-primary'
-                }`}
-              >
-                {view3D ? <Map className="w-3 h-3" /> : <Box className="w-3 h-3" />}
-                {view3D ? '2D' : '3D'}
-              </button>
-            </div>
+            {step > 0 && (
+              <div className="flex items-center gap-3 text-xs text-theme-muted">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                  Live
+                </span>
+                <span>·</span>
+                <span className="font-mono">{config.dimensions.length} × {config.dimensions.width} ft</span>
+                <span>·</span>
+                <button
+                  onClick={() => setView3D((v) => !v)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all ${
+                    view3D
+                      ? 'border-pink-500 bg-pink-600/15 text-pink-400'
+                      : 'border-theme-mid bg-theme-raised text-theme-muted hover:border-pink-500/50 hover:text-theme-primary'
+                  }`}
+                >
+                  {view3D ? <Map className="w-3 h-3" /> : <Box className="w-3 h-3" />}
+                  {view3D ? '2D' : '3D'}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
-            {view3D ? (
+            {step === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-4 text-center animate-fade-in">
+                <img
+                  src="/mb-sports-builders-logo.webp"
+                  alt="MB Sports Builders"
+                  className="w-48 opacity-60"
+                />
+                <p className="text-theme-muted text-sm max-w-xs">
+                  Your court preview will appear here as you configure your build.
+                </p>
+              </div>
+            ) : view3D ? (
               <div key={`3d-${config.type}`} className="w-full h-full animate-fade-in rounded-xl overflow-hidden">
                 <Court3D config={config} />
               </div>

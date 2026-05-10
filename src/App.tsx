@@ -265,6 +265,11 @@ const STEP_HINTS: Record<number, string> = {
 
 function CourtLegend({ config, step }: { config: CourtConfig; step: number }) {
   const area = config.dimensions.length * config.dimensions.width;
+  if (step === 0) return (
+    <div className="text-xs text-theme-faint">
+      <p className="text-pink-400/60">{STEP_HINTS[0]}</p>
+    </div>
+  );
   return (
     <div className="text-xs text-theme-faint space-y-0.5">
       <p>{COURT_DESC[config.type]}</p>

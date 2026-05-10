@@ -129,7 +129,7 @@ export const Step4Colors: React.FC<Props> = ({
                 }`}
               >
                 <div className="text-xs font-semibold">{f.label}</div>
-                <div className={`text-xs mt-0.5 ${surfaceFinish === f.id ? 'text-pink-200' : 'text-theme-muted'}`}>{f.desc}</div>
+                <div className={`text-xs mt-0.5 ${surfaceFinish === f.id ? 'text-pink-700 dark:text-pink-200' : 'text-theme-muted'}`}>{f.desc}</div>
               </button>
             ))}
           </div>

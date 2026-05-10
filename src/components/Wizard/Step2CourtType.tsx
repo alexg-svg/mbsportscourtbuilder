@@ -40,7 +40,7 @@ export const Step2CourtType: React.FC<Props> = ({ courtType, onChange, onBack, o
         >
           <Icon size={28} className={`mb-3 ${courtType === id ? 'text-pink-400' : 'text-theme-muted'}`} />
           <div className="text-sm font-bold">{label}</div>
-          <div className={`text-xs mt-1 leading-snug ${courtType === id ? 'text-pink-200' : 'text-theme-muted'}`}>{desc}</div>
+          <div className={`text-xs mt-1 leading-snug ${courtType === id ? 'text-pink-700 dark:text-pink-200' : 'text-theme-muted'}`}>{desc}</div>
         </button>
       ))}
     </div>

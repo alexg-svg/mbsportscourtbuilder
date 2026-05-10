@@ -80,7 +80,7 @@ export const Step5Accessories: React.FC<Props> = ({ courtType, selected, onToggl
                       <div className={`mt-0.5 w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all ${
                         isSelected ? 'bg-pink-500 border-pink-400' : 'border-theme-mid'
                       }`}>
-                        {isSelected && <Check className="w-2.5 h-2.5 text-theme-primary" strokeWidth={3} />}
+                        {isSelected && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
                       </div>
 
                       <Icon size={16} className={`mt-0.5 flex-shrink-0 ${isSelected ? 'text-pink-400' : 'text-theme-muted'}`} />
@@ -92,7 +92,7 @@ export const Step5Accessories: React.FC<Props> = ({ courtType, selected, onToggl
                             <span className="text-xs text-theme-faint">(pick one)</span>
                           )}
                         </div>
-                        <div className={`text-xs mt-0.5 leading-snug ${isSelected ? 'text-pink-200' : 'text-theme-muted'}`}>
+                        <div className={`text-xs mt-0.5 leading-snug ${isSelected ? 'text-pink-700 dark:text-pink-200' : 'text-theme-muted'}`}>
                           {acc.description}
                         </div>
                       </div>

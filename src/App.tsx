@@ -137,7 +137,7 @@ export default function App() {
         </div>
         {step >= 0 && (
           <button
-            className="sm:hidden text-xs bg-theme-raised border border-theme-border px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-theme-muted"
+            className="sm:hidden text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-semibold transition-all active:scale-95 bg-pink-600 border border-pink-500 text-white shadow-sm shadow-pink-900/30"
             onClick={() => setShowPreview((v) => !v)}
           >
             {showPreview

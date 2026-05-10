@@ -127,17 +127,17 @@ export default function App() {
           />
           <div>
             <div className="font-bold text-theme-primary text-sm leading-tight">Court Builder</div>
-            <div className="text-xs text-theme-muted">Design your custom asphalt court</div>
+            <div className="text-xs text-theme-muted">Design your custom court</div>
           </div>
         </div>
         <div className="hidden sm:flex items-center gap-4 text-xs">
           <span className="text-pink-500 font-semibold">mbsportsbuilders.com</span>
           <span className="text-theme-faint">·</span>
-          <span className="text-theme-muted">Tennis · Basketball · Pickleball</span>
+          <span className="text-theme-muted">Tennis · Basketball · Pickleball · Multi-Sport</span>
         </div>
         {step >= 0 && (
           <button
-            className="sm:hidden text-xs bg-theme-raised border border-theme-border px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-theme-muted"
+            className="sm:hidden text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-semibold transition-all active:scale-95 bg-pink-600 border border-pink-500 text-white shadow-sm shadow-pink-900/30"
             onClick={() => setShowPreview((v) => !v)}
           >
             {showPreview
@@ -202,10 +202,10 @@ export default function App() {
                 <span>·</span>
                 <button
                   onClick={() => setView3D((v) => !v)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 ${
                     view3D
-                      ? 'border-pink-500 bg-pink-600/15 text-pink-400'
-                      : 'border-theme-mid bg-theme-raised text-theme-muted hover:border-pink-500/50 hover:text-theme-primary'
+                      ? 'border-pink-500 bg-pink-600 text-white shadow-sm shadow-pink-900/30'
+                      : 'border-pink-500/60 bg-theme-raised text-pink-400 hover:bg-pink-600 hover:text-white hover:border-pink-500'
                   }`}
                 >
                   {view3D ? <Map className="w-3 h-3" /> : <Box className="w-3 h-3" />}
@@ -265,6 +265,11 @@ const STEP_HINTS: Record<number, string> = {
 
 function CourtLegend({ config, step }: { config: CourtConfig; step: number }) {
   const area = config.dimensions.length * config.dimensions.width;
+  if (step === 0) return (
+    <div className="text-xs text-theme-faint">
+      <p className="text-pink-400/60">{STEP_HINTS[0]}</p>
+    </div>
+  );
   return (
     <div className="text-xs text-theme-faint space-y-0.5">
       <p>{COURT_DESC[config.type]}</p>

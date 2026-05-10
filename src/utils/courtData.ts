@@ -161,6 +161,14 @@ export const BORDER_COLORS = [
 
 // ─── Accessories ──────────────────────────────────────────────────────────────
 export const ACCESSORIES: Accessory[] = [
+  // Customization
+  {
+    id: 'custom-logo',
+    name: 'Custom Logo',
+    description: 'Add your team, school, or brand logo to the court surface. Send artwork separately after submitting.',
+    category: 'customization',
+    compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
+  },
   // Sport Equipment
   {
     id: 'basketball-hoop-single',
@@ -266,7 +274,8 @@ export const ACCESSORIES: Accessory[] = [
 ];
 
 export const ACCESSORY_CATEGORIES = [
-  { id: 'sport-equipment', label: 'Sport Equipment' },
+  { id: 'customization',    label: 'Customization' },
+  { id: 'sport-equipment',  label: 'Sport Equipment' },
   { id: 'lighting',         label: 'Lighting' },
   { id: 'fencing',          label: 'Fencing' },
   { id: 'amenities',        label: 'Amenities' },

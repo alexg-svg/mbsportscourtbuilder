@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Minus, Zap, Grid2X2, Square, Wind,
-  Armchair, Droplets, ClipboardList, Check,
+  Armchair, Droplets, ClipboardList, Check, Stamp,
 } from 'lucide-react';
 import { GiBasketballBasket } from 'react-icons/gi';
 import { MdSportsTennis } from 'react-icons/md';
@@ -20,6 +20,7 @@ interface Props {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ACC_ICONS: Record<AccessoryId, React.ComponentType<any>> = {
+  'custom-logo':            Stamp,
   'basketball-hoop-single': GiBasketballBasket,
   'basketball-hoop-double': GiBasketballBasket,
   'tennis-net':             MdSportsTennis,

@@ -299,40 +299,37 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
 
   // ─── LIGHTING POLES ───────────────────────────────────────────────────────
   const renderLighting = () => {
-    const poles: { px: number; py: number }[] = [];
-    const lx = Math.max(16, ox * 0.55);
-    const rx = Math.min(width - 16, ox + svgCW + ox * 0.55);
-    if (hasAcc('lighting-2-pole')) {
-      poles.push({ px: lx, py: oy + svgCH / 2 }, { px: rx, py: oy + svgCH / 2 });
-    }
-    if (hasAcc('lighting-4-pole')) {
-      poles.push(
-        { px: lx, py: oy + svgCH * 0.25 }, { px: lx, py: oy + svgCH * 0.75 },
-        { px: rx, py: oy + svgCH * 0.25 }, { px: rx, py: oy + svgCH * 0.75 },
+    // Poles go on the LONG sides (sidelines = top/bottom in SVG coordinates)
+    const fracs: number[] = hasAcc('lighting-2-pole') ? [0.5]
+      : hasAcc('lighting-4-pole')  ? [0.25, 0.75]
+      : hasAcc('lighting-6-pole')  ? [0.15, 0.5, 0.85]
+      : [];
+    if (!fracs.length) return null;
+
+    const ty = oy - 5;            // base of top-side poles (just above court)
+    const by = oy + svgCH + 5;   // base of bottom-side poles (just below court)
+
+    // top poles point downward toward court; bottom poles point upward toward court
+    const renderPole = (px: number, py: number, up: boolean, key: string) => {
+      const pY  = up ? py - 25 : py;
+      const aY  = up ? py - 28 : py + 25;
+      const fY  = up ? py - 34 : py + 29;
+      const gY  = up ? py - 31 : py + 32;
+      return (
+        <g key={key}>
+          <rect x={px - 3} y={pY} width={6} height={25} fill="#9CA3AF" rx={2} />
+          <rect x={px - 11} y={aY} width={22} height={4} fill="#9CA3AF" rx={2} />
+          <rect x={px - 10} y={fY} width={20} height={7} fill="#FCD34D" rx={3} />
+          <circle cx={px} cy={gY} r={16} fill="#FCD34D" opacity={0.12} />
+        </g>
       );
-    }
-    if (hasAcc('lighting-6-pole')) {
-      poles.push(
-        { px: lx, py: oy + svgCH * 0.15 }, { px: lx, py: oy + svgCH * 0.5 }, { px: lx, py: oy + svgCH * 0.85 },
-        { px: rx, py: oy + svgCH * 0.15 }, { px: rx, py: oy + svgCH * 0.5 }, { px: rx, py: oy + svgCH * 0.85 },
-      );
-    }
-    if (!poles.length) return null;
+    };
+
     return (
       <g>
-        {poles.map((p, i) => (
-          <g key={`pole-${i}`}>
-            {/* Post */}
-            <rect x={p.px - 3} y={p.py - 30} width={6} height={30} fill="#9CA3AF" rx={2} />
-            {/* Arm */}
-            <rect x={p.px - 12} y={p.py - 33} width={24} height={4} fill="#9CA3AF" rx={2} />
-            {/* Light fixture */}
-            <rect x={p.px - 11} y={p.py - 41} width={22} height={8} fill="#FCD34D" rx={3} />
-            {/* Glow */}
-            <circle cx={p.px} cy={p.py - 37} r={18} fill="#FCD34D" opacity={0.12} />
-          </g>
-        ))}
-        {accLabel(poles[0].px, poles[0].py + 14, '⚡ Lighting')}
+        {fracs.map((f, i) => renderPole(ox + svgCW * f, ty, true,  `tp-${i}`))}
+        {fracs.map((f, i) => renderPole(ox + svgCW * f, by, false, `bp-${i}`))}
+        {accLabel(ox + svgCW * fracs[0], by + 18, '⚡ Lighting')}
       </g>
     );
   };

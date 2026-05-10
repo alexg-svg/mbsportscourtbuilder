@@ -26,6 +26,7 @@ const COURT_TYPES   = ['basketball', 'tennis', 'pickleball', 'multi-sport'] as c
 const PROP_TYPES    = ['residential', 'commercial'] as const;
 const FINISHES      = ['smooth', 'textured', 'cushioned'] as const;
 const ACCESSORY_IDS = [
+  'custom-logo',
   'basketball-hoop-single', 'basketball-hoop-double',
   'tennis-net', 'pickleball-net',
   'lighting-2-pole', 'lighting-4-pole', 'lighting-6-pole',

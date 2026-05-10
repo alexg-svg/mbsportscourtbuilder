@@ -529,24 +529,20 @@ function MultiSportCourt({ config }: { config: CourtConfig }) {
         <ArcLine cxFt={L - bX} cyFt={midY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={3} />
       )}
       {/* Pickleball nets */}
-      {[pklX1, pklX2].map((bx, i) => (
+      {acc.includes('pickleball-net') && [pklX1, pklX2].map((bx, i) => (
         <group key={`pkl-net-${i}`}>
           <mesh position={[tx(pklY + pklW / 2, W), 0.06, tz(bx + pklLen / 2, L)]}>
             <boxGeometry args={[(pklW + 0.3) * S, 0.12, 0.02]} />
             <meshStandardMaterial color="white" transparent opacity={0.7} />
           </mesh>
-          {acc.includes('pickleball-net') && (
-            <>
-              <mesh position={[tx(pklY, W) - 0.03, 0.08, tz(bx + pklLen / 2, L)]}>
-                <cylinderGeometry args={[0.025, 0.025, 0.16, 8]} />
-                <meshStandardMaterial color="#6B7280" />
-              </mesh>
-              <mesh position={[tx(pklY + pklW, W) + 0.03, 0.08, tz(bx + pklLen / 2, L)]}>
-                <cylinderGeometry args={[0.025, 0.025, 0.16, 8]} />
-                <meshStandardMaterial color="#6B7280" />
-              </mesh>
-            </>
-          )}
+          <mesh position={[tx(pklY, W) - 0.03, 0.08, tz(bx + pklLen / 2, L)]}>
+            <cylinderGeometry args={[0.025, 0.025, 0.16, 8]} />
+            <meshStandardMaterial color="#6B7280" />
+          </mesh>
+          <mesh position={[tx(pklY + pklW, W) + 0.03, 0.08, tz(bx + pklLen / 2, L)]}>
+            <cylinderGeometry args={[0.025, 0.025, 0.16, 8]} />
+            <meshStandardMaterial color="#6B7280" />
+          </mesh>
         </group>
       ))}
       {/* Tennis net at center */}

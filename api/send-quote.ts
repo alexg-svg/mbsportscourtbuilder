@@ -225,7 +225,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await transporter.sendMail({
       from:    `"MB Sports Court Builder" <${process.env.SMTP_USER}>`,
       to:      process.env.QUOTE_TO,
-      cc:      process.env.QUOTE_TO_CC || undefined,
+      cc:      process.env.QUOTE_TO_CC  || undefined,
+      bcc:     process.env.QUOTE_TO_BCC || undefined,
       replyTo: contact.email,
       subject: `New Court Quote – ${contact.name} (${contact.zip})`,
       html:    buildHtml(parsed.data),

@@ -127,13 +127,13 @@ export default function App() {
           />
           <div>
             <div className="font-bold text-theme-primary text-sm leading-tight">Court Builder</div>
-            <div className="text-xs text-theme-muted">Design your custom asphalt court</div>
+            <div className="text-xs text-theme-muted">Design your custom court</div>
           </div>
         </div>
         <div className="hidden sm:flex items-center gap-4 text-xs">
           <span className="text-pink-500 font-semibold">mbsportsbuilders.com</span>
           <span className="text-theme-faint">·</span>
-          <span className="text-theme-muted">Tennis · Basketball · Pickleball</span>
+          <span className="text-theme-muted">Tennis · Basketball · Pickleball · Multi-Sport</span>
         </div>
         {step >= 0 && (
           <button

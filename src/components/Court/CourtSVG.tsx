@@ -179,8 +179,8 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
       case 'multi-sport': {
         const keyLen  = 19;
         const keyW    = 16;
-        const pklX1   = cL * 0.08;
         const pklLen  = 44;
+        const pklX1   = Math.max(2, (cL / 2 - pklLen) / 2);
         const pklY    = (cW - 20) / 2;
         return [
           {
@@ -628,16 +628,19 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
 
   // ─── MULTI-SPORT ──────────────────────────────────────────────────────────
   const renderMultiSport = () => {
-    const keyW    = 16;
-    const keyLen  = 19;
-    const basketX = 5.25;
-    const midY    = cW / 2;
-    const pklW    = 20;
-    const pklLen  = 44;
-    const pklY    = (cW - pklW) / 2;
-    const pklX1   = cL * 0.08;
-    const pklX2   = cL * 0.52;
-    const pklSty  = { stroke: '#FCD34D', strokeWidth: Math.max(1, scale * 0.06) };
+    const keyW      = 16;
+    const keyLen    = 19;
+    const basketX   = 5.25;
+    const midY      = cW / 2;
+    const pklW      = 20;
+    const pklLen    = 44;
+    const pklY      = (cW - pklW) / 2;
+    const pklX1     = Math.max(2, (cL / 2 - pklLen) / 2);
+    const pklX2     = cL - pklLen - pklX1;
+    const r3pt      = 23.75;
+    const corner22  = 22;
+    const arcBreakX = basketX + Math.sqrt(r3pt * r3pt - corner22 * corner22);
+    const pklSty    = { stroke: '#FCD34D', strokeWidth: Math.max(1, scale * 0.06) };
 
     return (
       <g>
@@ -649,12 +652,46 @@ export const CourtSVG: React.FC<Props> = ({ config, width = 800, height = 560 })
         <rect {...rp(0,        (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? '#1A3A6B'} opacity={0.5} />
         <rect {...rp(cL - keyLen, (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? '#1A3A6B'} opacity={0.5} />
 
-        {/* Basketball lines */}
+        {/* Boundary + center */}
         <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
         <line {...lp(cL / 2, 0, cL / 2, cW)} {...ls} />
         <circle cx={px(cL / 2)} cy={py(midY)} r={6 * scale} fill="none" {...ls} />
-        <rect {...rp(0,        (cW - keyW) / 2, keyLen, keyW)} fill="none" {...ls} />
+
+        {/* Key outlines */}
+        <rect {...rp(0,           (cW - keyW) / 2, keyLen, keyW)} fill="none" {...ls} />
         <rect {...rp(cL - keyLen, (cW - keyW) / 2, keyLen, keyW)} fill="none" {...ls} />
+
+        {/* Free-throw circles */}
+        <circle cx={px(keyLen)}      cy={py(midY)} r={6 * scale} fill="none" {...ls} />
+        <circle cx={px(cL - keyLen)} cy={py(midY)} r={6 * scale} fill="none" {...ls} />
+
+        {/* Three-point: left end */}
+        <line {...lp(0, (cW - corner22 * 2) / 2, arcBreakX, (cW - corner22 * 2) / 2)} {...ls} />
+        <line {...lp(0, (cW + corner22 * 2) / 2, arcBreakX, (cW + corner22 * 2) / 2)} {...ls} />
+        <path fill="none" {...ls}
+          d={[
+            `M ${px(arcBreakX)} ${py((cW - corner22 * 2) / 2)}`,
+            `A ${r3pt * scale} ${r3pt * scale} 0 0 1`,
+            `${px(arcBreakX)} ${py((cW + corner22 * 2) / 2)}`,
+          ].join(' ')}
+        />
+
+        {/* Three-point: right end */}
+        <line {...lp(cL, (cW - corner22 * 2) / 2, cL - arcBreakX, (cW - corner22 * 2) / 2)} {...ls} />
+        <line {...lp(cL, (cW + corner22 * 2) / 2, cL - arcBreakX, (cW + corner22 * 2) / 2)} {...ls} />
+        <path fill="none" {...ls}
+          d={[
+            `M ${px(cL - arcBreakX)} ${py((cW - corner22 * 2) / 2)}`,
+            `A ${r3pt * scale} ${r3pt * scale} 0 0 0`,
+            `${px(cL - arcBreakX)} ${py((cW + corner22 * 2) / 2)}`,
+          ].join(' ')}
+        />
+
+        {/* Restricted area arcs */}
+        <path fill="none" {...ls}
+          d={`M ${px(basketX)} ${py(midY - 4)} A ${4 * scale} ${4 * scale} 0 0 1 ${px(basketX)} ${py(midY + 4)}`} />
+        <path fill="none" {...ls}
+          d={`M ${px(cL - basketX)} ${py(midY - 4)} A ${4 * scale} ${4 * scale} 0 0 0 ${px(cL - basketX)} ${py(midY + 4)}`} />
 
         {/* Pickleball overlays (yellow) */}
         {[pklX1, pklX2].map((bx, i) => (

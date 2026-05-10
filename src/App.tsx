@@ -202,10 +202,10 @@ export default function App() {
                 <span>·</span>
                 <button
                   onClick={() => setView3D((v) => !v)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 ${
                     view3D
-                      ? 'border-pink-500 bg-pink-600/15 text-pink-400'
-                      : 'border-theme-mid bg-theme-raised text-theme-muted hover:border-pink-500/50 hover:text-theme-primary'
+                      ? 'border-pink-500 bg-pink-600 text-white shadow-sm shadow-pink-900/30'
+                      : 'border-pink-500/60 bg-theme-raised text-pink-400 hover:bg-pink-600 hover:text-white hover:border-pink-500'
                   }`}
                 >
                   {view3D ? <Map className="w-3 h-3" /> : <Box className="w-3 h-3" />}

@@ -49,7 +49,7 @@ export const StepShell: React.FC<Props> = ({
         className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all relative overflow-hidden group ${
           nextDisabled
             ? 'bg-theme-raised text-theme-faint cursor-not-allowed'
-            : 'bg-pink-600 hover:bg-pink-500 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-theme-primary shadow-lg shadow-pink-900/30 hover:shadow-pink-500/40 hover:shadow-xl active:shadow-md'
+            : 'bg-pink-600 hover:bg-pink-500 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white shadow-lg shadow-pink-900/30 hover:shadow-pink-500/40 hover:shadow-xl active:shadow-md'
         }`}
       >
         {nextLabel}

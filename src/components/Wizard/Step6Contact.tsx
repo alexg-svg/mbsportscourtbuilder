@@ -97,31 +97,31 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit }) => {
             <label className="block text-xs text-theme-muted mb-1">Full Name *</label>
             <input required type="text" value={form.name} onChange={set('name')}
               placeholder="Jane Smith"
-              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500" />
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none focus:border-pink-500" />
           </div>
           <div className="col-span-2 sm:col-span-1">
             <label className="block text-xs text-theme-muted mb-1">Phone</label>
             <input type="tel" value={form.phone} onChange={set('phone')}
               placeholder="(555) 000-0000"
-              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500" />
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none focus:border-pink-500" />
           </div>
           <div className="col-span-2">
             <label className="block text-xs text-theme-muted mb-1">Email *</label>
             <input required type="email" value={form.email} onChange={set('email')}
               placeholder="jane@example.com"
-              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500" />
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none focus:border-pink-500" />
           </div>
           <div className="col-span-2">
             <label className="block text-xs text-theme-muted mb-1">ZIP Code *</label>
             <input required type="text" value={form.zip} onChange={set('zip')}
               placeholder="e.g. 90210"
-              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500" />
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none focus:border-pink-500" />
           </div>
           <div className="col-span-2">
             <label className="block text-xs text-theme-muted mb-1">Notes (optional)</label>
             <textarea rows={2} value={form.message} onChange={set('message')}
               placeholder="Timeline, site conditions, questions..."
-              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-gray-600 focus:outline-none focus:border-pink-500 resize-none" />
+              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none focus:border-pink-500 resize-none" />
           </div>
         </div>
 

@@ -22,14 +22,14 @@ function arcPts(
 
 // ─── Primitive building blocks ────────────────────────────────────────────────
 
-function Slab({ x, y, w, h, L, W, color, alpha = 1, yOff = 0.005 }: {
+function Slab({ x, y, w, h, L, W, color, alpha = 1, yOff = 0.005, roughness = 0.8 }: {
   x: number; y: number; w: number; h: number;
-  L: number; W: number; color: string; alpha?: number; yOff?: number;
+  L: number; W: number; color: string; alpha?: number; yOff?: number; roughness?: number;
 }) {
   return (
     <mesh position={[tx(y + h / 2, W), yOff, tz(x + w / 2, L)]} receiveShadow>
       <boxGeometry args={[h * S, 0.01, w * S]} />
-      <meshStandardMaterial color={color} transparent={alpha < 1} opacity={alpha} roughness={0.8} />
+      <meshStandardMaterial color={color} transparent={alpha < 1} opacity={alpha} roughness={roughness} />
     </mesh>
   );
 }
@@ -148,7 +148,7 @@ function Trees({ L, W }: { L: number; W: number }) {
 
 // ─── Basketball ───────────────────────────────────────────────────────────────
 function BasketballCourt({ config }: { config: CourtConfig }) {
-  const { dimensions: { length: L, width: W }, colors, selectedAccessories: acc } = config;
+  const { dimensions: { length: L, width: W }, colors, selectedAccessories: acc, surfaceFinish } = config;
   const keyW = 16, keyLen = 19, bX = 5.25;
   const r3 = 23.75, c22 = 22;
   const arcBX = bX + Math.sqrt(r3 * r3 - c22 * c22);
@@ -157,12 +157,15 @@ function BasketballCourt({ config }: { config: CourtConfig }) {
   const kc = colors.keyArea ?? colors.border;
   const arcA = Math.atan2(c22, arcBX - bX);
   const half = L < 60;
+  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
+  const pad = 8;
 
   return (
     <group>
-      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} />
-      <Slab x={0}        y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.55} />
-      {!half && <Slab x={L - keyLen} y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.55} />}
+      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} alpha={1} yOff={0.005} />
+      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} roughness={roughness} />
+      <Slab x={0}        y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.55} yOff={0.012} />
+      {!half && <Slab x={L - keyLen} y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.55} yOff={0.012} />}
       <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
       {!half && (
         <>
@@ -198,20 +201,23 @@ function BasketballCourt({ config }: { config: CourtConfig }) {
 
 // ─── Tennis ───────────────────────────────────────────────────────────────────
 function TennisCourt({ config }: { config: CourtConfig }) {
-  const { dimensions: { length: L, width: W }, colors, selectedAccessories: acc } = config;
+  const { dimensions: { length: L, width: W }, colors, selectedAccessories: acc, surfaceFinish } = config;
   const singW = 27, sOff = (W - singW) / 2;
   const svcLen = (L - 42) / 2;
   const lc = colors.lines;
   const sbc = colors.serviceBox ?? colors.surface;
+  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
+  const pad = 8;
 
   return (
     <group>
-      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} />
+      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} alpha={1} yOff={0.005} />
+      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} roughness={roughness} />
       {/* Service box tints */}
-      <Slab x={0}          y={sOff}           w={svcLen} h={singW / 2} L={L} W={W} color={sbc} alpha={0.8} />
-      <Slab x={0}          y={sOff + singW / 2} w={svcLen} h={singW / 2} L={L} W={W} color={sbc} alpha={0.65} />
-      <Slab x={L - svcLen} y={sOff}           w={svcLen} h={singW / 2} L={L} W={W} color={sbc} alpha={0.65} />
-      <Slab x={L - svcLen} y={sOff + singW / 2} w={svcLen} h={singW / 2} L={L} W={W} color={sbc} alpha={0.8} />
+      <Slab x={0}          y={sOff}             w={svcLen} h={singW / 2} L={L} W={W} color={sbc} alpha={0.8}  yOff={0.012} />
+      <Slab x={0}          y={sOff + singW / 2} w={svcLen} h={singW / 2} L={L} W={W} color={sbc} alpha={0.65} yOff={0.012} />
+      <Slab x={L - svcLen} y={sOff}             w={svcLen} h={singW / 2} L={L} W={W} color={sbc} alpha={0.65} yOff={0.012} />
+      <Slab x={L - svcLen} y={sOff + singW / 2} w={svcLen} h={singW / 2} L={L} W={W} color={sbc} alpha={0.8}  yOff={0.012} />
       {/* Lines */}
       <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
       <Seg x1={0}        y1={sOff}         x2={L}        y2={sOff}         L={L} W={W} color={lc} />
@@ -243,21 +249,23 @@ function TennisCourt({ config }: { config: CourtConfig }) {
 
 // ─── Pickleball ───────────────────────────────────────────────────────────────
 function PickleballCourt({ config }: { config: CourtConfig }) {
-  const { dimensions: { length: L, width: W }, colors, selectedAccessories: acc } = config;
+  const { dimensions: { length: L, width: W }, colors, selectedAccessories: acc, surfaceFinish } = config;
   const playW = Math.min(W, 20), playL = Math.min(L, 44);
   const offX = (L - playL) / 2, offY = (W - playW) / 2;
   const nvz = 7;
   const lc = colors.lines;
   const kc = colors.kitchen ?? '#60A5FA';
+  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
+  const pad = 8;
 
   return (
     <group>
-      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} />
+      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} alpha={1} yOff={0.005} />
+      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} roughness={roughness} />
       {/* NVZ kitchen zones */}
-      <Slab x={offX}             y={offY} w={nvz}  h={playW} L={L} W={W} color={kc} alpha={0.5} />
-      <Slab x={offX + playL - nvz} y={offY} w={nvz} h={playW} L={L} W={W} color={kc} alpha={0.5} />
+      <Slab x={offX}               y={offY} w={nvz} h={playW} L={L} W={W} color={kc} alpha={0.5} yOff={0.012} />
+      <Slab x={offX + playL - nvz} y={offY} w={nvz} h={playW} L={L} W={W} color={kc} alpha={0.5} yOff={0.012} />
       {/* Lines */}
-      <Border x={0} y={0} w={L} h={W} L={L} W={W} color={colors.border} lw={0.03} />
       <Border x={offX} y={offY} w={playL} h={playW} L={L} W={W} color={lc} />
       <Seg x1={offX}             y1={offY + playW / 2} x2={offX + playL}     y2={offY + playW / 2} L={L} W={W} color={lc} />
       <Seg x1={offX + nvz}       y1={offY}             x2={offX + nvz}       y2={offY + playW}     L={L} W={W} color={lc} />
@@ -285,7 +293,7 @@ function PickleballCourt({ config }: { config: CourtConfig }) {
 
 // ─── Multi-Sport ──────────────────────────────────────────────────────────────
 function MultiSportCourt({ config }: { config: CourtConfig }) {
-  const { dimensions: { length: L, width: W }, colors, selectedAccessories: acc } = config;
+  const { dimensions: { length: L, width: W }, colors, selectedAccessories: acc, surfaceFinish } = config;
   const keyW = 16, keyLen = 19, bX = 5.25;
   const midY = W / 2;
   const pklW = 20, pklLen = 44, pklY = (W - pklW) / 2;
@@ -293,13 +301,16 @@ function MultiSportCourt({ config }: { config: CourtConfig }) {
   const lc = colors.lines;
   const kc = colors.keyArea ?? '#1A3A6B';
   const pkl = '#FCD34D';
+  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
+  const pad = 8;
 
   return (
     <group>
-      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} />
+      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} alpha={1} yOff={0.005} />
+      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} roughness={roughness} />
       {/* Paint zones */}
-      <Slab x={0}          y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.5} />
-      <Slab x={L - keyLen} y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.5} />
+      <Slab x={0}          y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.5} yOff={0.012} />
+      <Slab x={L - keyLen} y={(W - keyW) / 2} w={keyLen} h={keyW} L={L} W={W} color={kc} alpha={0.5} yOff={0.012} />
       {/* Basketball lines */}
       <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
       <Seg x1={L / 2} y1={0} x2={L / 2} y2={W} L={L} W={W} color={lc} />

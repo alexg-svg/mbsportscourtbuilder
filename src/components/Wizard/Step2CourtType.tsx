@@ -31,7 +31,7 @@ export const Step2CourtType: React.FC<Props> = ({ courtType, onChange, onBack, o
       {OPTIONS.map(({ id, label, Icon, desc }) => (
         <button
           key={id}
-          onClick={() => { onChange(id); setTimeout(onNext, 250); }}
+          onClick={() => onChange(id)}
           className={`p-4 rounded-2xl border-2 text-left transition-all active:scale-[0.97] ${
             courtType === id
               ? 'border-pink-500 bg-pink-600/15 text-theme-primary shadow-lg shadow-pink-500/25 ring-1 ring-pink-500/30'

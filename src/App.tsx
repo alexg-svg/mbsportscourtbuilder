@@ -1,9 +1,10 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, lazy, Suspense } from 'react';
 import { Eye, ClipboardList, Box, Map } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES } from './utils/courtData';
 import { CourtSVG } from './components/Court/CourtSVG';
-import { Court3D } from './components/Court/Court3D';
+
+const Court3D = lazy(() => import('./components/Court/Court3D').then((m) => ({ default: m.Court3D })));
 import { StepProgress } from './components/Wizard/StepProgress';
 import { Step1Property } from './components/Wizard/Step1Property';
 import { Step2CourtType } from './components/Wizard/Step2CourtType';
@@ -254,7 +255,9 @@ export default function App() {
               </div>
             ) : view3D ? (
               <div key={`3d-${config.type}`} className="w-full h-full animate-fade-in rounded-xl overflow-hidden">
-                <Court3D config={config} />
+                <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-theme-muted text-sm">Loading 3D…</div>}>
+                  <Court3D config={config} />
+                </Suspense>
               </div>
             ) : (
               <div key={config.type} className="w-full max-w-4xl aspect-[16/10] animate-fade-in">

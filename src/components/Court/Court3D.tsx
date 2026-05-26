@@ -586,6 +586,14 @@ export function Court3D({ config }: { config: CourtConfig }) {
   const shadowRange = span * 2.2;
 
   return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div style={{ position: 'absolute', bottom: 10, right: 12, zIndex: 10,
+      fontSize: 11, fontFamily: 'system-ui, sans-serif', fontWeight: 600,
+      color: 'rgba(255,255,255,0.5)', letterSpacing: '0.05em',
+      textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+      pointerEvents: 'none', userSelect: 'none' }}>
+      mbsportsbuilders.com
+    </div>
     <Canvas
       shadows
       camera={{ position: [camX, camY, camZ], fov: 45, near: 0.01, far: 500 }}
@@ -621,5 +629,6 @@ export function Court3D({ config }: { config: CourtConfig }) {
         dampingFactor={0.08}
       />
     </Canvas>
+    </div>
   );
 }

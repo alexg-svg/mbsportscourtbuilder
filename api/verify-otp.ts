@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { z } from 'zod';
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHmac, createHash, timingSafeEqual } from 'crypto';
 
 // ─── Startup env guard ────────────────────────────────────────────────────────
 const REQUIRED_ENV = ['OTP_SECRET'] as const;
@@ -77,6 +77,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (!valid) {
     return res.status(400).json({ error: 'Incorrect code — please try again.' });
+  }
+
+  // ── Add to Mailchimp audience (fail open) ──────────────────────────────────
+  const apiKey  = process.env.MAILCHIMP_API_KEY;
+  const listId  = process.env.MAILCHIMP_LIST_ID;
+  if (apiKey && listId) {
+    const dc             = apiKey.split('-').pop();           // e.g. "us1"
+    const subscriberHash = createHash('md5').update(email.toLowerCase()).digest('hex');
+    try {
+      await fetch(
+        `https://${dc}.api.mailchimp.com/3.0/lists/${listId}/members/${subscriberHash}`,
+        {
+          method:  'PUT',
+          headers: {
+            'Content-Type':  'application/json',
+            Authorization:   `Basic ${Buffer.from(`anystring:${apiKey}`).toString('base64')}`,
+          },
+          body: JSON.stringify({
+            email_address:  email.toLowerCase(),
+            status_if_new:  'subscribed',
+            tags:           ['court-designer'],
+          }),
+        },
+      );
+    } catch {
+      // Non-fatal — verification still succeeds
+    }
   }
 
   return res.status(200).json({ ok: true });

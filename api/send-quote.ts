@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 import { z } from 'zod';
 
 // ─── Startup env guard ────────────────────────────────────────────────────────
-const REQUIRED_ENV = ['SMTP_USER', 'SMTP_PASS', 'QUOTE_TO'] as const;
+const REQUIRED_ENV = ['SMTP_USER', 'SMTP_PASS', 'QUOTE_TO', 'RECAPTCHA_SECRET'] as const;
 for (const key of REQUIRED_ENV) {
   if (!process.env[key]) throw new Error(`Missing required env var: ${key}`);
 }
@@ -61,7 +61,21 @@ const schema = z.object({
     selectedAccessories: z.array(z.enum(ACCESSORY_IDS)).max(20),
   }),
   courtImageBase64: z.string().max(700_000).optional(),
+  recaptchaToken: z.string().max(2000).optional(),
 });
+
+// ─── reCAPTCHA verification ───────────────────────────────────────────────────
+async function verifyRecaptcha(token: string): Promise<boolean> {
+  try {
+    const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `secret=${encodeURIComponent(process.env.RECAPTCHA_SECRET!)}&response=${encodeURIComponent(token)}`,
+    });
+    const data = await res.json() as { success: boolean; score: number };
+    return data.success && data.score >= 0.5;
+  } catch { return true; }
+}
 
 // ─── Simple per-instance rate limiter (10 req / 5 min per IP) ─────────────────
 const ratemap = new Map<string, { count: number; reset: number }>();
@@ -229,7 +243,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
   }
 
-  const { contact, courtImageBase64 } = parsed.data;
+  const { contact, courtImageBase64, recaptchaToken } = parsed.data;
+  if (recaptchaToken && !(await verifyRecaptcha(recaptchaToken))) {
+    return res.status(400).json({ error: 'reCAPTCHA verification failed' });
+  }
   const imgBuf = courtImageBase64 ? Buffer.from(courtImageBase64, 'base64') : undefined;
 
   try {

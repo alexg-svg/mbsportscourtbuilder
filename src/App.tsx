@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useRef, lazy, Suspense } from 'react';
+import React, { useState, useCallback, useRef, lazy, Suspense, useEffect } from 'react';
 import { Eye, ClipboardList, Box, Map } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES } from './utils/courtData';
+import { trackEvent } from './utils/analytics';
 import { CourtSVG } from './components/Court/CourtSVG';
 
 const Court3D = lazy(() => import('./components/Court/Court3D').then((m) => ({ default: m.Court3D })));
@@ -34,6 +35,11 @@ const initialConfig: CourtConfig = {
 
 const TOTAL_STEPS = 6;
 
+const STEP_NAMES: Record<number, string> = {
+  0: 'property_type', 1: 'court_type', 2: 'size',
+  3: 'colors', 4: 'accessories', 5: 'contact',
+};
+
 export default function App() {
   const [step, setStep]           = useState(0);
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
@@ -42,6 +48,10 @@ export default function App() {
   const [showPreview, setShowPreview] = useState(false);
   const [view3D, setView3D]       = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (step >= 0) trackEvent('step_view', { step_number: step, step_name: STEP_NAMES[step] });
+  }, [step]);
 
   const getCaptureImage = useCallback(async (): Promise<string | undefined> => {
     const svg = svgRef.current;

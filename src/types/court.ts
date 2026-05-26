@@ -1,4 +1,16 @@
-export type CourtType = 'basketball' | 'tennis' | 'pickleball' | 'multi-sport' | 'bocce-ball' | 'shuffleboard' | 'volleyball' | 'badminton' | 'futsal' | 'inline-hockey' | 'handball' | 'four-square';
+export type CourtType =
+  | 'basketball'
+  | 'tennis'
+  | 'pickleball'
+  | 'multi-sport'
+  | 'bocce-ball'
+  | 'badminton'
+  | 'futsal'
+  | 'inline-hockey'
+  | 'handball'
+  | 'volleyball'
+  | 'shuffleboard'
+  | 'four-square';
 export type PropertyType = 'residential' | 'commercial';
 export type SurfaceFinish = 'smooth' | 'textured' | 'cushioned';
 
@@ -22,6 +34,13 @@ export type AccessoryId =
   | 'basketball-hoop-double'
   | 'tennis-net'
   | 'pickleball-net'
+  | 'volleyball-net'
+  | 'badminton-net'
+  | 'futsal-goals'
+  | 'handball-goals'
+  | 'hockey-goals'
+  | 'dasher-boards'
+  | 'bocce-side-rails'
   | 'lighting-2-pole'
   | 'lighting-4-pole'
   | 'lighting-6-pole'
@@ -37,7 +56,7 @@ export interface Accessory {
   id: AccessoryId;
   name: string;
   description: string;
-  category: 'customization' | 'sport-equipment' | 'lighting' | 'fencing' | 'amenities';
+  category: 'customization' | 'sport-equipment' | 'net' | 'goals' | 'lighting' | 'fencing' | 'amenities';
   compatibleCourts: CourtType[];
 }
 

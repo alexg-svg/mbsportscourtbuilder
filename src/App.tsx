@@ -15,6 +15,7 @@ import { Step5Accessories } from './components/Wizard/Step5Accessories';
 import { Step6Contact } from './components/Wizard/Step6Contact';
 import type { ContactData } from './components/Wizard/Step6Contact';
 import { StepDone } from './components/Wizard/StepDone';
+import { EmailGate } from './components/Auth/EmailGate';
 
 function getDefaultDimensions(type: CourtType, propertyType: PropertyType): CourtDimensions {
   const pref = COURT_PRESETS.find(
@@ -41,6 +42,9 @@ const STEP_NAMES: Record<number, string> = {
 };
 
 export default function App() {
+  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(
+    localStorage.getItem('mb_verified_email'),
+  );
   const [step, setStep]           = useState(0);
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const [config, setConfig]       = useState<CourtConfig>(initialConfig);
@@ -48,6 +52,10 @@ export default function App() {
   const [showPreview, setShowPreview] = useState(false);
   const [view3D, setView3D]       = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
+
+  const handleVerified = (email: string) => {
+    setVerifiedEmail(email);
+  };
 
   useEffect(() => {
     if (step >= 0) trackEvent('step_view', { step_number: step, step_name: STEP_NAMES[step] });
@@ -145,10 +153,14 @@ export default function App() {
         />
       );
       case 4: return <Step5Accessories courtType={config.type} selected={config.selectedAccessories} onToggle={handleAccessoryToggle} onBack={back} onNext={next} />;
-      case 5: return <Step6Contact config={config} onBack={back} onSubmit={handleSubmit} getCaptureImage={getCaptureImage} />;
+      case 5: return <Step6Contact config={config} onBack={back} onSubmit={handleSubmit} getCaptureImage={getCaptureImage} verifiedEmail={verifiedEmail ?? undefined} />;
       default: return null;
     }
   };
+
+  if (!verifiedEmail) {
+    return <EmailGate onVerified={handleVerified} />;
+  }
 
   return (
     <div className="min-h-screen bg-theme-base text-theme-primary font-sans flex flex-col">

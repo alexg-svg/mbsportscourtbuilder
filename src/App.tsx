@@ -293,10 +293,18 @@ export default function App() {
 }
 
 const COURT_DESC: Record<string, string> = {
-  basketball:  'Basketball court · key areas · three-point arcs · free throw circles',
-  tennis:      'Tennis court · service boxes · singles & doubles sidelines',
-  pickleball:  'Pickleball court · NVZ kitchen zones · centerline',
-  'multi-sport': 'Multi-sport surface · basketball + 2 pickleball overlays',
+  basketball:     'Basketball court · key areas · three-point arcs · free throw circles',
+  tennis:         'Tennis court · service boxes · singles & doubles sidelines',
+  pickleball:     'Pickleball court · NVZ kitchen zones · centerline',
+  'multi-sport':  'Multi-sport surface · basketball + 2 pickleball overlays',
+  'bocce-ball':   'Bocce ball court · foul lines · center line · lane markers',
+  shuffleboard:   'Shuffleboard court · scoring triangles · 1-2-3 point zones',
+  volleyball:     'Volleyball court · net line · attack lines · service zones',
+  badminton:      'Badminton court · net line · service boxes · singles & doubles lines',
+  futsal:         'Futsal court · center circle · penalty areas · goal areas',
+  'inline-hockey': 'Inline hockey rink · center line · blue lines · face-off circles · goal creases',
+  handball:       'Handball court · goal areas · free-throw line · penalty spot',
+  'four-square':  'Four square court · four equal quadrants · serving square',
 };
 
 const STEP_HINTS: Record<number, string> = {

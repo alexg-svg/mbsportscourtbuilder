@@ -203,6 +203,8 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
           },
         ];
       }
+      default:
+        return [];
     }
   };
 
@@ -772,12 +774,454 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
     );
   };
 
+  // ─── BOCCE BALL ───────────────────────────────────────────────────────────
+  const renderBocce = () => {
+    const railInset  = cW * 0.08;
+    const foulDepth  = 10;
+    const midX       = cL / 2;
+
+    return (
+      <g>
+        {/* Surface */}
+        <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {/* Side rails */}
+        <line {...lp(0, railInset, cL, railInset)} {...ls} />
+        <line {...lp(0, cW - railInset, cL, cW - railInset)} {...ls} />
+        {/* Foul lines */}
+        <line {...lp(foulDepth, 0, foulDepth, cW)} {...ls} />
+        <line {...lp(cL - foulDepth, 0, cL - foulDepth, cW)} {...ls} />
+        {/* Center line */}
+        <line {...lp(midX, 0, midX, cW)} {...ls} />
+        {/* Boundary */}
+        <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
+      </g>
+    );
+  };
+
+  // ─── SHUFFLEBOARD ─────────────────────────────────────────────────────────
+  const renderShuffleboard = () => {
+    // 52 ft long × 6 ft wide
+    // Dead/approach zones: first 6 ft each end
+    // Scoring triangles: ft 6–18 from each end (12 ft each, 3 zones of 4 ft each)
+    const approach = 6;
+    const zoneDepth = 4;
+    const tenOff = approach + zoneDepth * 3; // 18 ft from end — tip of triangle
+
+    return (
+      <g>
+        {/* Surface */}
+        <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+
+        {/* Near scoring triangle (left end): 3pt tip innermost */}
+        {/* 3pt zone: ft 6–10 from near end (innermost) */}
+        <polygon
+          points={[
+            `${px(approach)},${py(cW / 2)}`,
+            `${px(approach + zoneDepth)},${py(0)}`,
+            `${px(approach + zoneDepth)},${py(cW)}`,
+          ].join(' ')}
+          fill={colors.keyArea ?? '#E53E3E'}
+          opacity={0.75}
+        />
+        {/* 2pt zone: ft 10–14 */}
+        <polygon
+          points={[
+            `${px(approach + zoneDepth)},${py(0)}`,
+            `${px(approach + zoneDepth * 2)},${py(0)}`,
+            `${px(approach + zoneDepth * 2)},${py(cW)}`,
+            `${px(approach + zoneDepth)},${py(cW)}`,
+          ].join(' ')}
+          fill={colors.serviceBox ?? '#ECC94B'}
+          opacity={0.75}
+        />
+        {/* 1pt zone: ft 14–18 */}
+        <polygon
+          points={[
+            `${px(approach + zoneDepth * 2)},${py(0)}`,
+            `${px(approach + zoneDepth * 3)},${py(0)}`,
+            `${px(approach + zoneDepth * 3)},${py(cW)}`,
+            `${px(approach + zoneDepth * 2)},${py(cW)}`,
+          ].join(' ')}
+          fill={colors.kitchen ?? '#48BB78'}
+          opacity={0.75}
+        />
+
+        {/* Far scoring triangle (right end, mirrored) */}
+        {/* 3pt zone */}
+        <polygon
+          points={[
+            `${px(cL - approach)},${py(cW / 2)}`,
+            `${px(cL - approach - zoneDepth)},${py(0)}`,
+            `${px(cL - approach - zoneDepth)},${py(cW)}`,
+          ].join(' ')}
+          fill={colors.keyArea ?? '#E53E3E'}
+          opacity={0.75}
+        />
+        {/* 2pt zone */}
+        <polygon
+          points={[
+            `${px(cL - approach - zoneDepth)},${py(0)}`,
+            `${px(cL - approach - zoneDepth * 2)},${py(0)}`,
+            `${px(cL - approach - zoneDepth * 2)},${py(cW)}`,
+            `${px(cL - approach - zoneDepth)},${py(cW)}`,
+          ].join(' ')}
+          fill={colors.serviceBox ?? '#ECC94B'}
+          opacity={0.75}
+        />
+        {/* 1pt zone */}
+        <polygon
+          points={[
+            `${px(cL - approach - zoneDepth * 2)},${py(0)}`,
+            `${px(cL - approach - zoneDepth * 3)},${py(0)}`,
+            `${px(cL - approach - zoneDepth * 3)},${py(cW)}`,
+            `${px(cL - approach - zoneDepth * 2)},${py(cW)}`,
+          ].join(' ')}
+          fill={colors.kitchen ?? '#48BB78'}
+          opacity={0.75}
+        />
+
+        {/* Zone divider lines */}
+        <line {...lp(approach, 0, approach, cW)} {...ls} />
+        <line {...lp(approach + zoneDepth, 0, approach + zoneDepth, cW)} {...ls} />
+        <line {...lp(approach + zoneDepth * 2, 0, approach + zoneDepth * 2, cW)} {...ls} />
+        <line {...lp(tenOff, 0, tenOff, cW)} {...ls} />
+        <line {...lp(cL - approach, 0, cL - approach, cW)} {...ls} />
+        <line {...lp(cL - approach - zoneDepth, 0, cL - approach - zoneDepth, cW)} {...ls} />
+        <line {...lp(cL - approach - zoneDepth * 2, 0, cL - approach - zoneDepth * 2, cW)} {...ls} />
+        <line {...lp(cL - tenOff, 0, cL - tenOff, cW)} {...ls} />
+        {/* Triangle diagonal lines */}
+        <line {...lp(approach, cW / 2, approach + zoneDepth, 0)} {...ls} />
+        <line {...lp(approach, cW / 2, approach + zoneDepth, cW)} {...ls} />
+        <line {...lp(cL - approach, cW / 2, cL - approach - zoneDepth, 0)} {...ls} />
+        <line {...lp(cL - approach, cW / 2, cL - approach - zoneDepth, cW)} {...ls} />
+        {/* Center line */}
+        <line {...lp(0, cW / 2, cL, cW / 2)} {...ls} strokeDasharray={`${scale * 0.5} ${scale * 0.3}`} />
+        {/* Boundary */}
+        <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
+      </g>
+    );
+  };
+
+  // ─── VOLLEYBALL ───────────────────────────────────────────────────────────
+  const renderVolleyball = () => {
+    const netX   = cL / 2;
+    const atkOff = 10; // attack lines 10 ft from net
+
+    return (
+      <g>
+        {/* Surface */}
+        <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {/* Boundary */}
+        <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
+        {/* Center / net line */}
+        <line
+          {...lp(netX, 0, netX, cW)}
+          stroke={colors.lines}
+          strokeWidth={Math.max(2, scale * 0.15)}
+          strokeDasharray={`${scale * 0.5} ${scale * 0.3}`}
+        />
+        {/* Attack lines */}
+        <line {...lp(netX - atkOff, 0, netX - atkOff, cW)} {...ls} />
+        <line {...lp(netX + atkOff, 0, netX + atkOff, cW)} {...ls} />
+      </g>
+    );
+  };
+
+  // ─── BADMINTON ────────────────────────────────────────────────────────────
+  const renderBadminton = () => {
+    const singlesInset = 1.5;    // singles sidelines 1.5 ft inside doubles sideline
+    const shortSvc     = 6.5;    // short service line: 6.5 ft from net
+    const longSvc      = 2.5;    // long service (doubles): 2.5 ft from baseline
+    const netX         = cL / 2;
+
+    return (
+      <g>
+        {/* Surface */}
+        <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {/* Doubles boundary */}
+        <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
+        {/* Singles sidelines */}
+        <line {...lp(0, singlesInset, cL, singlesInset)} {...ls} />
+        <line {...lp(0, cW - singlesInset, cL, cW - singlesInset)} {...ls} />
+        {/* Short service lines */}
+        <line {...lp(netX - shortSvc, 0, netX - shortSvc, cW)} {...ls} />
+        <line {...lp(netX + shortSvc, 0, netX + shortSvc, cW)} {...ls} />
+        {/* Long service lines (doubles) */}
+        <line {...lp(longSvc, 0, longSvc, cW)} {...ls} />
+        <line {...lp(cL - longSvc, 0, cL - longSvc, cW)} {...ls} />
+        {/* Center service line (only in service box area) */}
+        <line {...lp(longSvc, cW / 2, netX - shortSvc, cW / 2)} {...ls} />
+        <line {...lp(cL - longSvc, cW / 2, netX + shortSvc, cW / 2)} {...ls} />
+        {/* Net */}
+        <line
+          {...lp(netX, 0, netX, cW)}
+          stroke={colors.lines}
+          strokeWidth={Math.max(2, scale * 0.15)}
+          strokeDasharray={`${scale * 0.5} ${scale * 0.3}`}
+        />
+      </g>
+    );
+  };
+
+  // ─── FUTSAL ───────────────────────────────────────────────────────────────
+  const renderFutsal = () => {
+    const midY      = cW / 2;
+    const midX      = cL / 2;
+    const centerR   = 10;   // center circle radius (3m ≈ 10 ft)
+    const goalW     = 10;   // goal width (3m)
+    const penaltyR  = 20;   // penalty arc radius (6m)
+    const penaltySpot = 33; // penalty spot from goal line (10m)
+    const cornerR   = 1;    // corner arc radius
+
+    return (
+      <g>
+        {/* Surface */}
+        <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {/* Boundary */}
+        <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
+        {/* Center line */}
+        <line {...lp(midX, 0, midX, cW)} {...ls} />
+        {/* Center circle */}
+        <circle cx={px(midX)} cy={py(midY)} r={centerR * scale} fill="none" {...ls} />
+        {/* Center spot */}
+        <circle cx={px(midX)} cy={py(midY)} r={Math.max(3, 0.5 * scale)} fill={colors.lines} />
+
+        {/* Penalty arcs: left end */}
+        <path
+          fill="none" {...ls}
+          d={`M ${px(0)} ${py(midY - penaltyR)}
+              A ${penaltyR * scale} ${penaltyR * scale} 0 0 1
+              ${px(0)} ${py(midY + penaltyR)}`}
+          clipPath={`inset(0 0 0 ${ox}px)`}
+        />
+        {/* Goal left */}
+        <rect {...rp(-2, (cW - goalW) / 2, 2, goalW)} fill="none" {...ls} />
+
+        {/* Penalty arcs: right end */}
+        <path
+          fill="none" {...ls}
+          d={`M ${px(cL)} ${py(midY - penaltyR)}
+              A ${penaltyR * scale} ${penaltyR * scale} 0 0 0
+              ${px(cL)} ${py(midY + penaltyR)}`}
+        />
+        {/* Goal right */}
+        <rect {...rp(cL, (cW - goalW) / 2, 2, goalW)} fill="none" {...ls} />
+
+        {/* Penalty spots */}
+        <circle cx={px(penaltySpot)} cy={py(midY)} r={Math.max(3, 0.5 * scale)} fill={colors.lines} />
+        <circle cx={px(cL - penaltySpot)} cy={py(midY)} r={Math.max(3, 0.5 * scale)} fill={colors.lines} />
+
+        {/* Corner arcs */}
+        <path fill="none" {...ls} d={`M ${px(cornerR)} ${py(0)} A ${cornerR * scale} ${cornerR * scale} 0 0 0 ${px(0)} ${py(cornerR)}`} />
+        <path fill="none" {...ls} d={`M ${px(cL - cornerR)} ${py(0)} A ${cornerR * scale} ${cornerR * scale} 0 0 1 ${px(cL)} ${py(cornerR)}`} />
+        <path fill="none" {...ls} d={`M ${px(cornerR)} ${py(cW)} A ${cornerR * scale} ${cornerR * scale} 0 0 1 ${px(0)} ${py(cW - cornerR)}`} />
+        <path fill="none" {...ls} d={`M ${px(cL - cornerR)} ${py(cW)} A ${cornerR * scale} ${cornerR * scale} 0 0 0 ${px(cL)} ${py(cW - cornerR)}`} />
+      </g>
+    );
+  };
+
+  // ─── INLINE HOCKEY ────────────────────────────────────────────────────────
+  const renderInlineHockey = () => {
+    const midY       = cW / 2;
+    const midX       = cL / 2;
+    const blueLine1  = cL / 3;
+    const blueLine2  = (cL * 2) / 3;
+    const goalLineX  = 11;   // goal line 11 ft from baseline
+    const goalW      = 6;    // goal width
+    const creaseR    = 6;    // goal crease radius
+    const centerR    = 15;   // center face-off circle radius
+    const faceOffX   = blueLine1; // face-off dots near blue lines
+    const faceOffDist = 20;  // 20 ft from center width
+
+    const blueColor = '#4299E1';
+    const redColor  = colors.keyArea ?? '#E53E3E';
+
+    return (
+      <g>
+        {/* Surface */}
+        <rect {...rp(0, 0, cL, cW)} fill={colors.surface} rx={scale * 6} />
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {/* Boundary */}
+        <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} rx={scale * 6} />
+
+        {/* Center red line */}
+        <line {...lp(midX, 0, midX, cW)} stroke={redColor} strokeWidth={Math.max(2, scale * 0.12)} />
+
+        {/* Blue lines */}
+        <line {...lp(blueLine1, 0, blueLine1, cW)} stroke={blueColor} strokeWidth={Math.max(2, scale * 0.1)} />
+        <line {...lp(blueLine2, 0, blueLine2, cW)} stroke={blueColor} strokeWidth={Math.max(2, scale * 0.1)} />
+
+        {/* Goal lines */}
+        <line {...lp(goalLineX, 0, goalLineX, cW)} stroke={redColor} strokeWidth={Math.max(1.5, scale * 0.08)} />
+        <line {...lp(cL - goalLineX, 0, cL - goalLineX, cW)} stroke={redColor} strokeWidth={Math.max(1.5, scale * 0.08)} />
+
+        {/* Goal creases (semicircles from goal line into field) */}
+        <path
+          fill={redColor} fillOpacity={0.18} stroke={redColor} strokeWidth={Math.max(1.5, scale * 0.08)}
+          d={`M ${px(goalLineX)} ${py(midY - creaseR)}
+              A ${creaseR * scale} ${creaseR * scale} 0 0 1
+              ${px(goalLineX)} ${py(midY + creaseR)}
+              Z`}
+        />
+        <path
+          fill={redColor} fillOpacity={0.18} stroke={redColor} strokeWidth={Math.max(1.5, scale * 0.08)}
+          d={`M ${px(cL - goalLineX)} ${py(midY - creaseR)}
+              A ${creaseR * scale} ${creaseR * scale} 0 0 0
+              ${px(cL - goalLineX)} ${py(midY + creaseR)}
+              Z`}
+        />
+
+        {/* Goals */}
+        <rect {...rp(0, midY - goalW / 2, goalLineX, goalW)} fill="none" stroke={colors.lines} strokeWidth={Math.max(1.5, scale * 0.08)} />
+        <rect {...rp(cL - goalLineX, midY - goalW / 2, goalLineX, goalW)} fill="none" stroke={colors.lines} strokeWidth={Math.max(1.5, scale * 0.08)} />
+
+        {/* Center face-off circle */}
+        <circle cx={px(midX)} cy={py(midY)} r={centerR * scale} fill="none" stroke={redColor} strokeWidth={Math.max(1.5, scale * 0.08)} />
+        <circle cx={px(midX)} cy={py(midY)} r={Math.max(3, 0.5 * scale)} fill={redColor} />
+
+        {/* Face-off dots near blue lines */}
+        <circle cx={px(faceOffX)} cy={py(midY - faceOffDist / 2)} r={Math.max(3, 0.8 * scale)} fill={redColor} />
+        <circle cx={px(faceOffX)} cy={py(midY + faceOffDist / 2)} r={Math.max(3, 0.8 * scale)} fill={redColor} />
+        <circle cx={px(blueLine2)} cy={py(midY - faceOffDist / 2)} r={Math.max(3, 0.8 * scale)} fill={redColor} />
+        <circle cx={px(blueLine2)} cy={py(midY + faceOffDist / 2)} r={Math.max(3, 0.8 * scale)} fill={redColor} />
+      </g>
+    );
+  };
+
+  // ─── HANDBALL ─────────────────────────────────────────────────────────────
+  const renderHandball = () => {
+    const midY       = cW / 2;
+    const midX       = cL / 2;
+    const goalW      = 10;   // goal 3m = 10 ft
+    const sixMeter   = 20;   // 6m arc radius
+    const nineMeter  = 30;   // 9m arc radius
+    const penSpot    = 23;   // 7m = 23 ft penalty spot
+
+    return (
+      <g>
+        {/* Surface */}
+        <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {/* Boundary */}
+        <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
+        {/* Center line */}
+        <line {...lp(midX, 0, midX, cW)} {...ls} />
+        {/* Center circle */}
+        <circle cx={px(midX)} cy={py(midY)} r={3 * scale} fill="none" {...ls} />
+
+        {/* Goal areas (6m solid arcs) */}
+        {/* Left goal area: semicircle from center of left goal line */}
+        <path
+          fill={colors.keyArea ?? colors.border} fillOpacity={0.18}
+          stroke={colors.lines} strokeWidth={Math.max(1.5, scale * 0.08)}
+          d={`M ${px(0)} ${py(midY - sixMeter)}
+              A ${sixMeter * scale} ${sixMeter * scale} 0 0 1
+              ${px(0)} ${py(midY + sixMeter)}
+              L ${px(0)} ${py(midY - sixMeter)}`}
+        />
+        {/* Right goal area */}
+        <path
+          fill={colors.keyArea ?? colors.border} fillOpacity={0.18}
+          stroke={colors.lines} strokeWidth={Math.max(1.5, scale * 0.08)}
+          d={`M ${px(cL)} ${py(midY - sixMeter)}
+              A ${sixMeter * scale} ${sixMeter * scale} 0 0 0
+              ${px(cL)} ${py(midY + sixMeter)}
+              L ${px(cL)} ${py(midY - sixMeter)}`}
+        />
+
+        {/* 9m dashed arcs */}
+        <path
+          fill="none" stroke={colors.lines} strokeWidth={Math.max(1.5, scale * 0.08)} strokeDasharray="4 3"
+          d={`M ${px(0)} ${py(midY - nineMeter)}
+              A ${nineMeter * scale} ${nineMeter * scale} 0 0 1
+              ${px(0)} ${py(midY + nineMeter)}`}
+        />
+        <path
+          fill="none" stroke={colors.lines} strokeWidth={Math.max(1.5, scale * 0.08)} strokeDasharray="4 3"
+          d={`M ${px(cL)} ${py(midY - nineMeter)}
+              A ${nineMeter * scale} ${nineMeter * scale} 0 0 0
+              ${px(cL)} ${py(midY + nineMeter)}`}
+        />
+
+        {/* Goals */}
+        <rect {...rp(-2, (cW - goalW) / 2, 2, goalW)} fill="none" {...ls} />
+        <rect {...rp(cL, (cW - goalW) / 2, 2, goalW)} fill="none" {...ls} />
+
+        {/* Penalty spots */}
+        <circle cx={px(penSpot)} cy={py(midY)} r={Math.max(3, 0.6 * scale)} fill={colors.lines} />
+        <circle cx={px(cL - penSpot)} cy={py(midY)} r={Math.max(3, 0.6 * scale)} fill={colors.lines} />
+      </g>
+    );
+  };
+
+  // ─── FOUR SQUARE ──────────────────────────────────────────────────────────
+  const renderFourSquare = () => {
+    const midX = cL / 2;
+    const midY = cW / 2;
+    const FONT_SZ = Math.max(10, Math.min(28, scale * 3.5));
+
+    return (
+      <g>
+        {/* Surface */}
+        <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {/* Outer boundary */}
+        <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
+        {/* Dividing lines */}
+        <line {...lp(midX, 0, midX, cW)} {...ls} />
+        <line {...lp(0, midY, cL, midY)} {...ls} />
+        {/* Square labels */}
+        <text
+          x={px(midX / 2)} y={py(midY / 2)}
+          textAnchor="middle" dominantBaseline="middle"
+          fill={colors.lines} fontSize={FONT_SZ} fontWeight="bold"
+          fontFamily="Inter, system-ui, sans-serif"
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
+        >1</text>
+        <text
+          x={px(midX + midX / 2)} y={py(midY / 2)}
+          textAnchor="middle" dominantBaseline="middle"
+          fill={colors.lines} fontSize={FONT_SZ} fontWeight="bold"
+          fontFamily="Inter, system-ui, sans-serif"
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
+        >2</text>
+        <text
+          x={px(midX / 2)} y={py(midY + midY / 2)}
+          textAnchor="middle" dominantBaseline="middle"
+          fill={colors.lines} fontSize={FONT_SZ} fontWeight="bold"
+          fontFamily="Inter, system-ui, sans-serif"
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
+        >3</text>
+        <text
+          x={px(midX + midX / 2)} y={py(midY + midY / 2)}
+          textAnchor="middle" dominantBaseline="middle"
+          fill={colors.lines} fontSize={FONT_SZ} fontWeight="bold"
+          fontFamily="Inter, system-ui, sans-serif"
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
+        >4</text>
+      </g>
+    );
+  };
+
   const renderCourt = () => {
     switch (type) {
-      case 'basketball':  return renderBasketball();
-      case 'tennis':      return renderTennis();
-      case 'pickleball':  return renderPickleball();
-      case 'multi-sport': return renderMultiSport();
+      case 'basketball':    return renderBasketball();
+      case 'tennis':        return renderTennis();
+      case 'pickleball':    return renderPickleball();
+      case 'multi-sport':   return renderMultiSport();
+      case 'bocce-ball':    return renderBocce();
+      case 'shuffleboard':  return renderShuffleboard();
+      case 'volleyball':    return renderVolleyball();
+      case 'badminton':     return renderBadminton();
+      case 'futsal':        return renderFutsal();
+      case 'inline-hockey': return renderInlineHockey();
+      case 'handball':      return renderHandball();
+      case 'four-square':   return renderFourSquare();
     }
   };
 

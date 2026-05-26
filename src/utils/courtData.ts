@@ -94,6 +94,110 @@ export const COURT_PRESETS: CourtPreset[] = [
     description: 'Tennis + Basketball + Pickleball combo',
     recommended: 'commercial',
   },
+  // Bocce Ball
+  {
+    id: 'bocce-ball-residential',
+    name: 'Bocce Ball (Residential)',
+    type: 'bocce-ball',
+    dimensions: { width: 12, length: 60 },
+    description: 'Standard backyard bocce court',
+    recommended: 'residential',
+  },
+  {
+    id: 'bocce-ball-tournament',
+    name: 'Bocce Ball (Tournament)',
+    type: 'bocce-ball',
+    dimensions: { width: 13, length: 91 },
+    description: 'Official tournament size',
+    recommended: 'commercial',
+  },
+  // Shuffleboard
+  {
+    id: 'shuffleboard-standard',
+    name: 'Shuffleboard Court',
+    type: 'shuffleboard',
+    dimensions: { width: 6, length: 52 },
+    description: 'Standard regulation shuffleboard',
+    recommended: 'both',
+  },
+  // Volleyball
+  {
+    id: 'volleyball-regulation',
+    name: 'Volleyball Court',
+    type: 'volleyball',
+    dimensions: { width: 30, length: 60 },
+    description: 'Regulation hard court volleyball',
+    recommended: 'both',
+  },
+  // Badminton
+  {
+    id: 'badminton-doubles',
+    name: 'Badminton Court (Doubles)',
+    type: 'badminton',
+    dimensions: { width: 20, length: 44 },
+    description: 'Official BWF doubles court',
+    recommended: 'both',
+  },
+  // Futsal
+  {
+    id: 'futsal-residential',
+    name: 'Futsal (Small)',
+    type: 'futsal',
+    dimensions: { width: 65, length: 100 },
+    description: 'Recreational futsal court',
+    recommended: 'residential',
+  },
+  {
+    id: 'futsal-tournament',
+    name: 'Futsal (Tournament)',
+    type: 'futsal',
+    dimensions: { width: 66, length: 131 },
+    description: 'FIFA futsal regulation size',
+    recommended: 'commercial',
+  },
+  // Inline Hockey
+  {
+    id: 'inline-hockey-residential',
+    name: 'Inline Hockey (Small)',
+    type: 'inline-hockey',
+    dimensions: { width: 50, length: 100 },
+    description: 'Recreational inline hockey rink',
+    recommended: 'residential',
+  },
+  {
+    id: 'inline-hockey-full',
+    name: 'Inline Hockey (Full)',
+    type: 'inline-hockey',
+    dimensions: { width: 85, length: 185 },
+    description: 'Regulation inline hockey rink',
+    recommended: 'commercial',
+  },
+  // Handball
+  {
+    id: 'handball-regulation',
+    name: 'Handball Court',
+    type: 'handball',
+    dimensions: { width: 66, length: 131 },
+    description: 'IHF regulation handball court',
+    recommended: 'both',
+  },
+  // Four Square
+  {
+    id: 'four-square-residential',
+    name: 'Four Square (Small)',
+    type: 'four-square',
+    dimensions: { width: 16, length: 16 },
+    description: 'Standard backyard four square',
+    recommended: 'residential',
+  },
+  {
+    id: 'four-square-large',
+    name: 'Four Square (Large)',
+    type: 'four-square',
+    dimensions: { width: 24, length: 24 },
+    description: 'Larger four square court',
+    recommended: 'commercial',
+  },
 ];
 
 // ─── Default Colors Per Court Type ───────────────────────────────────────────
@@ -121,6 +225,50 @@ export const DEFAULT_COLORS: Record<CourtType, CourtColors> = {
     lines:   '#FFFFFF',
     border:  '#0F2147',
     keyArea: '#C8440C',
+  },
+  'bocce-ball': {
+    surface: '#C8A882',
+    lines:   '#FFFFFF',
+    border:  '#8B6914',
+  },
+  'shuffleboard': {
+    surface:    '#2D5A8E',
+    lines:      '#FFFFFF',
+    border:     '#1A3A5C',
+    keyArea:    '#E53E3E',
+    serviceBox: '#ECC94B',
+    kitchen:    '#48BB78',
+  },
+  'volleyball': {
+    surface: '#2B6CB0',
+    lines:   '#FFFFFF',
+    border:  '#1A4480',
+  },
+  'badminton': {
+    surface: '#276749',
+    lines:   '#FFFFFF',
+    border:  '#1C4532',
+  },
+  'futsal': {
+    surface: '#276749',
+    lines:   '#FFFFFF',
+    border:  '#1C4532',
+  },
+  'inline-hockey': {
+    surface: '#2C5282',
+    lines:   '#FFFFFF',
+    border:  '#1A3A5C',
+    keyArea: '#E53E3E',
+  },
+  'handball': {
+    surface: '#C05621',
+    lines:   '#FFFFFF',
+    border:  '#7B341E',
+  },
+  'four-square': {
+    surface: '#553C9A',
+    lines:   '#FFFFFF',
+    border:  '#322659',
   },
 };
 

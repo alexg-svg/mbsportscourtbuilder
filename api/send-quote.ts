@@ -22,7 +22,7 @@ const HEX_COLOR = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color');
 const SAFE_STRING = (max: number) =>
   z.string().max(max).transform((s) => s.replace(/[\r\n\0]/g, ' ').trim());
 
-const COURT_TYPES   = ['basketball', 'tennis', 'pickleball', 'multi-sport'] as const;
+const COURT_TYPES   = ['basketball', 'tennis', 'pickleball', 'multi-sport', 'bocce-ball', 'shuffleboard', 'volleyball', 'badminton', 'futsal', 'inline-hockey', 'handball', 'four-square'] as const;
 const PROP_TYPES    = ['residential', 'commercial'] as const;
 const FINISHES      = ['smooth', 'textured', 'cushioned'] as const;
 const ACCESSORY_IDS = [
@@ -97,6 +97,10 @@ function isRateLimited(ip: string): boolean {
 const COURT_LABELS: Record<string, string> = {
   basketball: 'Basketball', tennis: 'Tennis',
   pickleball: 'Pickleball', 'multi-sport': 'Multi-Sport',
+  'bocce-ball': 'Bocce Ball', shuffleboard: 'Shuffleboard',
+  volleyball: 'Volleyball', badminton: 'Badminton',
+  futsal: 'Futsal', 'inline-hockey': 'Inline Hockey',
+  handball: 'Handball', 'four-square': 'Four Square',
 };
 const FINISH_LABELS: Record<string, string> = {
   smooth: 'Smooth Asphalt', textured: 'Textured Asphalt', cushioned: 'Cushioned Asphalt',

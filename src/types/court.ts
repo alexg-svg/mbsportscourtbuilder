@@ -1,4 +1,4 @@
-export type CourtType = 'basketball' | 'tennis' | 'pickleball' | 'multi-sport';
+export type CourtType = 'basketball' | 'tennis' | 'pickleball' | 'multi-sport' | 'bocce-ball' | 'shuffleboard' | 'volleyball' | 'badminton' | 'futsal' | 'inline-hockey' | 'handball' | 'four-square';
 export type PropertyType = 'residential' | 'commercial';
 export type SurfaceFinish = 'smooth' | 'textured' | 'cushioned';
 

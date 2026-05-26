@@ -10,6 +10,7 @@ interface Props {
   onBack: () => void;
   onSubmit: (data: ContactData) => void;
   getCaptureImage?: () => Promise<string | undefined>;
+  verifiedEmail?: string;
 }
 
 export interface ContactData {
@@ -29,8 +30,8 @@ const FINISH_LABELS: Record<string, string> = {
   smooth: 'Smooth Asphalt', textured: 'Textured Asphalt', cushioned: 'Cushioned Asphalt',
 };
 
-export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCaptureImage }) => {
-  const [form, setForm] = useState<ContactData>({ name: '', email: '', phone: '', zip: '', message: '' });
+export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCaptureImage, verifiedEmail }) => {
+  const [form, setForm] = useState<ContactData>({ name: '', email: verifiedEmail ?? '', phone: '', zip: '', message: '' });
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

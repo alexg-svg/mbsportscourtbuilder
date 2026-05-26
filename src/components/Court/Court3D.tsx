@@ -567,28 +567,248 @@ function MultiSportCourt({ config }: { config: CourtConfig }) {
 }
 
 // ─── Bocce Ball ───────────────────────────────────────────────────────────────
-function BocceCourt({ config }: { config: CourtConfig }) {
+function BocceBallCourt({ config }: { config: CourtConfig }) {
   const { dimensions: { length: L, width: W }, colors, surfaceFinish } = config;
   const lc = colors.lines;
-  const railInset = W * 0.08;
-  const foulDepth = 10;
-  const midX = L / 2;
   const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
-  const pad = 2;
+  const pad = 4;
 
   return (
     <group>
-      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} yOff={0.005} />
-      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} yOff={0.01} roughness={roughness} />
+      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} alpha={1} yOff={0.005} />
+      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} roughness={roughness} />
       <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
-      {/* Side rails */}
-      <Seg x1={0} y1={railInset}       x2={L} y2={railInset}       L={L} W={W} color={lc} />
-      <Seg x1={0} y1={W - railInset}   x2={L} y2={W - railInset}   L={L} W={W} color={lc} />
-      {/* Foul lines */}
-      <Seg x1={foulDepth}     y1={0} x2={foulDepth}     y2={W} L={L} W={W} color={lc} />
-      <Seg x1={L - foulDepth} y1={0} x2={L - foulDepth} y2={W} L={L} W={W} color={lc} />
+      <Seg x1={L / 2} y1={0} x2={L / 2} y2={W} L={L} W={W} color={lc} />
+      <Seg x1={L * 0.25} y1={0} x2={L * 0.25} y2={W} L={L} W={W} color={lc} lw={0.03} />
+      <Seg x1={L * 0.75} y1={0} x2={L * 0.75} y2={W} L={L} W={W} color={lc} lw={0.03} />
+    </group>
+  );
+}
+
+// ─── Badminton ────────────────────────────────────────────────────────────────
+function BadmintonCourt({ config }: { config: CourtConfig }) {
+  const { dimensions: { length: L, width: W }, colors, selectedAccessories: acc, surfaceFinish } = config;
+  const isSingles = W <= 17;
+  const singW = 17;
+  const sOff  = isSingles ? 0 : (W - singW) / 2;
+  const svcLen = (L - 13) / 2;
+  const lc = colors.lines;
+  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
+  const pad = 6;
+
+  return (
+    <group>
+      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} alpha={1} yOff={0.005} />
+      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} roughness={roughness} />
+      <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
+      {/* Singles sidelines for doubles court */}
+      {!isSingles && (
+        <>
+          <Seg x1={0} y1={sOff} x2={L} y2={sOff} L={L} W={W} color={lc} />
+          <Seg x1={0} y1={sOff + singW} x2={L} y2={sOff + singW} L={L} W={W} color={lc} />
+        </>
+      )}
+      <Seg x1={svcLen} y1={isSingles ? 0 : sOff} x2={svcLen} y2={isSingles ? W : sOff + singW} L={L} W={W} color={lc} />
+      <Seg x1={L - svcLen} y1={isSingles ? 0 : sOff} x2={L - svcLen} y2={isSingles ? W : sOff + singW} L={L} W={W} color={lc} />
+      <Seg x1={svcLen} y1={W / 2} x2={L - svcLen} y2={W / 2} L={L} W={W} color={lc} />
+      {/* Net */}
+      <mesh position={[0, 0.07, tz(L / 2, L)]}>
+        <boxGeometry args={[(W + 0.4) * S, 0.14, 0.02]} />
+        <meshStandardMaterial color="white" transparent opacity={0.7} />
+      </mesh>
+      {acc.includes('badminton-net') && (
+        <>
+          <mesh position={[tx(0, W) - 0.03, 0.1, tz(L / 2, L)]}>
+            <cylinderGeometry args={[0.025, 0.025, 0.2, 8]} />
+            <meshStandardMaterial color="#6B7280" />
+          </mesh>
+          <mesh position={[tx(W, W) + 0.03, 0.1, tz(L / 2, L)]}>
+            <cylinderGeometry args={[0.025, 0.025, 0.2, 8]} />
+            <meshStandardMaterial color="#6B7280" />
+          </mesh>
+        </>
+      )}
+    </group>
+  );
+}
+
+// ─── Futsal ───────────────────────────────────────────────────────────────────
+function FutsalCourt({ config }: { config: CourtConfig }) {
+  const { dimensions: { length: L, width: W }, colors, selectedAccessories: acc, surfaceFinish } = config;
+  const midY = W / 2;
+  const penW = 20, penLen = 13;
+  const goalW = 10, goalLen = 2;
+  const lc = colors.lines;
+  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
+  const pad = 8;
+
+  return (
+    <group>
+      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} alpha={1} yOff={0.005} />
+      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} roughness={roughness} />
+      <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
+      <Seg x1={L / 2} y1={0} x2={L / 2} y2={W} L={L} W={W} color={lc} />
+      <ArcLine cxFt={L / 2} cyFt={midY} r={6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
+      <Border x={0} y={(W - penW) / 2} w={penLen} h={penW} L={L} W={W} color={lc} />
+      <Border x={L - penLen} y={(W - penW) / 2} w={penLen} h={penW} L={L} W={W} color={lc} />
+      <Border x={0} y={(W - goalW) / 2} w={goalLen} h={goalW} L={L} W={W} color={lc} lw={0.04} />
+      <Border x={L - goalLen} y={(W - goalW) / 2} w={goalLen} h={goalW} L={L} W={W} color={lc} lw={0.04} />
+      {/* Futsal goals */}
+      {acc.includes('futsal-goals') && (
+        <>
+          {/* Left goal */}
+          <mesh position={[tx(midY, W), 0.1, tz(-goalLen / 2, L)]}>
+            <boxGeometry args={[goalW * S, 0.2, goalLen * S]} />
+            <meshStandardMaterial color="white" transparent opacity={0.3} wireframe />
+          </mesh>
+          {/* Right goal */}
+          <mesh position={[tx(midY, W), 0.1, tz(L + goalLen / 2, L)]}>
+            <boxGeometry args={[goalW * S, 0.2, goalLen * S]} />
+            <meshStandardMaterial color="white" transparent opacity={0.3} wireframe />
+          </mesh>
+        </>
+      )}
+    </group>
+  );
+}
+
+// ─── Inline Hockey ────────────────────────────────────────────────────────────
+function InlineHockeyCourt({ config }: { config: CourtConfig }) {
+  const { dimensions: { length: L, width: W }, colors, selectedAccessories: acc, surfaceFinish } = config;
+  const midY = W / 2;
+  const goalLineX = 11;
+  const goalW = 6, goalDepth = 4;
+  const lc = colors.lines;
+  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
+  const pad = 8;
+
+  return (
+    <group>
+      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} alpha={1} yOff={0.005} />
+      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} roughness={roughness} />
+      <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
       {/* Center line */}
-      <Seg x1={midX} y1={0} x2={midX} y2={W} L={L} W={W} color={lc} />
+      <Seg x1={L / 2} y1={0} x2={L / 2} y2={W} L={L} W={W} color={lc} lw={0.08} />
+      {/* Blue lines */}
+      <Seg x1={L * 0.3} y1={0} x2={L * 0.3} y2={W} L={L} W={W} color="#1E40AF" lw={0.08} />
+      <Seg x1={L * 0.7} y1={0} x2={L * 0.7} y2={W} L={L} W={W} color="#1E40AF" lw={0.08} />
+      {/* Goal lines */}
+      <Seg x1={goalLineX} y1={0} x2={goalLineX} y2={W} L={L} W={W} color="#EF4444" lw={0.05} />
+      <Seg x1={L - goalLineX} y1={0} x2={L - goalLineX} y2={W} L={L} W={W} color="#EF4444" lw={0.05} />
+      {/* Center circle */}
+      <ArcLine cxFt={L / 2} cyFt={midY} r={8} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
+      {/* Hockey goals */}
+      {acc.includes('hockey-goals') && (
+        <>
+          <mesh position={[tx(midY, W), 0.06, tz(goalLineX - goalDepth / 2, L)]}>
+            <boxGeometry args={[goalW * S, 0.12, goalDepth * S]} />
+            <meshStandardMaterial color="white" transparent opacity={0.3} wireframe />
+          </mesh>
+          <mesh position={[tx(midY, W), 0.06, tz(L - goalLineX + goalDepth / 2, L)]}>
+            <boxGeometry args={[goalW * S, 0.12, goalDepth * S]} />
+            <meshStandardMaterial color="white" transparent opacity={0.3} wireframe />
+          </mesh>
+        </>
+      )}
+      {/* Dasher boards */}
+      {acc.includes('dasher-boards') && (
+        <>
+          <mesh position={[0, 0.02, tz(0, L)]}>
+            <boxGeometry args={[(W * S) + 0.05, 0.04, 0.025]} />
+            <meshStandardMaterial color="#E2E8F0" transparent opacity={0.85} />
+          </mesh>
+          <mesh position={[0, 0.02, tz(L, L)]}>
+            <boxGeometry args={[(W * S) + 0.05, 0.04, 0.025]} />
+            <meshStandardMaterial color="#E2E8F0" transparent opacity={0.85} />
+          </mesh>
+          <mesh position={[tx(0, W) - 0.01, 0.02, 0]}>
+            <boxGeometry args={[0.025, 0.04, (L * S)]} />
+            <meshStandardMaterial color="#E2E8F0" transparent opacity={0.85} />
+          </mesh>
+          <mesh position={[tx(W, W) + 0.01, 0.02, 0]}>
+            <boxGeometry args={[0.025, 0.04, (L * S)]} />
+            <meshStandardMaterial color="#E2E8F0" transparent opacity={0.85} />
+          </mesh>
+        </>
+      )}
+    </group>
+  );
+}
+
+// ─── Handball ─────────────────────────────────────────────────────────────────
+function HandballCourt({ config }: { config: CourtConfig }) {
+  const { dimensions: { length: L, width: W }, colors, selectedAccessories: acc, surfaceFinish } = config;
+  const midY = W / 2;
+  const goalW = 10, goalLen = 2;
+  const lc = colors.lines;
+  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
+  const pad = 8;
+
+  return (
+    <group>
+      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} alpha={1} yOff={0.005} />
+      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} roughness={roughness} />
+      <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
+      <Seg x1={L / 2} y1={0} x2={L / 2} y2={W} L={L} W={W} color={lc} />
+      <ArcLine cxFt={L / 2} cyFt={midY} r={9.84} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
+      {/* Goal area arcs */}
+      <ArcLine cxFt={0} cyFt={midY} r={19.7} a0={-Math.PI / 6} a1={Math.PI / 6} L={L} W={W} color={lc} />
+      <ArcLine cxFt={L} cyFt={midY} r={19.7} a0={Math.PI - Math.PI / 6} a1={Math.PI + Math.PI / 6} L={L} W={W} color={lc} />
+      {/* Goals on court */}
+      <Border x={0} y={(W - goalW) / 2} w={goalLen} h={goalW} L={L} W={W} color={lc} lw={0.06} />
+      <Border x={L - goalLen} y={(W - goalW) / 2} w={goalLen} h={goalW} L={L} W={W} color={lc} lw={0.06} />
+      {/* Handball goals accessory */}
+      {acc.includes('handball-goals') && (
+        <>
+          <mesh position={[tx(midY, W), 0.1, tz(-goalLen / 2, L)]}>
+            <boxGeometry args={[goalW * S, 0.2, goalLen * S]} />
+            <meshStandardMaterial color="white" transparent opacity={0.3} wireframe />
+          </mesh>
+          <mesh position={[tx(midY, W), 0.1, tz(L + goalLen / 2, L)]}>
+            <boxGeometry args={[goalW * S, 0.2, goalLen * S]} />
+            <meshStandardMaterial color="white" transparent opacity={0.3} wireframe />
+          </mesh>
+        </>
+      )}
+    </group>
+  );
+}
+
+// ─── Volleyball ───────────────────────────────────────────────────────────────
+function VolleyballCourt({ config }: { config: CourtConfig }) {
+  const { dimensions: { length: L, width: W }, colors, selectedAccessories: acc, surfaceFinish } = config;
+  const attackLine = 10;
+  const lc = colors.lines;
+  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
+  const pad = 8;
+
+  return (
+    <group>
+      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} alpha={1} yOff={0.005} />
+      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} roughness={roughness} />
+      <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
+      {/* Center/net line */}
+      <Seg x1={L / 2} y1={0} x2={L / 2} y2={W} L={L} W={W} color={lc} lw={0.08} />
+      {/* Attack lines */}
+      <Seg x1={L / 2 - attackLine} y1={0} x2={L / 2 - attackLine} y2={W} L={L} W={W} color={lc} />
+      <Seg x1={L / 2 + attackLine} y1={0} x2={L / 2 + attackLine} y2={W} L={L} W={W} color={lc} />
+      {/* Net */}
+      <mesh position={[0, 0.09, tz(L / 2, L)]}>
+        <boxGeometry args={[(W + 0.4) * S, 0.18, 0.025]} />
+        <meshStandardMaterial color="white" transparent opacity={0.7} />
+      </mesh>
+      {acc.includes('volleyball-net') && (
+        <>
+          <mesh position={[tx(0, W) - 0.04, 0.12, tz(L / 2, L)]}>
+            <cylinderGeometry args={[0.03, 0.03, 0.24, 8]} />
+            <meshStandardMaterial color="#6B7280" />
+          </mesh>
+          <mesh position={[tx(W, W) + 0.04, 0.12, tz(L / 2, L)]}>
+            <cylinderGeometry args={[0.03, 0.03, 0.24, 8]} />
+            <meshStandardMaterial color="#6B7280" />
+          </mesh>
+        </>
+      )}
     </group>
   );
 }
@@ -597,250 +817,64 @@ function BocceCourt({ config }: { config: CourtConfig }) {
 function ShuffleboardCourt({ config }: { config: CourtConfig }) {
   const { dimensions: { length: L, width: W }, colors, surfaceFinish } = config;
   const lc = colors.lines;
-  const approach = 6;
-  const zoneDepth = 4;
-  const kc = colors.keyArea  ?? '#E53E3E';
-  const sbc = colors.serviceBox ?? '#ECC94B';
-  const kic = colors.kitchen ?? '#48BB78';
   const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
-  const pad = 1;
+  const pad = 4;
 
   return (
     <group>
-      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} yOff={0.005} />
-      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} yOff={0.01} roughness={roughness} />
-      {/* Scoring zones - near end */}
-      <Slab x={approach}                  y={0} w={zoneDepth} h={W} L={L} W={W} color={kc}  alpha={0.75} yOff={0.012} />
-      <Slab x={approach + zoneDepth}      y={0} w={zoneDepth} h={W} L={L} W={W} color={sbc} alpha={0.75} yOff={0.012} />
-      <Slab x={approach + zoneDepth * 2}  y={0} w={zoneDepth} h={W} L={L} W={W} color={kic} alpha={0.75} yOff={0.012} />
-      {/* Scoring zones - far end */}
-      <Slab x={L - approach - zoneDepth}             y={0} w={zoneDepth} h={W} L={L} W={W} color={kc}  alpha={0.75} yOff={0.012} />
-      <Slab x={L - approach - zoneDepth * 2}          y={0} w={zoneDepth} h={W} L={L} W={W} color={sbc} alpha={0.75} yOff={0.012} />
-      <Slab x={L - approach - zoneDepth * 3}          y={0} w={zoneDepth} h={W} L={L} W={W} color={kic} alpha={0.75} yOff={0.012} />
+      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} alpha={1} yOff={0.005} />
+      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} roughness={roughness} />
       <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
-      {/* Zone lines */}
-      <Seg x1={approach}                    y1={0} x2={approach}                    y2={W} L={L} W={W} color={lc} />
-      <Seg x1={approach + zoneDepth}        y1={0} x2={approach + zoneDepth}        y2={W} L={L} W={W} color={lc} />
-      <Seg x1={approach + zoneDepth * 2}    y1={0} x2={approach + zoneDepth * 2}    y2={W} L={L} W={W} color={lc} />
-      <Seg x1={approach + zoneDepth * 3}    y1={0} x2={approach + zoneDepth * 3}    y2={W} L={L} W={W} color={lc} />
-      <Seg x1={L - approach}                y1={0} x2={L - approach}                y2={W} L={L} W={W} color={lc} />
-      <Seg x1={L - approach - zoneDepth}    y1={0} x2={L - approach - zoneDepth}    y2={W} L={L} W={W} color={lc} />
-      <Seg x1={L - approach - zoneDepth*2}  y1={0} x2={L - approach - zoneDepth*2}  y2={W} L={L} W={W} color={lc} />
-      <Seg x1={L - approach - zoneDepth*3}  y1={0} x2={L - approach - zoneDepth*3}  y2={W} L={L} W={W} color={lc} />
-      {/* Center line */}
+      <Seg x1={5} y1={0} x2={5} y2={W} L={L} W={W} color={lc} />
+      <Seg x1={8} y1={0} x2={8} y2={W} L={L} W={W} color={lc} />
+      <Seg x1={12} y1={0} x2={12} y2={W} L={L} W={W} color={lc} />
+      <Seg x1={L - 5} y1={0} x2={L - 5} y2={W} L={L} W={W} color={lc} />
+      <Seg x1={L - 8} y1={0} x2={L - 8} y2={W} L={L} W={W} color={lc} />
+      <Seg x1={L - 12} y1={0} x2={L - 12} y2={W} L={L} W={W} color={lc} />
+      {/* Dead zone */}
+      <Slab x={L / 2 - 5} y={0} w={10} h={W} L={L} W={W} color={lc} alpha={0.12} yOff={0.012} />
+    </group>
+  );
+}
+
+// ─── Four-Square ──────────────────────────────────────────────────────────────
+function FourSquareCourt({ config }: { config: CourtConfig }) {
+  const { dimensions: { length: L, width: W }, colors, surfaceFinish } = config;
+  const lc = colors.lines;
+  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
+  const pad = 4;
+
+  return (
+    <group>
+      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} alpha={1} yOff={0.005} />
+      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} alpha={1} yOff={0.01} roughness={roughness} />
+      <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
+      <Seg x1={L / 2} y1={0} x2={L / 2} y2={W} L={L} W={W} color={lc} />
       <Seg x1={0} y1={W / 2} x2={L} y2={W / 2} L={L} W={W} color={lc} />
     </group>
   );
 }
 
-// ─── Volleyball ───────────────────────────────────────────────────────────────
-function VolleyballCourt({ config }: { config: CourtConfig }) {
-  const { dimensions: { length: L, width: W }, colors, surfaceFinish } = config;
-  const lc = colors.lines;
-  const netX = L / 2;
-  const atkOff = 10;
-  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
-  const pad = 4;
+// ─── Sport-Specific Accessories 3D ───────────────────────────────────────────
+function SportSpecificAccessories3D({ config }: { config: CourtConfig }) {
+  const { dimensions: { length: L, width: W }, selectedAccessories: acc } = config;
+  const nodes: React.ReactNode[] = [];
 
-  return (
-    <group>
-      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} yOff={0.005} />
-      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} yOff={0.01} roughness={roughness} />
-      <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
-      {/* Attack lines */}
-      <Seg x1={netX - atkOff} y1={0} x2={netX - atkOff} y2={W} L={L} W={W} color={lc} />
-      <Seg x1={netX + atkOff} y1={0} x2={netX + atkOff} y2={W} L={L} W={W} color={lc} />
-      {/* Net */}
-      <mesh position={[0, 0.08, tz(netX, L)]}>
-        <boxGeometry args={[(W + 0.4) * S, 0.16, 0.025]} />
-        <meshStandardMaterial color="white" transparent opacity={0.7} />
-      </mesh>
-    </group>
-  );
-}
+  // Bocce side rails
+  if (config.type === 'bocce-ball' && acc.includes('bocce-side-rails')) {
+    nodes.push(
+      <mesh key="bocce-rail-n" position={[tx(1, W), 0.015, 0]}>
+        <boxGeometry args={[0.15, 0.03, L * S]} />
+        <meshStandardMaterial color="#92400E" roughness={0.85} />
+      </mesh>,
+      <mesh key="bocce-rail-s" position={[tx(W - 1, W), 0.015, 0]}>
+        <boxGeometry args={[0.15, 0.03, L * S]} />
+        <meshStandardMaterial color="#92400E" roughness={0.85} />
+      </mesh>,
+    );
+  }
 
-// ─── Badminton ────────────────────────────────────────────────────────────────
-function BadmintonCourt({ config }: { config: CourtConfig }) {
-  const { dimensions: { length: L, width: W }, colors, surfaceFinish } = config;
-  const lc = colors.lines;
-  const singlesInset = 1.5;
-  const shortSvc = 6.5;
-  const longSvc = 2.5;
-  const netX = L / 2;
-  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
-  const pad = 3;
-
-  return (
-    <group>
-      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} yOff={0.005} />
-      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} yOff={0.01} roughness={roughness} />
-      <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
-      {/* Singles sidelines */}
-      <Seg x1={0} y1={singlesInset}       x2={L} y2={singlesInset}       L={L} W={W} color={lc} />
-      <Seg x1={0} y1={W - singlesInset}   x2={L} y2={W - singlesInset}   L={L} W={W} color={lc} />
-      {/* Short service lines */}
-      <Seg x1={netX - shortSvc} y1={0} x2={netX - shortSvc} y2={W} L={L} W={W} color={lc} />
-      <Seg x1={netX + shortSvc} y1={0} x2={netX + shortSvc} y2={W} L={L} W={W} color={lc} />
-      {/* Long service lines */}
-      <Seg x1={longSvc}     y1={0} x2={longSvc}     y2={W} L={L} W={W} color={lc} />
-      <Seg x1={L - longSvc} y1={0} x2={L - longSvc} y2={W} L={L} W={W} color={lc} />
-      {/* Center service line */}
-      <Seg x1={longSvc}     y1={W / 2} x2={netX - shortSvc} y2={W / 2} L={L} W={W} color={lc} />
-      <Seg x1={L - longSvc} y1={W / 2} x2={netX + shortSvc} y2={W / 2} L={L} W={W} color={lc} />
-      {/* Net */}
-      <mesh position={[0, 0.07, tz(netX, L)]}>
-        <boxGeometry args={[(W + 0.3) * S, 0.14, 0.02]} />
-        <meshStandardMaterial color="white" transparent opacity={0.65} />
-      </mesh>
-    </group>
-  );
-}
-
-// ─── Futsal ───────────────────────────────────────────────────────────────────
-function FutsalCourt({ config }: { config: CourtConfig }) {
-  const { dimensions: { length: L, width: W }, colors, surfaceFinish } = config;
-  const lc = colors.lines;
-  const midY = W / 2;
-  const midX = L / 2;
-  const centerR = 10;
-  const goalW = 10;
-  const penaltyR = 20;
-  const penaltySpot = 33;
-  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
-  const pad = 4;
-
-  return (
-    <group>
-      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} yOff={0.005} />
-      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} yOff={0.01} roughness={roughness} />
-      <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
-      {/* Center line */}
-      <Seg x1={midX} y1={0} x2={midX} y2={W} L={L} W={W} color={lc} />
-      {/* Center circle */}
-      <ArcLine cxFt={midX} cyFt={midY} r={centerR} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
-      {/* Penalty arcs (half circles from goal lines, clamped to field) */}
-      <ArcLine cxFt={0} cyFt={midY} r={penaltyR} a0={-Math.PI / 2} a1={Math.PI / 2} L={L} W={W} color={lc} />
-      <ArcLine cxFt={L} cyFt={midY} r={penaltyR} a0={Math.PI / 2} a1={Math.PI * 3 / 2} L={L} W={W} color={lc} />
-      {/* Penalty spots */}
-      <ArcLine cxFt={penaltySpot}     cyFt={midY} r={0.5} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} lw={3} />
-      <ArcLine cxFt={L - penaltySpot} cyFt={midY} r={0.5} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} lw={3} />
-      {/* Goal boxes */}
-      <Border x={-2} y={(W - goalW) / 2} w={2} h={goalW} L={L} W={W} color={lc} />
-      <Border x={L}  y={(W - goalW) / 2} w={2} h={goalW} L={L} W={W} color={lc} />
-    </group>
-  );
-}
-
-// ─── Inline Hockey ────────────────────────────────────────────────────────────
-function InlineHockeyCourt({ config }: { config: CourtConfig }) {
-  const { dimensions: { length: L, width: W }, colors, surfaceFinish } = config;
-  const lc = colors.lines;
-  const redC = colors.keyArea ?? '#E53E3E';
-  const blueC = '#4299E1';
-  const midY = W / 2;
-  const midX = L / 2;
-  const blueLine1 = L / 3;
-  const blueLine2 = (L * 2) / 3;
-  const goalLineX = 11;
-  const goalW = 6;
-  const creaseR = 6;
-  const centerR = 15;
-  const faceOffDist = 20;
-  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
-  const pad = 6;
-
-  return (
-    <group>
-      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} yOff={0.005} />
-      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} yOff={0.01} roughness={roughness} />
-      <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
-      {/* Center red line */}
-      <Seg x1={midX} y1={0} x2={midX} y2={W} L={L} W={W} color={redC} lw={0.08} />
-      {/* Blue lines */}
-      <Seg x1={blueLine1} y1={0} x2={blueLine1} y2={W} L={L} W={W} color={blueC} lw={0.07} />
-      <Seg x1={blueLine2} y1={0} x2={blueLine2} y2={W} L={L} W={W} color={blueC} lw={0.07} />
-      {/* Goal lines */}
-      <Seg x1={goalLineX}     y1={0} x2={goalLineX}     y2={W} L={L} W={W} color={redC} lw={0.06} />
-      <Seg x1={L - goalLineX} y1={0} x2={L - goalLineX} y2={W} L={L} W={W} color={redC} lw={0.06} />
-      {/* Goal creases */}
-      <Slab x={goalLineX - creaseR} y={midY - creaseR} w={creaseR} h={creaseR * 2} L={L} W={W} color={redC} alpha={0.2} yOff={0.013} />
-      <Slab x={L - goalLineX}       y={midY - creaseR} w={creaseR} h={creaseR * 2} L={L} W={W} color={redC} alpha={0.2} yOff={0.013} />
-      <ArcLine cxFt={goalLineX}     cyFt={midY} r={creaseR} a0={-Math.PI / 2} a1={Math.PI / 2} L={L} W={W} color={redC} />
-      <ArcLine cxFt={L - goalLineX} cyFt={midY} r={creaseR} a0={Math.PI / 2} a1={Math.PI * 3 / 2} L={L} W={W} color={redC} />
-      {/* Goal boxes */}
-      <Border x={0}             y={midY - goalW / 2} w={goalLineX} h={goalW} L={L} W={W} color={lc} />
-      <Border x={L - goalLineX} y={midY - goalW / 2} w={goalLineX} h={goalW} L={L} W={W} color={lc} />
-      {/* Center face-off circle */}
-      <ArcLine cxFt={midX} cyFt={midY} r={centerR} a0={0} a1={Math.PI * 2} L={L} W={W} color={redC} />
-      {/* Face-off dots */}
-      <ArcLine cxFt={blueLine1} cyFt={midY - faceOffDist / 2} r={0.8} a0={0} a1={Math.PI * 2} L={L} W={W} color={redC} lw={3} />
-      <ArcLine cxFt={blueLine1} cyFt={midY + faceOffDist / 2} r={0.8} a0={0} a1={Math.PI * 2} L={L} W={W} color={redC} lw={3} />
-      <ArcLine cxFt={blueLine2} cyFt={midY - faceOffDist / 2} r={0.8} a0={0} a1={Math.PI * 2} L={L} W={W} color={redC} lw={3} />
-      <ArcLine cxFt={blueLine2} cyFt={midY + faceOffDist / 2} r={0.8} a0={0} a1={Math.PI * 2} L={L} W={W} color={redC} lw={3} />
-    </group>
-  );
-}
-
-// ─── Handball ─────────────────────────────────────────────────────────────────
-function HandballCourt({ config }: { config: CourtConfig }) {
-  const { dimensions: { length: L, width: W }, colors, surfaceFinish } = config;
-  const lc = colors.lines;
-  const kc = colors.keyArea ?? colors.border;
-  const midY = W / 2;
-  const midX = L / 2;
-  const goalW = 10;
-  const sixMeter = 20;
-  const nineMeter = 30;
-  const penSpot = 23;
-  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
-  const pad = 5;
-
-  return (
-    <group>
-      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} yOff={0.005} />
-      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} yOff={0.01} roughness={roughness} />
-      <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
-      {/* Center line */}
-      <Seg x1={midX} y1={0} x2={midX} y2={W} L={L} W={W} color={lc} />
-      {/* Center circle */}
-      <ArcLine cxFt={midX} cyFt={midY} r={3} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
-      {/* Goal area 6m arcs */}
-      <Slab x={0} y={midY - sixMeter} w={sixMeter} h={sixMeter * 2} L={L} W={W} color={kc} alpha={0.18} yOff={0.012} />
-      <Slab x={L - sixMeter} y={midY - sixMeter} w={sixMeter} h={sixMeter * 2} L={L} W={W} color={kc} alpha={0.18} yOff={0.012} />
-      <ArcLine cxFt={0} cyFt={midY} r={sixMeter} a0={-Math.PI / 2} a1={Math.PI / 2} L={L} W={W} color={lc} />
-      <ArcLine cxFt={L} cyFt={midY} r={sixMeter} a0={Math.PI / 2} a1={Math.PI * 3 / 2} L={L} W={W} color={lc} />
-      {/* 9m dashed arcs — rendered as solid in 3D */}
-      <ArcLine cxFt={0} cyFt={midY} r={nineMeter} a0={-Math.PI / 2} a1={Math.PI / 2} L={L} W={W} color={lc} lw={1} />
-      <ArcLine cxFt={L} cyFt={midY} r={nineMeter} a0={Math.PI / 2} a1={Math.PI * 3 / 2} L={L} W={W} color={lc} lw={1} />
-      {/* Goals */}
-      <Border x={-2} y={(W - goalW) / 2} w={2} h={goalW} L={L} W={W} color={lc} />
-      <Border x={L}  y={(W - goalW) / 2} w={2} h={goalW} L={L} W={W} color={lc} />
-      {/* Penalty spots */}
-      <ArcLine cxFt={penSpot}     cyFt={midY} r={0.6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} lw={3} />
-      <ArcLine cxFt={L - penSpot} cyFt={midY} r={0.6} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} lw={3} />
-    </group>
-  );
-}
-
-// ─── Four Square ──────────────────────────────────────────────────────────────
-function FourSquareCourt({ config }: { config: CourtConfig }) {
-  const { dimensions: { length: L, width: W }, colors, surfaceFinish } = config;
-  const lc = colors.lines;
-  const midX = L / 2;
-  const midY = W / 2;
-  const roughness = surfaceFinish === 'smooth' ? 0.25 : surfaceFinish === 'textured' ? 0.92 : 0.6;
-  const pad = 2;
-
-  return (
-    <group>
-      <Slab x={-pad} y={-pad} w={L + pad * 2} h={W + pad * 2} L={L} W={W} color={colors.border} yOff={0.005} />
-      <Slab x={0} y={0} w={L} h={W} L={L} W={W} color={colors.surface} yOff={0.01} roughness={roughness} />
-      <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
-      {/* Dividing lines */}
-      <Seg x1={midX} y1={0} x2={midX} y2={W} L={L} W={W} color={lc} />
-      <Seg x1={0} y1={midY} x2={L} y2={midY} L={L} W={W} color={lc} />
-    </group>
-  );
+  return <>{nodes}</>;
 }
 
 // ─── Scene switcher ───────────────────────────────────────────────────────────
@@ -850,13 +884,13 @@ function CourtScene({ config }: { config: CourtConfig }) {
     case 'tennis':        return <TennisCourt config={config} />;
     case 'pickleball':    return <PickleballCourt config={config} />;
     case 'multi-sport':   return <MultiSportCourt config={config} />;
-    case 'bocce-ball':    return <BocceCourt config={config} />;
-    case 'shuffleboard':  return <ShuffleboardCourt config={config} />;
-    case 'volleyball':    return <VolleyballCourt config={config} />;
+    case 'bocce-ball':    return <BocceBallCourt config={config} />;
     case 'badminton':     return <BadmintonCourt config={config} />;
     case 'futsal':        return <FutsalCourt config={config} />;
     case 'inline-hockey': return <InlineHockeyCourt config={config} />;
     case 'handball':      return <HandballCourt config={config} />;
+    case 'volleyball':    return <VolleyballCourt config={config} />;
+    case 'shuffleboard':  return <ShuffleboardCourt config={config} />;
     case 'four-square':   return <FourSquareCourt config={config} />;
   }
 }
@@ -904,6 +938,7 @@ export function Court3D({ config }: { config: CourtConfig }) {
       <Trees L={L} W={W} />
       <CourtScene config={config} />
       <CourtAccessories3D config={config} />
+      <SportSpecificAccessories3D config={config} />
       <OrbitControls
         target={[0, 0, 0]}
         minDistance={span * 0.3}

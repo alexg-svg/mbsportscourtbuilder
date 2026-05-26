@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Minus, Zap, Grid2X2, Square, Wind,
   Armchair, Droplets, ClipboardList, Check, Stamp,
+  Target, AlignJustify, List,
 } from 'lucide-react';
 import { GiBasketballBasket } from 'react-icons/gi';
 import { MdSportsTennis } from 'react-icons/md';
@@ -25,6 +26,13 @@ const ACC_ICONS: Record<AccessoryId, React.ComponentType<any>> = {
   'basketball-hoop-double': GiBasketballBasket,
   'tennis-net':             MdSportsTennis,
   'pickleball-net':         FaTableTennisPaddleBall,
+  'volleyball-net':         Minus,
+  'badminton-net':          Minus,
+  'futsal-goals':           Target,
+  'handball-goals':         Target,
+  'hockey-goals':           Square,
+  'dasher-boards':          AlignJustify,
+  'bocce-side-rails':       List,
   'lighting-2-pole':        Zap,
   'lighting-4-pole':        Zap,
   'lighting-6-pole':        Zap,

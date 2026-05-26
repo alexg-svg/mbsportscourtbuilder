@@ -3,6 +3,7 @@ import { AlertCircle } from 'lucide-react';
 import type { CourtConfig } from '../../types/court';
 import { ACCESSORIES, COURT_PRESETS } from '../../utils/courtData';
 import { StepShell } from './StepShell';
+import { trackEvent, getRecaptchaToken } from '../../utils/analytics';
 
 interface Props {
   config: CourtConfig;
@@ -50,13 +51,17 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
     setSending(true);
     setError(null);
     try {
-      const courtImageBase64 = await getCaptureImage?.();
+      const [courtImageBase64, recaptchaToken] = await Promise.all([
+        getCaptureImage?.(),
+        getRecaptchaToken('submit_quote').catch(() => undefined),
+      ]);
       const res = await fetch('/api/send-quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact: form, config, courtImageBase64 }),
+        body: JSON.stringify({ contact: form, config, courtImageBase64, recaptchaToken }),
       });
       if (!res.ok) throw new Error('Server error');
+      trackEvent('quote_submitted', { court_type: config.type, property_type: config.propertyType, accessories_count: config.selectedAccessories.length });
       onSubmit(form);
     } catch {
       setError('Something went wrong sending your quote. Please try again or call us directly.');

@@ -812,6 +812,13 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
       {renderWaterFountain()}
       {renderLabels()}
       {renderHotspots()}
+      <text
+        x={width - 10} y={height - 10}
+        textAnchor="end" fontSize={11}
+        fontFamily="system-ui, sans-serif"
+        fill="rgba(255,255,255,0.45)" fontWeight="600"
+        letterSpacing="0.05em" style={{ userSelect: 'none' }}
+      >mbsportsbuilders.com</text>
     </svg>
   );
 });

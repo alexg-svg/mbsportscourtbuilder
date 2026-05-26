@@ -199,6 +199,11 @@ export const EmailGate: React.FC<Props> = ({ onVerified }) => {
                     <span className="absolute inset-0 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
                   )}
                 </button>
+
+                <p className="text-xs text-theme-faint text-center leading-relaxed">
+                  By entering your email you consent to receive occasional marketing
+                  emails from MB Sports Builders. You can unsubscribe at any time.
+                </p>
               </form>
             ) : (
               /* ── Code stage ────────────────────────────────────────────── */

@@ -24,6 +24,10 @@ export interface ContactData {
 const COURT_LABELS: Record<string, string> = {
   basketball: 'Basketball', tennis: 'Tennis',
   pickleball: 'Pickleball', 'multi-sport': 'Multi-Sport',
+  'bocce-ball': 'Bocce Ball', shuffleboard: 'Shuffleboard',
+  volleyball: 'Volleyball', badminton: 'Badminton',
+  futsal: 'Futsal', 'inline-hockey': 'Inline Hockey',
+  handball: 'Handball', 'four-square': 'Four-Square',
 };
 
 const FINISH_LABELS: Record<string, string> = {

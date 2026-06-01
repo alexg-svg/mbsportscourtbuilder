@@ -153,7 +153,7 @@ export default function App() {
         />
       );
       case 4: return <Step5Accessories courtType={config.type} selected={config.selectedAccessories} onToggle={handleAccessoryToggle} onBack={back} onNext={next} />;
-      case 5: return <Step6Contact config={config} onBack={back} onSubmit={handleSubmit} getCaptureImage={getCaptureImage} verifiedEmail={verifiedEmail ?? undefined} />;
+      case 5: return <Step6Contact config={config} onBack={back} onSubmit={handleSubmit} getCaptureImage={getCaptureImage} verifiedEmail={verifiedEmail === 'bypass' ? undefined : verifiedEmail ?? undefined} />;
       default: return null;
     }
   };

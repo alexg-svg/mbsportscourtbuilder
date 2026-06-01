@@ -43,7 +43,7 @@ const STEP_NAMES: Record<number, string> = {
 
 export default function App() {
   const [verifiedEmail, setVerifiedEmail] = useState<string | null>(
-    localStorage.getItem('mb_verified_email'),
+    'bypass', // TODO: re-enable gate → localStorage.getItem('mb_verified_email')
   );
   const [step, setStep]           = useState(0);
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');

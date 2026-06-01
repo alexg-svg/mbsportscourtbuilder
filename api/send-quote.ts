@@ -54,8 +54,8 @@ const schema = z.object({
     propertyType:  z.enum(PROP_TYPES),
     surfaceFinish: z.enum(FINISHES),
     dimensions: z.object({
-      length: z.number().int().min(20).max(200),
-      width:  z.number().int().min(10).max(100),
+      length: z.number().int().min(10).max(300),
+      width:  z.number().int().min(4).max(150),
     }),
     colors: z.object({
       surface:    HEX_COLOR,

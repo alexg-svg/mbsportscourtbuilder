@@ -68,7 +68,7 @@ const schema = z.object({
     selectedAccessories: z.array(z.enum(ACCESSORY_IDS)).max(20),
   }),
   courtImageBase64: z.string().max(700_000).optional(),
-  recaptchaToken: z.string().max(2000).optional(),
+  recaptchaToken: z.string().max(10_000).optional(),
 });
 
 // ─── reCAPTCHA verification ───────────────────────────────────────────────────

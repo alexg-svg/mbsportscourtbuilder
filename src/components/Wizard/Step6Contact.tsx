@@ -130,18 +130,24 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
     setSending(true);
     setError(null);
     try {
-      const [courtImageBase64, recaptchaToken] = await Promise.all([
+      const [rawImage, recaptchaToken] = await Promise.all([
         getCaptureImage?.(),
         getRecaptchaToken('submit_quote').catch(() => undefined),
       ]);
+      // Skip image if it would exceed the server's 700k char limit
+      const courtImageBase64 = rawImage && rawImage.length <= 650_000 ? rawImage : undefined;
       const res = await fetch('/api/send-quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contact: form, config, courtImageBase64, recaptchaToken }),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `Server error ${res.status}`);
+        const body = await res.json().catch(() => ({})) as { error?: string; details?: { fieldErrors?: Record<string, string[]> } };
+        console.error('Quote submission failed:', JSON.stringify(body));
+        const fields = body.details?.fieldErrors
+          ? Object.entries(body.details.fieldErrors).map(([k, v]) => `${k}: ${v[0]}`).join('; ')
+          : '';
+        throw new Error(`${body.error ?? `Server error ${res.status}`}${fields ? ` — ${fields}` : ''}`);
       }
       trackEvent('quote_submitted', { court_type: config.type, property_type: config.propertyType, accessories_count: config.selectedAccessories.length });
       onSubmit(form);

@@ -252,6 +252,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) {
+    console.error('Validation error:', JSON.stringify(parsed.error.flatten()));
     return res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
   }
 

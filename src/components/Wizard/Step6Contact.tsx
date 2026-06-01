@@ -139,11 +139,14 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contact: form, config, courtImageBase64, recaptchaToken }),
       });
-      if (!res.ok) throw new Error('Server error');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `Server error ${res.status}`);
+      }
       trackEvent('quote_submitted', { court_type: config.type, property_type: config.propertyType, accessories_count: config.selectedAccessories.length });
       onSubmit(form);
-    } catch {
-      setError('Something went wrong sending your quote. Please try again or call us directly.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong sending your quote. Please try again or call us directly.');
     } finally {
       setSending(false);
     }

@@ -34,13 +34,85 @@ const FINISH_LABELS: Record<string, string> = {
   smooth: 'Smooth Asphalt', textured: 'Textured Asphalt', cushioned: 'Cushioned Asphalt',
 };
 
-export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCaptureImage, verifiedEmail }) => {
-  const [form, setForm] = useState<ContactData>({ name: '', email: verifiedEmail ?? '', phone: '', zip: '', message: '' });
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+// ─── Validation helpers ───────────────────────────────────────────────────────
 
-  const set = (k: keyof ContactData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+const BLOCKED_EMAIL_DOMAINS = new Set([
+  'example.com', 'example.org', 'example.net',
+  'test.com', 'test.org', 'test.net',
+  'mailinator.com', 'guerrillamail.com', 'guerrillamail.org', 'guerrillamail.net',
+  'guerrillamail.info', 'guerrillamailblock.com',
+  'tempmail.com', 'temp-mail.org', 'tempmail.net',
+  'yopmail.com', 'yopmail.fr', 'cool.fr.nf', 'jetable.fr.nf',
+  'sharklasers.com', 'guerrillamail.de', 'spam4.me',
+  'trashmail.com', 'trashmail.org', 'trashmail.me', 'trashmail.net',
+  'fakeinbox.com', 'dispostable.com', 'maildrop.cc',
+  'spamgourmet.com', 'spamgourmet.org',
+  'throwam.com', 'throwaway.email', 'tempr.email',
+  'getairmail.com', 'discard.email', 'mailnull.com',
+  'emailondeck.com', '10minutemail.com', '10minemail.com',
+  'mailtemp.net', 'getnada.com', 'filzmail.com',
+]);
+
+function validateEmail(email: string): string | null {
+  if (!email.trim()) return 'Email is required.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return 'Enter a valid email address.';
+  const domain = email.split('@')[1].toLowerCase();
+  if (BLOCKED_EMAIL_DOMAINS.has(domain)) return 'Please use your real email address.';
+  return null;
+}
+
+function validatePhone(phone: string): string | null {
+  if (!phone.trim()) return null; // optional
+  const digits = phone.replace(/\D/g, '');
+  // Accept +1 or 1 country code prefix
+  const local = digits.length === 11 && digits[0] === '1' ? digits.slice(1) : digits;
+  if (local.length !== 10) return 'Enter a 10-digit US phone number.';
+  if (/^[01]/.test(local)) return 'Enter a valid area code.';
+  if (/^(\d)\1{9}$/.test(local)) return 'Enter a valid phone number.'; // all same digit
+  if (local === '1234567890' || local === '0123456789') return 'Enter a valid phone number.';
+  if (local.slice(3, 6) === '555' && /^01[0-9]{2}$/.test(local.slice(6))) return 'Enter a valid phone number.'; // 555-01xx (fictional)
+  return null;
+}
+
+function validateZip(zip: string): string | null {
+  if (!zip.trim()) return 'ZIP code is required.';
+  const trimmed = zip.trim();
+  // US 5-digit ZIP
+  if (/^\d{5}$/.test(trimmed)) {
+    if (trimmed === '00000') return 'Enter a valid ZIP code.';
+    if (/^(\d)\1{4}$/.test(trimmed)) return 'Enter a valid ZIP code.'; // 11111, 22222, etc.
+    return null;
+  }
+  // US ZIP+4
+  if (/^\d{5}-\d{4}$/.test(trimmed)) return null;
+  // Canadian postal code (A1A 1A1 or A1A1A1)
+  if (/^[A-Za-z]\d[A-Za-z][\s\-]?\d[A-Za-z]\d$/.test(trimmed)) return null;
+  return 'Enter a valid ZIP or postal code.';
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCaptureImage, verifiedEmail }) => {
+  const [form, setForm]       = useState<ContactData>({ name: '', email: verifiedEmail ?? '', phone: '', zip: '', message: '' });
+  const [touched, setTouched] = useState<Partial<Record<keyof ContactData, boolean>>>({});
+  const [sending, setSending] = useState(false);
+  const [error, setError]     = useState<string | null>(null);
+
+  const fieldErrors: Partial<Record<keyof ContactData, string | null>> = {
+    email: validateEmail(form.email),
+    phone: validatePhone(form.phone),
+    zip:   validateZip(form.zip),
+  };
+
+  const hasFieldErrors = Object.values(fieldErrors).some(Boolean);
+
+  const set = (k: keyof ContactData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((f) => ({ ...f, [k]: e.target.value }));
+  };
+
+  const blur = (k: keyof ContactData) => () => setTouched((t) => ({ ...t, [k]: true }));
+
+  const showError = (k: keyof ContactData) => touched[k] ? fieldErrors[k] : null;
 
   const { dimensions, type, propertyType, surfaceFinish, selectedAccessories } = config;
   const presetName =
@@ -48,10 +120,12 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
       (p) => p.type === type && p.dimensions.width === dimensions.width && p.dimensions.length === dimensions.length,
     )?.name ?? 'Custom';
 
-  const accItems = ACCESSORIES.filter((a) => selectedAccessories.includes(a.id));
-  const canSubmit = !sending && form.name.trim() && form.email.trim() && form.zip.trim();
+  const accItems  = ACCESSORIES.filter((a) => selectedAccessories.includes(a.id));
+  const canSubmit = !sending && form.name.trim() && !hasFieldErrors && form.email.trim() && form.zip.trim();
 
   const handleSubmit = async () => {
+    // Touch all validated fields to reveal any hidden errors
+    setTouched({ email: true, phone: true, zip: true });
     if (!canSubmit) return;
     setSending(true);
     setError(null);
@@ -74,6 +148,13 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
       setSending(false);
     }
   };
+
+  const inputClass = (k: keyof ContactData) =>
+    `w-full bg-theme-raised border rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none transition-colors ${
+      showError(k)
+        ? 'border-red-500/60 focus:border-red-500'
+        : 'border-theme-mid focus:border-pink-500'
+    }`;
 
   return (
     <StepShell
@@ -111,24 +192,31 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
               placeholder="Jane Smith"
               className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none focus:border-pink-500" />
           </div>
+
           <div className="col-span-2 sm:col-span-1">
             <label className="block text-xs text-theme-muted mb-1">Phone</label>
-            <input type="tel" value={form.phone} onChange={set('phone')}
+            <input type="tel" value={form.phone} onChange={set('phone')} onBlur={blur('phone')}
               placeholder="(555) 000-0000"
-              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none focus:border-pink-500" />
+              className={inputClass('phone')} />
+            {showError('phone') && <FieldError msg={showError('phone')!} />}
           </div>
+
           <div className="col-span-2">
             <label className="block text-xs text-theme-muted mb-1">Email *</label>
-            <input required type="email" value={form.email} onChange={set('email')}
+            <input required type="email" value={form.email} onChange={set('email')} onBlur={blur('email')}
               placeholder="jane@example.com"
-              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none focus:border-pink-500" />
+              className={inputClass('email')} />
+            {showError('email') && <FieldError msg={showError('email')!} />}
           </div>
+
           <div className="col-span-2">
             <label className="block text-xs text-theme-muted mb-1">ZIP Code *</label>
-            <input required type="text" value={form.zip} onChange={set('zip')}
+            <input required type="text" value={form.zip} onChange={set('zip')} onBlur={blur('zip')}
               placeholder="e.g. 90210"
-              className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none focus:border-pink-500" />
+              className={inputClass('zip')} />
+            {showError('zip') && <FieldError msg={showError('zip')!} />}
           </div>
+
           <div className="col-span-2">
             <label className="block text-xs text-theme-muted mb-1">Notes (optional)</label>
             <textarea rows={2} value={form.message} onChange={set('message')}
@@ -151,6 +239,13 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
     </StepShell>
   );
 };
+
+const FieldError: React.FC<{ msg: string }> = ({ msg }) => (
+  <p className="flex items-center gap-1 mt-1 text-xs text-red-400">
+    <AlertCircle className="w-3 h-3 flex-shrink-0" />
+    {msg}
+  </p>
+);
 
 const SumRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="flex gap-2">

@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 import { z } from 'zod';
 
 // ─── Startup env guard ────────────────────────────────────────────────────────
-const REQUIRED_ENV = ['SMTP_USER', 'SMTP_PASS', 'QUOTE_TO', 'RECAPTCHA_SECRET'] as const;
+const REQUIRED_ENV = ['SMTP_USER', 'SMTP_PASS', 'QUOTE_TO'] as const;
 for (const key of REQUIRED_ENV) {
   if (!process.env[key]) throw new Error(`Missing required env var: ${key}`);
 }
@@ -73,11 +73,12 @@ const schema = z.object({
 
 // ─── reCAPTCHA verification ───────────────────────────────────────────────────
 async function verifyRecaptcha(token: string): Promise<boolean> {
+  if (!process.env.RECAPTCHA_SECRET) return true; // skip if not configured
   try {
     const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `secret=${encodeURIComponent(process.env.RECAPTCHA_SECRET!)}&response=${encodeURIComponent(token)}`,
+      body: `secret=${encodeURIComponent(process.env.RECAPTCHA_SECRET)}&response=${encodeURIComponent(token)}`,
     });
     const data = await res.json() as { success: boolean; score: number };
     return data.success && data.score >= 0.5;

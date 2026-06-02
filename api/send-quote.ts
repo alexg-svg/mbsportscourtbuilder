@@ -47,6 +47,8 @@ const schema = z.object({
     email:   z.string().email().max(254).transform((s) => s.replace(/[\r\n\0]/g, '')),
     phone:   SAFE_STRING(30).optional(),
     zip:     z.string().regex(/^[0-9A-Za-z\s\-]{3,10}$/),
+    city:    SAFE_STRING(100).optional(),
+    state:   SAFE_STRING(50).optional(),
     message: SAFE_STRING(2000).optional(),
   }),
   config: z.object({
@@ -168,6 +170,10 @@ function buildHtml(data: z.infer<typeof schema>, hasImage: boolean): string {
                 <td style="padding:5px 0;color:#6b7280;font-size:14px;">ZIP</td>
                 <td style="padding:5px 0;color:#111827;font-size:14px;">${escHtml(contact.zip)}</td>
               </tr>
+              ${contact.city && contact.state ? `<tr>
+                <td style="padding:5px 0;color:#6b7280;font-size:14px;">Location</td>
+                <td style="padding:5px 0;color:#111827;font-size:14px;">${escHtml(contact.city)}, ${escHtml(contact.state)}</td>
+              </tr>` : ''}
               ${contact.message ? `<tr>
                 <td style="padding:5px 0;color:#6b7280;font-size:14px;vertical-align:top;">Notes</td>
                 <td style="padding:5px 0;color:#111827;font-size:14px;">${escHtml(contact.message)}</td>

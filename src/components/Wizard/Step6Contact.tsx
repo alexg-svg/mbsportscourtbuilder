@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { AlertCircle } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { AlertCircle, CheckCircle2, MapPin } from 'lucide-react';
 import type { CourtConfig } from '../../types/court';
 import { ACCESSORIES, COURT_PRESETS } from '../../utils/courtData';
 import { StepShell } from './StepShell';
@@ -18,6 +18,8 @@ export interface ContactData {
   email: string;
   phone: string;
   zip: string;
+  city?: string;
+  state?: string;
   message: string;
 }
 
@@ -34,7 +36,7 @@ const FINISH_LABELS: Record<string, string> = {
   smooth: 'Smooth Asphalt', textured: 'Textured Asphalt', cushioned: 'Cushioned Asphalt',
 };
 
-// ─── Validation helpers ───────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const BLOCKED_EMAIL_DOMAINS = new Set([
   'example.com', 'example.org', 'example.net',
@@ -62,41 +64,60 @@ function validateEmail(email: string): string | null {
 }
 
 function validatePhone(phone: string): string | null {
-  if (!phone.trim()) return null; // optional
+  if (!phone.trim()) return null;
   const digits = phone.replace(/\D/g, '');
-  // Accept +1 or 1 country code prefix
   const local = digits.length === 11 && digits[0] === '1' ? digits.slice(1) : digits;
   if (local.length !== 10) return 'Enter a 10-digit US phone number.';
   if (/^[01]/.test(local)) return 'Enter a valid area code.';
-  if (/^(\d)\1{9}$/.test(local)) return 'Enter a valid phone number.'; // all same digit
+  if (/^(\d)\1{9}$/.test(local)) return 'Enter a valid phone number.';
   if (local === '1234567890' || local === '0123456789') return 'Enter a valid phone number.';
-  if (local.slice(3, 6) === '555' && /^01[0-9]{2}$/.test(local.slice(6))) return 'Enter a valid phone number.'; // 555-01xx (fictional)
+  if (local.slice(3, 6) === '555' && /^01[0-9]{2}$/.test(local.slice(6))) return 'Enter a valid phone number.';
   return null;
 }
 
 function validateZip(zip: string): string | null {
   if (!zip.trim()) return 'ZIP code is required.';
   const trimmed = zip.trim();
-  // US 5-digit ZIP
   if (/^\d{5}$/.test(trimmed)) {
     if (trimmed === '00000') return 'Enter a valid ZIP code.';
-    if (/^(\d)\1{4}$/.test(trimmed)) return 'Enter a valid ZIP code.'; // 11111, 22222, etc.
+    if (/^(\d)\1{4}$/.test(trimmed)) return 'Enter a valid ZIP code.';
     return null;
   }
-  // US ZIP+4
   if (/^\d{5}-\d{4}$/.test(trimmed)) return null;
-  // Canadian postal code (A1A 1A1 or A1A1A1)
   if (/^[A-Za-z]\d[A-Za-z][\s\-]?\d[A-Za-z]\d$/.test(trimmed)) return null;
   return 'Enter a valid ZIP or postal code.';
+}
+
+// Auto-format phone number as (XXX) XXX-XXXX
+function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 10);
+  if (digits.length === 0) return '';
+  if (digits.length <= 3) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
+// Lookup city/state from US ZIP via public API (fail open)
+async function lookupZip(zip: string): Promise<{ city: string; state: string } | null> {
+  if (!/^\d{5}$/.test(zip.trim())) return null;
+  try {
+    const res = await fetch(`https://api.zippopotam.us/us/${zip.trim()}`);
+    if (!res.ok) return null;
+    const data = await res.json() as { places: Array<{ 'place name': string; 'state abbreviation': string }> };
+    const place = data.places?.[0];
+    if (!place) return null;
+    return { city: place['place name'], state: place['state abbreviation'] };
+  } catch { return null; }
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCaptureImage, verifiedEmail }) => {
-  const [form, setForm]       = useState<ContactData>({ name: '', email: verifiedEmail ?? '', phone: '', zip: '', message: '' });
-  const [touched, setTouched] = useState<Partial<Record<keyof ContactData, boolean>>>({});
-  const [sending, setSending] = useState(false);
-  const [error, setError]     = useState<string | null>(null);
+  const [form, setForm]         = useState<ContactData>({ name: '', email: verifiedEmail ?? '', phone: '', zip: '', message: '' });
+  const [touched, setTouched]   = useState<Partial<Record<keyof ContactData, boolean>>>({});
+  const [zipLooking, setZipLooking] = useState(false);
+  const [sending, setSending]   = useState(false);
+  const [error, setError]       = useState<string | null>(null);
 
   const fieldErrors: Partial<Record<keyof ContactData, string | null>> = {
     email: validateEmail(form.email),
@@ -105,14 +126,30 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
   };
 
   const hasFieldErrors = Object.values(fieldErrors).some(Boolean);
+  const showError = (k: keyof ContactData) => touched[k] ? fieldErrors[k] : null;
+  const isValid   = (k: keyof ContactData) => touched[k] && !fieldErrors[k];
 
-  const set = (k: keyof ContactData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+  const blur = (k: keyof ContactData) => () => setTouched(t => ({ ...t, [k]: true }));
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(f => ({ ...f, phone: formatPhone(e.target.value) }));
   };
 
-  const blur = (k: keyof ContactData) => () => setTouched((t) => ({ ...t, [k]: true }));
+  const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm(f => ({ ...f, zip: e.target.value, city: undefined, state: undefined }));
+  };
 
-  const showError = (k: keyof ContactData) => touched[k] ? fieldErrors[k] : null;
+  const handleZipBlur = useCallback(async () => {
+    setTouched(t => ({ ...t, zip: true }));
+    const zip = form.zip.trim();
+    if (!/^\d{5}$/.test(zip) || zip === '00000' || /^(\d)\1{4}$/.test(zip)) return;
+    setZipLooking(true);
+    const result = await lookupZip(zip);
+    setZipLooking(false);
+    if (result) {
+      setForm(f => ({ ...f, city: result.city, state: result.state }));
+    }
+  }, [form.zip]);
 
   const { dimensions, type, propertyType, surfaceFinish, selectedAccessories } = config;
   const presetName =
@@ -124,7 +161,6 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
   const canSubmit = !sending && form.name.trim() && !hasFieldErrors && form.email.trim() && form.zip.trim();
 
   const handleSubmit = async () => {
-    // Touch all validated fields to reveal any hidden errors
     setTouched({ email: true, phone: true, zip: true });
     if (!canSubmit) return;
     setSending(true);
@@ -134,7 +170,6 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
         getCaptureImage?.(),
         getRecaptchaToken('submit_quote').catch(() => undefined),
       ]);
-      // Skip image if it would exceed the server's 700k char limit
       const courtImageBase64 = rawImage && rawImage.length <= 650_000 ? rawImage : undefined;
       const res = await fetch('/api/send-quote', {
         method: 'POST',
@@ -159,10 +194,10 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
   };
 
   const inputClass = (k: keyof ContactData) =>
-    `w-full bg-theme-raised border rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none transition-colors ${
-      showError(k)
-        ? 'border-red-500/60 focus:border-red-500'
-        : 'border-theme-mid focus:border-pink-500'
+    `w-full bg-theme-raised border rounded-lg px-3 py-2 pr-8 text-sm text-theme-primary placeholder-theme-faint focus:outline-none transition-colors ${
+      showError(k) ? 'border-red-500/60 focus:border-red-500'
+      : isValid(k) ? 'border-green-500/60 focus:border-green-500'
+      : 'border-theme-mid focus:border-pink-500'
     }`;
 
   return (
@@ -179,9 +214,9 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
         {/* Mini summary */}
         <div className="bg-theme-raised/60 border border-theme-mid rounded-xl p-3 space-y-1 text-xs">
           <div className="text-theme-muted font-semibold uppercase tracking-wider mb-2">Your Design Summary</div>
-          <SumRow label="Court"    value={`${COURT_LABELS[type]} · ${propertyType}`} />
-          <SumRow label="Size"     value={`${dimensions.length}×${dimensions.width} ft (${presetName})`} />
-          <SumRow label="Surface"  value={FINISH_LABELS[surfaceFinish]} />
+          <SumRow label="Court"   value={`${COURT_LABELS[type]} · ${propertyType}`} />
+          <SumRow label="Size"    value={`${dimensions.length}×${dimensions.width} ft (${presetName})`} />
+          <SumRow label="Surface" value={FINISH_LABELS[surfaceFinish]} />
           {accItems.length > 0 && (
             <SumRow label="Extras" value={accItems.map((a) => a.name).join(', ')} />
           )}
@@ -197,38 +232,76 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2 sm:col-span-1">
             <label className="block text-xs text-theme-muted mb-1">Full Name *</label>
-            <input required type="text" value={form.name} onChange={set('name')}
+            <input required type="text" value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
               placeholder="Jane Smith"
               className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none focus:border-pink-500" />
           </div>
 
+          {/* Phone with auto-format */}
           <div className="col-span-2 sm:col-span-1">
             <label className="block text-xs text-theme-muted mb-1">Phone</label>
-            <input type="tel" value={form.phone} onChange={set('phone')} onBlur={blur('phone')}
-              placeholder="(555) 000-0000"
-              className={inputClass('phone')} />
+            <div className="relative">
+              <input type="tel" value={form.phone}
+                onChange={handlePhoneChange} onBlur={blur('phone')}
+                placeholder="(555) 000-0000"
+                className={inputClass('phone')} />
+              {showError('phone')
+                ? <AlertCircle className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400 pointer-events-none" />
+                : isValid('phone') && form.phone
+                  ? <CheckCircle2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500 pointer-events-none" />
+                  : null}
+            </div>
             {showError('phone') && <FieldError msg={showError('phone')!} />}
           </div>
 
+          {/* Email with live validation indicator */}
           <div className="col-span-2">
             <label className="block text-xs text-theme-muted mb-1">Email *</label>
-            <input required type="email" value={form.email} onChange={set('email')} onBlur={blur('email')}
-              placeholder="jane@example.com"
-              className={inputClass('email')} />
+            <div className="relative">
+              <input required type="email" value={form.email}
+                onChange={e => { setForm(f => ({ ...f, email: e.target.value })); }}
+                onBlur={blur('email')}
+                placeholder="jane@example.com"
+                className={inputClass('email')} />
+              {showError('email')
+                ? <AlertCircle className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400 pointer-events-none" />
+                : isValid('email')
+                  ? <CheckCircle2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500 pointer-events-none" />
+                  : null}
+            </div>
             {showError('email') && <FieldError msg={showError('email')!} />}
           </div>
 
+          {/* ZIP with city/state lookup */}
           <div className="col-span-2">
             <label className="block text-xs text-theme-muted mb-1">ZIP Code *</label>
-            <input required type="text" value={form.zip} onChange={set('zip')} onBlur={blur('zip')}
-              placeholder="e.g. 90210"
-              className={inputClass('zip')} />
+            <div className="relative">
+              <input required type="text" value={form.zip}
+                onChange={handleZipChange} onBlur={handleZipBlur}
+                placeholder="e.g. 90210"
+                className={inputClass('zip')} />
+              {zipLooking
+                ? <span className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-pink-400/40 border-t-pink-400 rounded-full animate-spin pointer-events-none" />
+                : showError('zip')
+                  ? <AlertCircle className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-red-400 pointer-events-none" />
+                  : isValid('zip')
+                    ? <CheckCircle2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500 pointer-events-none" />
+                    : null}
+            </div>
             {showError('zip') && <FieldError msg={showError('zip')!} />}
+            {form.city && form.state && !showError('zip') && (
+              <p className="flex items-center gap-1 mt-1 text-xs text-green-400">
+                <MapPin className="w-3 h-3 flex-shrink-0" />
+                {form.city}, {form.state}
+              </p>
+            )}
           </div>
 
           <div className="col-span-2">
             <label className="block text-xs text-theme-muted mb-1">Notes (optional)</label>
-            <textarea rows={2} value={form.message} onChange={set('message')}
+            <textarea rows={2} value={form.message}
+              onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
               placeholder="Timeline, site conditions, questions..."
               className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none focus:border-pink-500 resize-none" />
           </div>

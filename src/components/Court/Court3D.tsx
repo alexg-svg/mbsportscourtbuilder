@@ -12,7 +12,7 @@ import {
   SportNet, BasketballGoal, Goal, LightPole, PerimeterFence, PlayerBench, DasherBoards,
 } from './equipment';
 
-const S = 0.1; // 1 foot = 0.1 THREE units
+export const S = 0.1; // 1 foot = 0.1 THREE units
 const LINE_W = 0.035; // painted line width (≈4 in)
 const LINE_Y = 0.026; // top of the painted lines
 
@@ -98,7 +98,7 @@ function ArcLine({ cxFt, cyFt, r, a0, a1, L, W, color, lw = LINE_W, n = 56 }: {
 
 // ─── Surroundings ─────────────────────────────────────────────────────────────
 // Width of the colored out-of-bounds border each court draws around itself (ft)
-const BORDER_PAD: Partial<Record<CourtType, number>> = {
+export const BORDER_PAD: Partial<Record<CourtType, number>> = {
   'bocce-ball': 4, shuffleboard: 4, 'four-square': 4, badminton: 6,
 };
 const APRON_FT = 3; // concrete walkway around the finished court
@@ -777,18 +777,33 @@ function Toggle<T extends string>({ value, options, onChange }: {
 }
 
 // ─── Scene ────────────────────────────────────────────────────────────────────
-/** Everything in the 3D world except camera and controls. */
-function SceneContents({ config, time, mapSize }: { config: CourtConfig; time: TimeOfDay; mapSize: number }) {
+/**
+ * Everything in the 3D world except camera and controls. `bare` drops the
+ * sky, lawn and scenery so the court can be composited over a photo; a
+ * transparent shadow catcher keeps equipment shadows on the real ground.
+ */
+export function SceneContents({ config, time, mapSize, bare = false }: {
+  config: CourtConfig; time: TimeOfDay; mapSize: number; bare?: boolean;
+}) {
   const { length: L, width: W } = config.dimensions;
   const span = Math.max(L, W) * S;
   const pad = BORDER_PAD[config.type] ?? 8;
   return (
     <>
-      <fog attach="fog" color={FOG_COLOR[time]} near={span * 2 + 8} far={span * 6 + 40} />
-      <SceneLighting span={span} mapSize={mapSize} time={time} />
-      <Lawn size={span * 6 + 60} />
-      <Surroundings L={L} W={W} pad={pad} residential={config.propertyType === 'residential'} />
-      <Apron L={L} W={W} pad={pad} />
+      <SceneLighting span={span} mapSize={mapSize} time={time} background={!bare} />
+      {bare ? (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.0005, 0]} receiveShadow>
+          <planeGeometry args={[(W + pad * 2) * S + 6, (L + pad * 2) * S + 6]} />
+          <shadowMaterial transparent opacity={0.32} />
+        </mesh>
+      ) : (
+        <>
+          <fog attach="fog" color={FOG_COLOR[time]} near={span * 2 + 8} far={span * 6 + 40} />
+          <Lawn size={span * 6 + 60} />
+          <Surroundings L={L} W={W} pad={pad} residential={config.propertyType === 'residential'} />
+          <Apron L={L} W={W} pad={pad} />
+        </>
+      )}
       <FinishContext.Provider value={config.surfaceFinish}>
         <CourtScene config={config} />
       </FinishContext.Provider>

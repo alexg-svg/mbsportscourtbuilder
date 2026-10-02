@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useRef, lazy, Suspense, useEffect } from 'react';
-import { Eye, ClipboardList, Box, Map } from 'lucide-react';
+import { Eye, ClipboardList, Box, Map, ImagePlus } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES } from './utils/courtData';
 import { trackEvent } from './utils/analytics';
 import { CourtSVG } from './components/Court/CourtSVG';
 
 const Court3D = lazy(() => import('./components/Court/Court3D').then((m) => ({ default: m.Court3D })));
+const YardView = lazy(() => import('./components/Yard/YardView'));
 import { StepProgress } from './components/Wizard/StepProgress';
 import { Step1Property } from './components/Wizard/Step1Property';
 import { Step2CourtType } from './components/Wizard/Step2CourtType';
@@ -53,6 +54,7 @@ export default function App() {
   const render3DPromise = useRef<Promise<string | undefined> | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [view3D, setView3D]       = useState(false);
+  const [showYard, setShowYard]   = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
 
   const handleVerified = (email: string) => {
@@ -254,17 +256,17 @@ export default function App() {
           <div className="px-6 py-3 border-b border-theme-border flex items-center justify-between bg-theme-panel/70 flex-shrink-0">
             <div>
               <h2 className="text-sm font-semibold text-theme-primary">Live Court Preview</h2>
-              <p className="text-xs text-theme-muted mt-0.5">Updates as you configure your court</p>
+              <p className="hidden sm:block text-xs text-theme-muted mt-0.5">Updates as you configure your court</p>
             </div>
             {step > 0 && (
-              <div className="flex items-center gap-3 text-xs text-theme-muted">
-                <span className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2 lg:gap-3 text-xs text-theme-muted whitespace-nowrap">
+                <span className="hidden lg:flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
                   Live
                 </span>
-                <span>·</span>
-                <span className="font-mono">{config.dimensions.length} × {config.dimensions.width} ft</span>
-                <span>·</span>
+                <span className="hidden lg:inline">·</span>
+                <span className="hidden md:inline font-mono">{config.dimensions.length} × {config.dimensions.width} ft</span>
+                <span className="hidden md:inline">·</span>
                 <button
                   onClick={() => setView3D((v) => !v)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 ${
@@ -275,6 +277,14 @@ export default function App() {
                 >
                   {view3D ? <Map className="w-3 h-3" /> : <Box className="w-3 h-3" />}
                   {view3D ? '2D' : '3D'}
+                </button>
+                <button
+                  onClick={() => setShowYard(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 border-pink-500/60 bg-theme-raised text-pink-400 hover:bg-pink-600 hover:text-white hover:border-pink-500"
+                >
+                  <ImagePlus className="w-3 h-3" />
+                  <span className="hidden lg:inline">See it in my yard</span>
+                  <span className="lg:hidden">My yard</span>
                 </button>
               </div>
             )}
@@ -310,6 +320,12 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {showYard && (
+        <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center text-white/70 text-sm">Loading…</div>}>
+          <YardView config={config} onClose={() => setShowYard(false)} />
+        </Suspense>
+      )}
 
       {/* Off-screen SVG kept in DOM from step 1 onward for email image capture */}
       {step > 0 && (

@@ -323,7 +323,9 @@ export const FOG_COLOR: Record<TimeOfDay, string> = {
 };
 
 /** Image-based lighting from a sky dome plus a sun (or moon) and ground bounce. */
-export function SceneLighting({ span, mapSize, time }: { span: number; mapSize: number; time: TimeOfDay }) {
+export function SceneLighting({ span, mapSize, time, background = true }: {
+  span: number; mapSize: number; time: TimeOfDay; background?: boolean;
+}) {
   const r = span * 1.6 + 6;
   const sun = SUN[time];
   const len = Math.hypot(...sun);
@@ -337,7 +339,7 @@ export function SceneLighting({ span, mapSize, time }: { span: number; mapSize: 
   }[time];
   return (
     <>
-      {time === 'night' ? <color attach="background" args={[FOG_COLOR.night]} /> : sky}
+      {background && (time === 'night' ? <color attach="background" args={[FOG_COLOR.night]} /> : sky)}
       <Environment key={time} frames={1} resolution={128} environmentIntensity={{ day: 1, sunset: 0.5, night: 0.2 }[time]}>
         {time === 'night'
           ? <Lightformer form="rect" color="#2a3a66" intensity={1} position={[0, 40, 0]} rotation-x={Math.PI / 2} scale={[300, 300, 1]} />

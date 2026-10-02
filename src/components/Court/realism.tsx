@@ -18,7 +18,7 @@ function rng(seed: number) {
   };
 }
 
-function canvas(size: number) {
+export function canvas(size: number) {
   const c = document.createElement('canvas');
   c.width = c.height = size;
   return [c, c.getContext('2d')!] as const;
@@ -58,7 +58,7 @@ function sand(ctx: CanvasRenderingContext2D, size: number, rand: () => number) {
   }
 }
 
-function toTexture(c: HTMLCanvasElement, srgb: boolean) {
+export function toTexture(c: HTMLCanvasElement, srgb: boolean) {
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.anisotropy = 8;
@@ -104,7 +104,7 @@ export const FinishContext = createContext<SurfaceFinish>('smooth');
 const TILE_FT = 20; // one texture tile covers 20 × 20 ft
 
 // Clone a shared texture with its own repeat; clones share the GPU image.
-function useRepeated(base: THREE.Texture, rx: number, ry: number) {
+export function useRepeated(base: THREE.Texture, rx: number, ry: number) {
   const tex = useMemo(() => {
     const t = base.clone();
     t.repeat.set(rx, ry);
@@ -310,24 +310,51 @@ export function Shrub({ position, size, seed }: {
 }
 
 // ─── Lighting ─────────────────────────────────────────────────────────────────
-/** Image-based lighting from a sky dome plus a sun and ground bounce. */
-export function SceneLighting({ span, mapSize }: { span: number; mapSize: number }) {
+export type TimeOfDay = 'day' | 'sunset' | 'night';
+
+const SUN: Record<TimeOfDay, [number, number, number]> = {
+  day:    [100, 40, 60],
+  sunset: [100, 3, 60],
+  night:  [-60, 30, 40], // moon
+};
+
+export const FOG_COLOR: Record<TimeOfDay, string> = {
+  day: '#d6e2ea', sunset: '#e8c9ab', night: '#0b1222',
+};
+
+/** Image-based lighting from a sky dome plus a sun (or moon) and ground bounce. */
+export function SceneLighting({ span, mapSize, time }: { span: number; mapSize: number; time: TimeOfDay }) {
   const r = span * 1.6 + 6;
+  const sun = SUN[time];
+  const len = Math.hypot(...sun);
+  const dist = span * 3 + 4;
+  const sunPos: [number, number, number] = [sun[0] / len * dist, sun[1] / len * dist, sun[2] / len * dist];
+  const sky = <Sky sunPosition={sun} turbidity={time === 'sunset' ? 8 : 5} rayleigh={time === 'sunset' ? 2.5 : 0.6} mieCoefficient={0.004} />;
+  const sunLight = {
+    day:    { intensity: 2.4,  color: '#fff6e8' },
+    sunset: { intensity: 2.6,  color: '#ff9a52' },
+    night:  { intensity: 0.22, color: '#a9bcff' },
+  }[time];
   return (
     <>
-      <Sky sunPosition={[100, 40, 60]} turbidity={5} rayleigh={0.6} mieCoefficient={0.004} />
-      <Environment frames={1} resolution={128}>
-        <Sky sunPosition={[100, 40, 60]} turbidity={5} rayleigh={0.6} mieCoefficient={0.004} />
-        <Lightformer form="circle" color="#fff4e0" intensity={6} position={[60, 45, 35]} scale={18} />
-        <Lightformer form="rect" color="#56803f" intensity={0.5} position={[0, -30, 0]}
+      {time === 'night' ? <color attach="background" args={[FOG_COLOR.night]} /> : sky}
+      <Environment key={time} frames={1} resolution={128} environmentIntensity={{ day: 1, sunset: 0.5, night: 0.2 }[time]}>
+        {time === 'night'
+          ? <Lightformer form="rect" color="#2a3a66" intensity={1} position={[0, 40, 0]} rotation-x={Math.PI / 2} scale={[300, 300, 1]} />
+          : sky}
+        {time !== 'night' && (
+          <Lightformer form="circle" color={time === 'sunset' ? '#ffb070' : '#fff4e0'} intensity={6}
+            position={[sunPos[0] * 10, Math.max(sunPos[1] * 10, 8), sunPos[2] * 10]} scale={18} />
+        )}
+        <Lightformer form="rect" color="#56803f" intensity={time === 'night' ? 0.05 : 0.5} position={[0, -30, 0]}
           rotation-x={-Math.PI / 2} scale={[300, 300, 1]} />
       </Environment>
-      <hemisphereLight args={['#cfe3ff', '#4a6b35', 0.25]} />
+      <hemisphereLight args={[time === 'sunset' ? '#ffd9b8' : '#cfe3ff', '#4a6b35', { day: 0.25, sunset: 0.1, night: 0.06 }[time]]} />
       <directionalLight
-        position={[span * 2, span * 2.6, span * 1.3]}
-        intensity={2.4}
-        color="#fff6e8"
-        castShadow
+        position={sunPos}
+        intensity={sunLight.intensity}
+        color={sunLight.color}
+        castShadow={time !== 'night'}
         shadow-mapSize={[mapSize, mapSize]}
         shadow-bias={-0.0004}
         shadow-normalBias={0.02}

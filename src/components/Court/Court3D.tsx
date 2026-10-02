@@ -1,12 +1,16 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, PerformanceMonitor } from '@react-three/drei';
 import type { CourtConfig, CourtType } from '../../types/court';
 import {
   FinishContext, SurfaceMaterial, LinePaintMaterial, ribbonGeometry,
-  Lawn, BackyardFence, LeafyTree, Shrub, SceneLighting, ShadowGroup,
+  Lawn, BackyardFence, LeafyTree, Shrub, SceneLighting, ShadowGroup, FOG_COLOR,
 } from './realism';
+import type { TimeOfDay } from './realism';
+import {
+  SportNet, BasketballGoal, Goal, LightPole, PerimeterFence, PlayerBench, DasherBoards,
+} from './equipment';
 
 const S = 0.1; // 1 foot = 0.1 THREE units
 const LINE_W = 0.035; // painted line width (≈4 in)
@@ -117,16 +121,17 @@ function Surroundings({ L, W, pad, residential }: {
   const hx = ((W / 2) + pad + APRON_FT) * S;
   const hz = ((L / 2) + pad + APRON_FT) * S;
   const fx = hx + 2.2, fz = hz + 2.2; // fence ≈ 22 ft past the apron
+  // Tall trees stay on the far sides (−X, −Z) so they frame the court without
+  // blocking the corner and courtside cameras, which sit on the +X / +Z side.
   const trees: [number, number, number, number][] = [
-    [-fx - 1.4, -fz * 0.55, 3.2, 1], [-fx - 2.4, fz * 0.1, 2.6, 2], [-fx - 1.2, fz * 0.7, 3.0, 3],
-    [ fx + 1.6, -fz * 0.7, 2.8, 4], [ fx + 2.2, -fz * 0.05, 3.4, 5], [ fx + 1.3, fz * 0.6, 2.5, 6],
-    [-fx * 0.5, -fz - 1.8, 3.1, 7], [ fx * 0.35, -fz - 1.3, 2.7, 8],
-    [-fx * 0.3,  fz + 1.6, 2.9, 9], [ fx * 0.6,  fz + 2.3, 3.3, 10],
+    [-fx - 1.4, -fz * 0.6, 3.2, 1], [-fx - 2.4, 0, 2.6, 2], [-fx - 1.2, fz * 0.65, 3.0, 3],
+    [-fx * 0.55, -fz - 1.8, 3.1, 7], [fx * 0.05, -fz - 2.4, 2.8, 4], [fx * 0.6, -fz - 1.3, 2.7, 8],
+    [-fx - 1.5, -fz - 1.6, 3.4, 5], [fx + 1.6, -fz - 1.2, 2.9, 9], [-fx - 1.3, fz + 1.5, 2.5, 6],
   ];
   const shrubs: [number, number, number][] = [
     [-fx + 0.5, -fz + 0.5, 11], [fx - 0.5, -fz + 0.6, 12],
     [-fx + 0.6,  fz - 0.5, 13], [fx - 0.5,  fz - 0.6, 14],
-    [-fx + 0.45, 0, 15], [fx - 0.45, fz * 0.3, 16],
+    [-fx + 0.45, 0, 15], [fx - 0.45, fz * 0.3, 16], [fx * 0.3, fz - 0.45, 17],
   ];
   return (
     <group>
@@ -142,48 +147,6 @@ function Surroundings({ L, W, pad, residential }: {
 }
 
 // ─── Accessory building blocks ────────────────────────────────────────────────
-
-function LightPole({ x, z }: { x: number; z: number }) {
-  return (
-    <group position={[x, 0, z]}>
-      <mesh position={[0, 0.6, 0]} castShadow>
-        <cylinderGeometry args={[0.03, 0.04, 1.2, 8]} />
-        <meshStandardMaterial color="#94A3B8" roughness={0.6} metalness={0.4} />
-      </mesh>
-      <mesh position={[0.15, 1.22, 0]} rotation={[0, 0, 0.3]}>
-        <cylinderGeometry args={[0.015, 0.015, 0.36, 6]} />
-        <meshStandardMaterial color="#94A3B8" roughness={0.6} metalness={0.4} />
-      </mesh>
-      <mesh position={[0.30, 1.22, 0]} castShadow>
-        <boxGeometry args={[0.18, 0.05, 0.28]} />
-        <meshStandardMaterial color="#FCD34D" emissive="#FCD34D" emissiveIntensity={0.9} />
-      </mesh>
-    </group>
-  );
-}
-
-function Bench3D({ x, z, rotY = 0 }: { x: number; z: number; rotY?: number }) {
-  return (
-    <group position={[x, 0, z]} rotation={[0, rotY, 0]}>
-      <mesh position={[0, 0.21, 0]}>
-        <boxGeometry args={[0.62, 0.04, 0.16]} />
-        <meshStandardMaterial color="#92400E" roughness={0.85} />
-      </mesh>
-      <mesh position={[0, 0.36, -0.065]} rotation={[0.15, 0, 0]}>
-        <boxGeometry args={[0.62, 0.04, 0.16]} />
-        <meshStandardMaterial color="#92400E" roughness={0.85} />
-      </mesh>
-      <mesh position={[-0.26, 0.1, 0]}>
-        <boxGeometry args={[0.035, 0.2, 0.035]} />
-        <meshStandardMaterial color="#7C3500" roughness={0.85} />
-      </mesh>
-      <mesh position={[ 0.26, 0.1, 0]}>
-        <boxGeometry args={[0.035, 0.2, 0.035]} />
-        <meshStandardMaterial color="#7C3500" roughness={0.85} />
-      </mesh>
-    </group>
-  );
-}
 
 function Scoreboard3D({ x, z }: { x: number; z: number }) {
   return (
@@ -231,7 +194,7 @@ function WaterFountain3D({ x, z }: { x: number; z: number }) {
   );
 }
 
-function CourtAccessories3D({ config }: { config: CourtConfig }) {
+function CourtAccessories3D({ config, night }: { config: CourtConfig; night: boolean }) {
   const { dimensions: { length: L, width: W }, selectedAccessories: acc } = config;
   const halfW = (W * S) / 2;
   const halfL = (L * S) / 2;
@@ -240,64 +203,33 @@ function CourtAccessories3D({ config }: { config: CourtConfig }) {
 
   const nodes: React.ReactNode[] = [];
 
-  // ── Lighting ──
-  if (acc.includes('lighting-2-pole')) {
+  // ── Lighting: poles on both sidelines, each aimed across the court ──
+  const poleZ = acc.includes('lighting-2-pole') ? [0]
+    : acc.includes('lighting-4-pole') ? [-0.5, 0.5]
+    : acc.includes('lighting-6-pole') ? [-0.65, 0, 0.65]
+    : [];
+  poleZ.forEach((f, i) => {
+    const z = halfL * f;
     nodes.push(
-      <LightPole key="lp1" x={-edgeX} z={0} />,
-      <LightPole key="lp2" x={ edgeX} z={0} />,
+      <LightPole key={`lpa${i}`} x={-edgeX} z={z} aim={[halfW * 0.5, z]} night={night} />,
+      <LightPole key={`lpb${i}`} x={edgeX} z={z} aim={[-halfW * 0.5, z]} night={night} />,
     );
-  } else if (acc.includes('lighting-4-pole')) {
-    nodes.push(
-      <LightPole key="lp1" x={-edgeX} z={-halfL * 0.5} />,
-      <LightPole key="lp2" x={-edgeX} z={ halfL * 0.5} />,
-      <LightPole key="lp3" x={ edgeX} z={-halfL * 0.5} />,
-      <LightPole key="lp4" x={ edgeX} z={ halfL * 0.5} />,
-    );
-  } else if (acc.includes('lighting-6-pole')) {
-    nodes.push(
-      <LightPole key="lp1" x={-edgeX} z={-halfL * 0.65} />,
-      <LightPole key="lp2" x={-edgeX} z={0}             />,
-      <LightPole key="lp3" x={-edgeX} z={ halfL * 0.65} />,
-      <LightPole key="lp4" x={ edgeX} z={-halfL * 0.65} />,
-      <LightPole key="lp5" x={ edgeX} z={0}             />,
-      <LightPole key="lp6" x={ edgeX} z={ halfL * 0.65} />,
-    );
-  }
+  });
 
   // ── Fencing ──
   if (acc.includes('chain-link-fence') || acc.includes('vinyl-fence')) {
-    const isVinyl = acc.includes('vinyl-fence');
-    const hasWind = acc.includes('windscreen');
-    const fColor   = hasWind ? '#166534' : isVinyl ? '#CBD5E1' : '#94A3B8';
-    const fH       = hasWind ? 0.34 : 0.2;
-    const fOpacity = hasWind ? 0.52 : isVinyl ? 0.8 : 0.45;
     nodes.push(
-      <mesh key="fn" position={[0, fH / 2, -edgeL]}>
-        <boxGeometry args={[edgeX * 2 + 0.025, fH, 0.025]} />
-        <meshStandardMaterial color={fColor} transparent opacity={fOpacity} />
-      </mesh>,
-      <mesh key="fs" position={[0, fH / 2, edgeL]}>
-        <boxGeometry args={[edgeX * 2 + 0.025, fH, 0.025]} />
-        <meshStandardMaterial color={fColor} transparent opacity={fOpacity} />
-      </mesh>,
-      <mesh key="fw" position={[-edgeX, fH / 2, 0]}>
-        <boxGeometry args={[0.025, fH, edgeL * 2]} />
-        <meshStandardMaterial color={fColor} transparent opacity={fOpacity} />
-      </mesh>,
-      <mesh key="fe" position={[edgeX, fH / 2, 0]}>
-        <boxGeometry args={[0.025, fH, edgeL * 2]} />
-        <meshStandardMaterial color={fColor} transparent opacity={fOpacity} />
-      </mesh>,
+      <PerimeterFence key="fence" hx={edgeX} hz={edgeL}
+        kind={acc.includes('vinyl-fence') ? 'vinyl' : 'chain'}
+        windscreen={acc.includes('windscreen')} />,
     );
   }
 
-  // ── Benches ──
+  // ── Benches along the +X sideline, facing the court ──
   if (acc.includes('bench-2') || acc.includes('bench-4')) {
-    const count  = acc.includes('bench-4') ? 4 : 2;
-    const bX     = edgeX - 0.3;
-    const fracs  = count === 2 ? [-0.28, 0.28] : [-0.55, -0.18, 0.18, 0.55];
+    const fracs = acc.includes('bench-4') ? [-0.55, -0.18, 0.18, 0.55] : [-0.28, 0.28];
     fracs.forEach((f, i) => {
-      nodes.push(<Bench3D key={`bench-${i}`} x={bX} z={halfL * f} rotY={Math.PI / 2} />);
+      nodes.push(<PlayerBench key={`bench-${i}`} position={[edgeX - 0.3, 0, halfL * f]} rotationY={-Math.PI / 2} />);
     });
   }
 
@@ -361,10 +293,10 @@ function BasketballCourt({ config }: { config: CourtConfig }) {
       <ArcLine cxFt={bX} cyFt={ftY} r={4} a0={-Math.PI / 2} a1={Math.PI / 2} L={L} W={W} color={lc} />
       {!half && <ArcLine cxFt={L - bX} cyFt={ftY} r={4} a0={Math.PI / 2} a1={Math.PI * 3 / 2} L={L} W={W} color={lc} />}
       {(acc.includes('basketball-hoop-single') || acc.includes('basketball-hoop-double')) && (
-        <ArcLine cxFt={bX} cyFt={ftY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={0.05} />
+        <BasketballGoal position={[tx(ftY, W), 0, tz(bX - 1.25, L)]} />
       )}
       {acc.includes('basketball-hoop-double') && !half && (
-        <ArcLine cxFt={L - bX} cyFt={ftY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={0.05} />
+        <BasketballGoal position={[tx(ftY, W), 0, tz(L - bX + 1.25, L)]} rotationY={Math.PI} />
       )}
     </group>
   );
@@ -396,24 +328,8 @@ function TennisCourt({ config }: { config: CourtConfig }) {
       <Seg x1={svcLen}   y1={sOff}         x2={svcLen}   y2={sOff + singW} L={L} W={W} color={lc} />
       <Seg x1={L - svcLen} y1={sOff}       x2={L - svcLen} y2={sOff + singW} L={L} W={W} color={lc} />
       <Seg x1={svcLen}   y1={W / 2}        x2={L - svcLen} y2={W / 2}       L={L} W={W} color={lc} />
-      {/* Net */}
-      <mesh position={[0, 0.08, tz(L / 2, L)]}>
-        <boxGeometry args={[(W + 0.6) * S, 0.16, 0.025]} />
-        <meshStandardMaterial color="white" transparent opacity={0.7} />
-      </mesh>
-      {/* Net posts */}
-      {acc.includes('tennis-net') && (
-        <>
-          <mesh position={[tx(0, W) - 0.04, 0.12, tz(L / 2, L)]}>
-            <cylinderGeometry args={[0.03, 0.03, 0.24, 8]} />
-            <meshStandardMaterial color="#6B7280" />
-          </mesh>
-          <mesh position={[tx(W, W) + 0.04, 0.12, tz(L / 2, L)]}>
-            <cylinderGeometry args={[0.03, 0.03, 0.24, 8]} />
-            <meshStandardMaterial color="#6B7280" />
-          </mesh>
-        </>
-      )}
+      {/* Net: 3.5 ft at the posts (3 ft outside the doubles lines), 3 ft at center */}
+      <SportNet position={[0, 0, tz(L / 2, L)]} width={(W + 6) * S} postH={0.35} centerH={0.3} centerStrap />
     </group>
   );
 }
@@ -441,23 +357,9 @@ function PickleballCourt({ config }: { config: CourtConfig }) {
       <Seg x1={offX}             y1={offY + playW / 2} x2={offX + playL}     y2={offY + playW / 2} L={L} W={W} color={lc} />
       <Seg x1={offX + nvz}       y1={offY}             x2={offX + nvz}       y2={offY + playW}     L={L} W={W} color={lc} />
       <Seg x1={offX + playL - nvz} y1={offY}           x2={offX + playL - nvz} y2={offY + playW}   L={L} W={W} color={lc} />
-      {/* Net */}
-      <mesh position={[tx(offY + playW / 2, W), 0.06, tz(offX + playL / 2, L)]}>
-        <boxGeometry args={[(playW + 0.3) * S, 0.12, 0.02]} />
-        <meshStandardMaterial color="white" transparent opacity={0.7} />
-      </mesh>
-      {acc.includes('pickleball-net') && (
-        <>
-          <mesh position={[tx(offY, W) - 0.03, 0.08, tz(offX + playL / 2, L)]}>
-            <cylinderGeometry args={[0.025, 0.025, 0.16, 8]} />
-            <meshStandardMaterial color="#6B7280" />
-          </mesh>
-          <mesh position={[tx(offY + playW, W) + 0.03, 0.08, tz(offX + playL / 2, L)]}>
-            <cylinderGeometry args={[0.025, 0.025, 0.16, 8]} />
-            <meshStandardMaterial color="#6B7280" />
-          </mesh>
-        </>
-      )}
+      {/* Net: 36 in at the posts, 34 in at center */}
+      <SportNet position={[tx(offY + playW / 2, W), 0, tz(offX + playL / 2, L)]} width={(playW + 2) * S}
+        postH={0.3} centerH={0.283} postR={0.01} />
     </group>
   );
 }
@@ -518,44 +420,19 @@ function MultiSportCourt({ config }: { config: CourtConfig }) {
       ))}
       {/* Hoops */}
       {(acc.includes('basketball-hoop-single') || acc.includes('basketball-hoop-double')) && (
-        <ArcLine cxFt={bX}     cyFt={midY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={0.05} />
+        <BasketballGoal position={[tx(midY, W), 0, tz(bX - 1.25, L)]} />
       )}
       {acc.includes('basketball-hoop-double') && (
-        <ArcLine cxFt={L - bX} cyFt={midY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={0.05} />
+        <BasketballGoal position={[tx(midY, W), 0, tz(L - bX + 1.25, L)]} rotationY={Math.PI} />
       )}
       {/* Pickleball nets */}
       {acc.includes('pickleball-net') && [pklX1, pklX2].map((bx, i) => (
-        <group key={`pkl-net-${i}`}>
-          <mesh position={[tx(pklY + pklW / 2, W), 0.06, tz(bx + pklLen / 2, L)]}>
-            <boxGeometry args={[(pklW + 0.3) * S, 0.12, 0.02]} />
-            <meshStandardMaterial color="white" transparent opacity={0.7} />
-          </mesh>
-          <mesh position={[tx(pklY, W) - 0.03, 0.08, tz(bx + pklLen / 2, L)]}>
-            <cylinderGeometry args={[0.025, 0.025, 0.16, 8]} />
-            <meshStandardMaterial color="#6B7280" />
-          </mesh>
-          <mesh position={[tx(pklY + pklW, W) + 0.03, 0.08, tz(bx + pklLen / 2, L)]}>
-            <cylinderGeometry args={[0.025, 0.025, 0.16, 8]} />
-            <meshStandardMaterial color="#6B7280" />
-          </mesh>
-        </group>
+        <SportNet key={`pkl-net-${i}`} position={[tx(pklY + pklW / 2, W), 0, tz(bx + pklLen / 2, L)]}
+          width={(pklW + 2) * S} postH={0.3} centerH={0.283} postR={0.01} />
       ))}
       {/* Tennis net at center */}
       {acc.includes('tennis-net') && (
-        <>
-          <mesh position={[0, 0.08, tz(L / 2, L)]}>
-            <boxGeometry args={[(W + 0.6) * S, 0.16, 0.025]} />
-            <meshStandardMaterial color="white" transparent opacity={0.7} />
-          </mesh>
-          <mesh position={[tx(0, W) - 0.04, 0.12, tz(L / 2, L)]}>
-            <cylinderGeometry args={[0.03, 0.03, 0.24, 8]} />
-            <meshStandardMaterial color="#6B7280" />
-          </mesh>
-          <mesh position={[tx(W, W) + 0.04, 0.12, tz(L / 2, L)]}>
-            <cylinderGeometry args={[0.03, 0.03, 0.24, 8]} />
-            <meshStandardMaterial color="#6B7280" />
-          </mesh>
-        </>
+        <SportNet position={[0, 0, tz(L / 2, L)]} width={(W + 6) * S} postH={0.35} centerH={0.3} centerStrap />
       )}
     </group>
   );
@@ -606,23 +483,8 @@ function BadmintonCourt({ config }: { config: CourtConfig }) {
       <Seg x1={svcLen} y1={isSingles ? 0 : sOff} x2={svcLen} y2={isSingles ? W : sOff + singW} L={L} W={W} color={lc} />
       <Seg x1={L - svcLen} y1={isSingles ? 0 : sOff} x2={L - svcLen} y2={isSingles ? W : sOff + singW} L={L} W={W} color={lc} />
       <Seg x1={svcLen} y1={W / 2} x2={L - svcLen} y2={W / 2} L={L} W={W} color={lc} />
-      {/* Net */}
-      <mesh position={[0, 0.07, tz(L / 2, L)]}>
-        <boxGeometry args={[(W + 0.4) * S, 0.14, 0.02]} />
-        <meshStandardMaterial color="white" transparent opacity={0.7} />
-      </mesh>
-      {acc.includes('badminton-net') && (
-        <>
-          <mesh position={[tx(0, W) - 0.03, 0.1, tz(L / 2, L)]}>
-            <cylinderGeometry args={[0.025, 0.025, 0.2, 8]} />
-            <meshStandardMaterial color="#6B7280" />
-          </mesh>
-          <mesh position={[tx(W, W) + 0.03, 0.1, tz(L / 2, L)]}>
-            <cylinderGeometry args={[0.025, 0.025, 0.2, 8]} />
-            <meshStandardMaterial color="#6B7280" />
-          </mesh>
-        </>
-      )}
+      {/* Net: 5 ft 1 in at the posts, 5 ft at center, 2.5 ft deep */}
+      <SportNet position={[0, 0, tz(L / 2, L)]} width={W * S} postH={0.51} centerH={0.5} bottom={0.25} postR={0.01} />
     </group>
   );
 }
@@ -648,19 +510,11 @@ function FutsalCourt({ config }: { config: CourtConfig }) {
       <Border x={L - penLen} y={(W - penW) / 2} w={penLen} h={penW} L={L} W={W} color={lc} />
       <Border x={0} y={(W - goalW) / 2} w={goalLen} h={goalW} L={L} W={W} color={lc} lw={0.04} />
       <Border x={L - goalLen} y={(W - goalW) / 2} w={goalLen} h={goalW} L={L} W={W} color={lc} lw={0.04} />
-      {/* Futsal goals */}
+      {/* Futsal goals: 3 × 2 m on each goal line */}
       {acc.includes('futsal-goals') && (
         <>
-          {/* Left goal */}
-          <mesh position={[tx(midY, W), 0.1, tz(-goalLen / 2, L)]}>
-            <boxGeometry args={[goalW * S, 0.2, goalLen * S]} />
-            <meshStandardMaterial color="white" transparent opacity={0.3} wireframe />
-          </mesh>
-          {/* Right goal */}
-          <mesh position={[tx(midY, W), 0.1, tz(L + goalLen / 2, L)]}>
-            <boxGeometry args={[goalW * S, 0.2, goalLen * S]} />
-            <meshStandardMaterial color="white" transparent opacity={0.3} wireframe />
-          </mesh>
+          <Goal position={[tx(midY, W), 0, tz(0, L)]} width={1.0} height={0.656} depth={0.3} />
+          <Goal position={[tx(midY, W), 0, tz(L, L)]} rotationY={Math.PI} width={1.0} height={0.656} depth={0.3} />
         </>
       )}
     </group>
@@ -692,40 +546,16 @@ function InlineHockeyCourt({ config }: { config: CourtConfig }) {
       <Seg x1={L - goalLineX} y1={0} x2={L - goalLineX} y2={W} L={L} W={W} color="#EF4444" lw={0.05} />
       {/* Center circle */}
       <ArcLine cxFt={L / 2} cyFt={midY} r={8} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
-      {/* Hockey goals */}
+      {/* Hockey goals: 6 × 4 ft on the goal lines */}
       {acc.includes('hockey-goals') && (
         <>
-          <mesh position={[tx(midY, W), 0.06, tz(goalLineX - goalDepth / 2, L)]}>
-            <boxGeometry args={[goalW * S, 0.12, goalDepth * S]} />
-            <meshStandardMaterial color="white" transparent opacity={0.3} wireframe />
-          </mesh>
-          <mesh position={[tx(midY, W), 0.06, tz(L - goalLineX + goalDepth / 2, L)]}>
-            <boxGeometry args={[goalW * S, 0.12, goalDepth * S]} />
-            <meshStandardMaterial color="white" transparent opacity={0.3} wireframe />
-          </mesh>
+          <Goal position={[tx(midY, W), 0, tz(goalLineX, L)]} width={goalW * S} height={0.4} depth={goalDepth * S * 0.8}
+            frameColor="#dc2626" frameR={0.009} />
+          <Goal position={[tx(midY, W), 0, tz(L - goalLineX, L)]} rotationY={Math.PI} width={goalW * S} height={0.4}
+            depth={goalDepth * S * 0.8} frameColor="#dc2626" frameR={0.009} />
         </>
       )}
-      {/* Dasher boards */}
-      {acc.includes('dasher-boards') && (
-        <>
-          <mesh position={[0, 0.02, tz(0, L)]}>
-            <boxGeometry args={[(W * S) + 0.05, 0.04, 0.025]} />
-            <meshStandardMaterial color="#E2E8F0" transparent opacity={0.85} />
-          </mesh>
-          <mesh position={[0, 0.02, tz(L, L)]}>
-            <boxGeometry args={[(W * S) + 0.05, 0.04, 0.025]} />
-            <meshStandardMaterial color="#E2E8F0" transparent opacity={0.85} />
-          </mesh>
-          <mesh position={[tx(0, W) - 0.01, 0.02, 0]}>
-            <boxGeometry args={[0.025, 0.04, (L * S)]} />
-            <meshStandardMaterial color="#E2E8F0" transparent opacity={0.85} />
-          </mesh>
-          <mesh position={[tx(W, W) + 0.01, 0.02, 0]}>
-            <boxGeometry args={[0.025, 0.04, (L * S)]} />
-            <meshStandardMaterial color="#E2E8F0" transparent opacity={0.85} />
-          </mesh>
-        </>
-      )}
+      {acc.includes('dasher-boards') && <DasherBoards hx={(W * S) / 2 + 0.01} hz={(L * S) / 2 + 0.01} />}
     </group>
   );
 }
@@ -752,17 +582,11 @@ function HandballCourt({ config }: { config: CourtConfig }) {
       {/* Goals on court */}
       <Border x={0} y={(W - goalW) / 2} w={goalLen} h={goalW} L={L} W={W} color={lc} lw={0.06} />
       <Border x={L - goalLen} y={(W - goalW) / 2} w={goalLen} h={goalW} L={L} W={W} color={lc} lw={0.06} />
-      {/* Handball goals accessory */}
+      {/* Handball goals: 3 × 2 m with painted stripes */}
       {acc.includes('handball-goals') && (
         <>
-          <mesh position={[tx(midY, W), 0.1, tz(-goalLen / 2, L)]}>
-            <boxGeometry args={[goalW * S, 0.2, goalLen * S]} />
-            <meshStandardMaterial color="white" transparent opacity={0.3} wireframe />
-          </mesh>
-          <mesh position={[tx(midY, W), 0.1, tz(L + goalLen / 2, L)]}>
-            <boxGeometry args={[goalW * S, 0.2, goalLen * S]} />
-            <meshStandardMaterial color="white" transparent opacity={0.3} wireframe />
-          </mesh>
+          <Goal position={[tx(midY, W), 0, tz(0, L)]} width={1.0} height={0.656} depth={0.3} stripes="#dc2626" />
+          <Goal position={[tx(midY, W), 0, tz(L, L)]} rotationY={Math.PI} width={1.0} height={0.656} depth={0.3} stripes="#dc2626" />
         </>
       )}
     </group>
@@ -787,23 +611,8 @@ function VolleyballCourt({ config }: { config: CourtConfig }) {
       {/* Attack lines */}
       <Seg x1={L / 2 - attackLine} y1={0} x2={L / 2 - attackLine} y2={W} L={L} W={W} color={lc} />
       <Seg x1={L / 2 + attackLine} y1={0} x2={L / 2 + attackLine} y2={W} L={L} W={W} color={lc} />
-      {/* Net */}
-      <mesh position={[0, 0.09, tz(L / 2, L)]}>
-        <boxGeometry args={[(W + 0.4) * S, 0.18, 0.025]} />
-        <meshStandardMaterial color="white" transparent opacity={0.7} />
-      </mesh>
-      {acc.includes('volleyball-net') && (
-        <>
-          <mesh position={[tx(0, W) - 0.04, 0.12, tz(L / 2, L)]}>
-            <cylinderGeometry args={[0.03, 0.03, 0.24, 8]} />
-            <meshStandardMaterial color="#6B7280" />
-          </mesh>
-          <mesh position={[tx(W, W) + 0.04, 0.12, tz(L / 2, L)]}>
-            <cylinderGeometry args={[0.03, 0.03, 0.24, 8]} />
-            <meshStandardMaterial color="#6B7280" />
-          </mesh>
-        </>
-      )}
+      {/* Net: top at 7 ft 11 in, 3.3 ft deep, posts 3 ft outside the sidelines */}
+      <SportNet position={[0, 0, tz(L / 2, L)]} width={(W + 6) * S} postH={0.8} centerH={0.795} bottom={0.47} postR={0.02} />
     </group>
   );
 }
@@ -890,6 +699,83 @@ function CourtScene({ config }: { config: CourtConfig }) {
   }
 }
 
+// ─── Camera ───────────────────────────────────────────────────────────────────
+type View = 'corner' | 'top' | 'side';
+
+const VIEW_DIR: Record<View, [number, number, number]> = {
+  corner: [0.56, 0.6, 0.56],
+  top:    [0.12, 1, 0.0001], // long axis runs across the screen
+  side:   [1, 0.42, 0.25],   // low courtside angle
+};
+
+/** Distance at which the court rectangle (half-extents hx × hz) fills the view. */
+function fitDistance(dir: THREE.Vector3, hx: number, hz: number, fov: number, aspect: number) {
+  const cam = new THREE.PerspectiveCamera(fov, aspect, 0.01, 1000);
+  const corners = [[-hx, -hz], [hx, -hz], [hx, hz], [-hx, hz]].map(([x, z]) => new THREE.Vector3(x, 0, z));
+  const fits = (d: number) => {
+    cam.position.copy(dir).multiplyScalar(d);
+    cam.lookAt(0, 0, 0);
+    cam.updateMatrixWorld();
+    return corners.every((c) => {
+      const p = c.clone().project(cam);
+      return Math.abs(p.x) <= 0.92 && Math.abs(p.y) <= 0.88 && p.z < 1;
+    });
+  };
+  let lo = 0.1, hi = 500;
+  for (let i = 0; i < 30; i++) { const mid = (lo + hi) / 2; if (fits(mid)) hi = mid; else lo = mid; }
+  return hi;
+}
+
+/** Glides the camera to the chosen view, refitting when the canvas resizes. */
+function CameraRig({ view, hx, hz }: { view: View; hx: number; hz: number }) {
+  const { camera, size, controls } = useThree();
+  const goal = useRef<THREE.Vector3 | null>(null);
+
+  useEffect(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    const dir = new THREE.Vector3(...VIEW_DIR[view]).normalize();
+    goal.current = dir.multiplyScalar(fitDistance(dir, hx, hz, cam.fov, size.width / size.height));
+  }, [camera, view, hx, hz, size.width, size.height]);
+
+  // Hand control back to the user as soon as they start dragging
+  useEffect(() => {
+    const ctl = controls as unknown as THREE.EventDispatcher<{ start: object }> | null;
+    if (!ctl) return;
+    const stop = () => { goal.current = null; };
+    ctl.addEventListener('start', stop);
+    return () => ctl.removeEventListener('start', stop);
+  }, [controls]);
+
+  useFrame((_, dt) => {
+    if (!goal.current) return;
+    camera.position.lerp(goal.current, 1 - Math.exp(-dt * 6));
+    const ctl = controls as unknown as { target: THREE.Vector3; update: () => void } | null;
+    if (ctl) { ctl.target.set(0, 0, 0); ctl.update(); } else camera.lookAt(0, 0, 0);
+    if (camera.position.distanceTo(goal.current) < 0.005) goal.current = null;
+  });
+  return null;
+}
+
+function Toggle<T extends string>({ value, options, onChange }: {
+  value: T; options: [T, string][]; onChange: (v: T) => void;
+}) {
+  return (
+    <div className="flex rounded-lg bg-black/45 backdrop-blur-sm p-0.5 shadow-sm">
+      {options.map(([v, label]) => (
+        <button
+          key={v}
+          onClick={() => onChange(v)}
+          className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
+            value === v ? 'bg-white text-gray-900' : 'text-white/85 hover:text-white'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ─── Exported component ───────────────────────────────────────────────────────
 const coarsePointer = typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;
 
@@ -902,6 +788,9 @@ export function Court3D({ config }: { config: CourtConfig }) {
   const pad = BORDER_PAD[config.type] ?? 8;
   // Start lighter on phones; drop resolution further if frame rate struggles
   const [dpr, setDpr] = useState(coarsePointer ? 1.25 : 2);
+  const [view, setView] = useState<View>('corner');
+  const [time, setTime] = useState<TimeOfDay>('day');
+  const hasLights = config.selectedAccessories.some((a) => a.startsWith('lighting-'));
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -915,6 +804,15 @@ export function Court3D({ config }: { config: CourtConfig }) {
       pointerEvents: 'none', userSelect: 'none' }}>
       mbsportsbuilders.com
     </div>
+    <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
+      <Toggle value={view} onChange={setView} options={[['corner', 'Corner'], ['top', 'Top'], ['side', 'Courtside']]} />
+      <Toggle value={time} onChange={setTime} options={[['day', 'Day'], ['sunset', 'Sunset'], ['night', 'Night']]} />
+    </div>
+    {time === 'night' && !hasLights && (
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-lg bg-black/60 text-white text-xs whitespace-nowrap">
+        Add a lighting package to see your court lit at night
+      </div>
+    )}
     <Canvas
       shadows="soft"
       dpr={dpr}
@@ -923,8 +821,8 @@ export function Court3D({ config }: { config: CourtConfig }) {
       gl={{ antialias: true, toneMapping: THREE.NeutralToneMapping, toneMappingExposure: 1.0 }}
     >
       <PerformanceMonitor onDecline={() => setDpr(1)} />
-      <fog attach="fog" color="#d6e2ea" near={span * 2 + 8} far={span * 6 + 40} />
-      <SceneLighting span={span} mapSize={coarsePointer ? 1024 : 2048} />
+      <fog attach="fog" color={FOG_COLOR[time]} near={span * 2 + 8} far={span * 6 + 40} />
+      <SceneLighting span={span} mapSize={coarsePointer ? 1024 : 2048} time={time} />
       <Lawn size={span * 6 + 60} />
       <Surroundings L={L} W={W} pad={pad} residential={config.propertyType === 'residential'} />
       <Apron L={L} W={W} pad={pad} />
@@ -932,14 +830,16 @@ export function Court3D({ config }: { config: CourtConfig }) {
         <CourtScene config={config} />
       </FinishContext.Provider>
       <ShadowGroup deps={config}>
-        <CourtAccessories3D config={config} />
+        <CourtAccessories3D config={config} night={time === 'night'} />
         <SportSpecificAccessories3D config={config} />
       </ShadowGroup>
+      <CameraRig view={view} hx={(W / 2 + pad) * S} hz={(L / 2 + pad) * S} />
       <OrbitControls
+        makeDefault
         target={[0, 0, 0]}
         minDistance={span * 0.3}
-        maxDistance={span * 4}
-        minPolarAngle={Math.PI / 12}
+        maxDistance={span * 4 + 10}
+        minPolarAngle={0.02}
         maxPolarAngle={Math.PI / 2.05}
         enableDamping
         dampingFactor={0.08}

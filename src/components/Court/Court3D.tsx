@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
+import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Line, Sky } from '@react-three/drei';
-import type { CourtConfig } from '../../types/court';
+import { OrbitControls, PerformanceMonitor } from '@react-three/drei';
+import type { CourtConfig, CourtType } from '../../types/court';
+import {
+  FinishContext, SurfaceMaterial, LinePaintMaterial, ribbonGeometry,
+  Lawn, BackyardFence, LeafyTree, Shrub, SceneLighting, ShadowGroup,
+} from './realism';
 
 const S = 0.1; // 1 foot = 0.1 THREE units
+const LINE_W = 0.035; // painted line width (≈4 in)
+const LINE_Y = 0.026; // top of the painted lines
 
 // Court-feet → THREE world coords (length along Z, width along X)
 const tx = (y: number, W: number) => (y - W / 2) * S;
@@ -16,25 +23,27 @@ function arcPts(
 ): [number, number, number][] {
   return Array.from({ length: n + 1 }, (_, i) => {
     const a = a0 + (a1 - a0) * (i / n);
-    return [tx(cyFt + r * Math.sin(a), W), 0.022, tz(cxFt + r * Math.cos(a), L)];
+    return [tx(cyFt + r * Math.sin(a), W), LINE_Y, tz(cxFt + r * Math.cos(a), L)];
   });
 }
 
 // ─── Primitive building blocks ────────────────────────────────────────────────
 
-function Slab({ x, y, w, h, L, W, color, alpha = 1, yOff = 0.005, roughness = 0.8 }: {
+// Roughness now comes from the surface finish (FinishContext); the prop is kept
+// so existing call sites stay valid.
+function Slab({ x, y, w, h, L, W, color, alpha = 1, yOff = 0.005 }: {
   x: number; y: number; w: number; h: number;
   L: number; W: number; color: string; alpha?: number; yOff?: number; roughness?: number;
 }) {
   return (
     <mesh position={[tx(y + h / 2, W), yOff, tz(x + w / 2, L)]} receiveShadow>
       <boxGeometry args={[h * S, 0.01, w * S]} />
-      <meshStandardMaterial color={color} transparent={alpha < 1} opacity={alpha} roughness={roughness} />
+      <SurfaceMaterial color={color} wFt={w} hFt={h} alpha={alpha} />
     </mesh>
   );
 }
 
-function Seg({ x1, y1, x2, y2, L, W, color, lw = 0.05 }: {
+function Seg({ x1, y1, x2, y2, L, W, color, lw = LINE_W }: {
   x1: number; y1: number; x2: number; y2: number;
   L: number; W: number; color: string; lw?: number;
 }) {
@@ -48,12 +57,12 @@ function Seg({ x1, y1, x2, y2, L, W, color, lw = 0.05 }: {
       rotation={[0, Math.atan2(dX3, dZ3), 0]}
     >
       <boxGeometry args={[lw, 0.008, len]} />
-      <meshStandardMaterial color={color} />
+      <LinePaintMaterial color={color} />
     </mesh>
   );
 }
 
-function Border({ x, y, w, h, L, W, color, lw = 0.05 }: {
+function Border({ x, y, w, h, L, W, color, lw = LINE_W }: {
   x: number; y: number; w: number; h: number;
   L: number; W: number; color: string; lw?: number;
 }) {
@@ -67,82 +76,68 @@ function Border({ x, y, w, h, L, W, color, lw = 0.05 }: {
   );
 }
 
-function ArcLine({ cxFt, cyFt, r, a0, a1, L, W, color, lw = 1.5, n = 56 }: {
+// Arcs are flat painted ribbons with the same world width as straight lines
+function ArcLine({ cxFt, cyFt, r, a0, a1, L, W, color, lw = LINE_W, n = 56 }: {
   cxFt: number; cyFt: number; r: number; a0: number; a1: number;
   L: number; W: number; color: string; lw?: number; n?: number;
 }) {
-  const pts = arcPts(cxFt, cyFt, r, a0, a1, L, W, n);
-  return <Line points={pts} color={color} lineWidth={lw} />;
-}
-
-// ─── Ground (grass) ───────────────────────────────────────────────────────────
-function Ground({ L, W }: { L: number; W: number }) {
-  const size = Math.max(L, W) * S * 6;
+  const geo = useMemo(
+    () => ribbonGeometry(arcPts(cxFt, cyFt, r, a0, a1, L, W, n), lw),
+    [cxFt, cyFt, r, a0, a1, L, W, n, lw],
+  );
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-      <planeGeometry args={[size, size]} />
-      <meshStandardMaterial color="#4a7c3f" roughness={0.95} />
+    <mesh geometry={geo} receiveShadow>
+      <LinePaintMaterial color={color} />
     </mesh>
   );
 }
 
-// ─── Tree ─────────────────────────────────────────────────────────────────────
-function Tree({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) {
-  const h = scale;
+// ─── Surroundings ─────────────────────────────────────────────────────────────
+// Width of the colored out-of-bounds border each court draws around itself (ft)
+const BORDER_PAD: Partial<Record<CourtType, number>> = {
+  'bocce-ball': 4, shuffleboard: 4, 'four-square': 4, badminton: 6,
+};
+const APRON_FT = 3; // concrete walkway around the finished court
+
+function Apron({ L, W, pad }: { L: number; W: number; pad: number }) {
+  const e = pad + APRON_FT;
   return (
-    <group position={position}>
-      <mesh position={[0, h * 0.15, 0]} castShadow>
-        <cylinderGeometry args={[0.045 * scale, 0.07 * scale, h * 0.3, 6]} />
-        <meshStandardMaterial color="#5c3d1e" roughness={0.9} />
-      </mesh>
-      <mesh position={[0, h * 0.52, 0]} castShadow>
-        <coneGeometry args={[0.34 * scale, h * 0.55, 7]} />
-        <meshStandardMaterial color="#2d5a27" roughness={0.85} />
-      </mesh>
-      <mesh position={[0, h * 0.76, 0]} castShadow>
-        <coneGeometry args={[0.24 * scale, h * 0.42, 7]} />
-        <meshStandardMaterial color="#3a7a32" roughness={0.85} />
-      </mesh>
-      <mesh position={[0, h * 0.96, 0]} castShadow>
-        <coneGeometry args={[0.14 * scale, h * 0.30, 7]} />
-        <meshStandardMaterial color="#4d9445" roughness={0.85} />
-      </mesh>
-    </group>
+    <mesh position={[0, 0.002, 0]} receiveShadow>
+      <boxGeometry args={[(W + e * 2) * S, 0.01, (L + e * 2) * S]} />
+      <meshStandardMaterial color="#b9b4aa" roughness={0.92} />
+    </mesh>
   );
 }
 
-// ─── Trees scattered around the court ─────────────────────────────────────────
-function Trees({ L, W }: { L: number; W: number }) {
-  const hw = (W * S) / 2;
-  const hl = (L * S) / 2;
-  const m  = Math.max(hw, hl) * 0.28;
-  const ts = Math.max(hw, hl) * 0.20;
-
-  const pts: [number, number, number][] = [
-    // far end (−Z)
-    [-hw - m * 0.5, -hl - m * 1.1, ts * 1.10],
-    [0,              -hl - m * 1.5, ts * 0.90],
-    [ hw + m * 0.3, -hl - m * 1.0, ts * 1.20],
-    // near end (+Z)
-    [-hw - m * 0.4,  hl + m * 1.2,  ts * 1.00],
-    [0,               hl + m * 1.6,  ts * 1.15],
-    [ hw + m * 0.5,  hl + m * 1.0,  ts * 0.85],
-    // left side (−X)
-    [-hw - m * 1.2, -hl * 0.55, ts * 1.30],
-    [-hw - m * 1.5,  0.1,         ts * 0.95],
-    [-hw - m * 1.1,  hl * 0.50,  ts * 1.10],
-    // right side (+X)
-    [ hw + m * 1.3, -hl * 0.45, ts * 1.00],
-    [ hw + m * 1.6,  0.2,         ts * 1.20],
-    [ hw + m * 1.2,  hl * 0.55,  ts * 0.90],
+// Fence and trees sit a fixed real-world distance from the court so they read
+// at true scale (6 ft fence, 25–35 ft trees) whatever the court size.
+function Surroundings({ L, W, pad, residential }: {
+  L: number; W: number; pad: number; residential: boolean;
+}) {
+  const hx = ((W / 2) + pad + APRON_FT) * S;
+  const hz = ((L / 2) + pad + APRON_FT) * S;
+  const fx = hx + 2.2, fz = hz + 2.2; // fence ≈ 22 ft past the apron
+  const trees: [number, number, number, number][] = [
+    [-fx - 1.4, -fz * 0.55, 3.2, 1], [-fx - 2.4, fz * 0.1, 2.6, 2], [-fx - 1.2, fz * 0.7, 3.0, 3],
+    [ fx + 1.6, -fz * 0.7, 2.8, 4], [ fx + 2.2, -fz * 0.05, 3.4, 5], [ fx + 1.3, fz * 0.6, 2.5, 6],
+    [-fx * 0.5, -fz - 1.8, 3.1, 7], [ fx * 0.35, -fz - 1.3, 2.7, 8],
+    [-fx * 0.3,  fz + 1.6, 2.9, 9], [ fx * 0.6,  fz + 2.3, 3.3, 10],
   ];
-
+  const shrubs: [number, number, number][] = [
+    [-fx + 0.5, -fz + 0.5, 11], [fx - 0.5, -fz + 0.6, 12],
+    [-fx + 0.6,  fz - 0.5, 13], [fx - 0.5,  fz - 0.6, 14],
+    [-fx + 0.45, 0, 15], [fx - 0.45, fz * 0.3, 16],
+  ];
   return (
-    <>
-      {pts.map(([x, z, scale], i) => (
-        <Tree key={i} position={[x, 0, z]} scale={scale} />
+    <group>
+      {residential && <BackyardFence hx={fx} hz={fz} />}
+      {trees.map(([x, z, h, seed]) => (
+        <LeafyTree key={seed} position={[x, 0, z]} height={h} seed={seed} />
       ))}
-    </>
+      {shrubs.map(([x, z, seed]) => (
+        <Shrub key={seed} position={[x, 0, z]} size={0.45} seed={seed} />
+      ))}
+    </group>
   );
 }
 
@@ -366,10 +361,10 @@ function BasketballCourt({ config }: { config: CourtConfig }) {
       <ArcLine cxFt={bX} cyFt={ftY} r={4} a0={-Math.PI / 2} a1={Math.PI / 2} L={L} W={W} color={lc} />
       {!half && <ArcLine cxFt={L - bX} cyFt={ftY} r={4} a0={Math.PI / 2} a1={Math.PI * 3 / 2} L={L} W={W} color={lc} />}
       {(acc.includes('basketball-hoop-single') || acc.includes('basketball-hoop-double')) && (
-        <ArcLine cxFt={bX} cyFt={ftY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={3} />
+        <ArcLine cxFt={bX} cyFt={ftY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={0.05} />
       )}
       {acc.includes('basketball-hoop-double') && !half && (
-        <ArcLine cxFt={L - bX} cyFt={ftY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={3} />
+        <ArcLine cxFt={L - bX} cyFt={ftY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={0.05} />
       )}
     </group>
   );
@@ -523,10 +518,10 @@ function MultiSportCourt({ config }: { config: CourtConfig }) {
       ))}
       {/* Hoops */}
       {(acc.includes('basketball-hoop-single') || acc.includes('basketball-hoop-double')) && (
-        <ArcLine cxFt={bX}     cyFt={midY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={3} />
+        <ArcLine cxFt={bX}     cyFt={midY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={0.05} />
       )}
       {acc.includes('basketball-hoop-double') && (
-        <ArcLine cxFt={L - bX} cyFt={midY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={3} />
+        <ArcLine cxFt={L - bX} cyFt={midY} r={0.75} a0={0} a1={Math.PI * 2} L={L} W={W} color="#F97316" lw={0.05} />
       )}
       {/* Pickleball nets */}
       {acc.includes('pickleball-net') && [pklX1, pklX2].map((bx, i) => (
@@ -896,16 +891,23 @@ function CourtScene({ config }: { config: CourtConfig }) {
 }
 
 // ─── Exported component ───────────────────────────────────────────────────────
+const coarsePointer = typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;
+
 export function Court3D({ config }: { config: CourtConfig }) {
   const { length: L, width: W } = config.dimensions;
   const span = Math.max(L, W) * S;
   const camX = span * 0.85;
   const camY = span * 0.90;
   const camZ = span * 0.85;
-  const shadowRange = span * 2.2;
+  const pad = BORDER_PAD[config.type] ?? 8;
+  // Start lighter on phones; drop resolution further if frame rate struggles
+  const [dpr, setDpr] = useState(coarsePointer ? 1.25 : 2);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    {/* Soft lens vignette */}
+    <div style={{ position: 'absolute', inset: 0, zIndex: 5, pointerEvents: 'none',
+      background: 'radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.28) 100%)' }} />
     <div style={{ position: 'absolute', bottom: 10, right: 12, zIndex: 10,
       fontSize: 11, fontFamily: 'system-ui, sans-serif', fontWeight: 600,
       color: 'rgba(255,255,255,0.5)', letterSpacing: '0.05em',
@@ -914,31 +916,25 @@ export function Court3D({ config }: { config: CourtConfig }) {
       mbsportsbuilders.com
     </div>
     <Canvas
-      shadows
+      shadows="soft"
+      dpr={dpr}
       camera={{ position: [camX, camY, camZ], fov: 45, near: 0.01, far: 500 }}
-      gl={{ antialias: true }}
+      // Neutral tone mapping keeps the customer's chosen colors close to true
+      gl={{ antialias: true, toneMapping: THREE.NeutralToneMapping, toneMappingExposure: 1.0 }}
     >
-      <fog attach="fog" color="#c8dfc8" near={span * 3} far={span * 9} />
-      <Sky sunPosition={[100, 30, 60]} turbidity={6} rayleigh={0.5} />
-      <ambientLight intensity={0.35} />
-      <hemisphereLight args={['#87ceeb', '#4a7c3f', 0.4]} />
-      <directionalLight
-        position={[span * 2, span * 3, span * 1.5]}
-        intensity={1.1}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-near={0.5}
-        shadow-camera-far={span * 10}
-        shadow-camera-left={-shadowRange}
-        shadow-camera-right={shadowRange}
-        shadow-camera-top={shadowRange}
-        shadow-camera-bottom={-shadowRange}
-      />
-      <Ground L={L} W={W} />
-      <Trees L={L} W={W} />
-      <CourtScene config={config} />
-      <CourtAccessories3D config={config} />
-      <SportSpecificAccessories3D config={config} />
+      <PerformanceMonitor onDecline={() => setDpr(1)} />
+      <fog attach="fog" color="#d6e2ea" near={span * 2 + 8} far={span * 6 + 40} />
+      <SceneLighting span={span} mapSize={coarsePointer ? 1024 : 2048} />
+      <Lawn size={span * 6 + 60} />
+      <Surroundings L={L} W={W} pad={pad} residential={config.propertyType === 'residential'} />
+      <Apron L={L} W={W} pad={pad} />
+      <FinishContext.Provider value={config.surfaceFinish}>
+        <CourtScene config={config} />
+      </FinishContext.Provider>
+      <ShadowGroup deps={config}>
+        <CourtAccessories3D config={config} />
+        <SportSpecificAccessories3D config={config} />
+      </ShadowGroup>
       <OrbitControls
         target={[0, 0, 0]}
         minDistance={span * 0.3}

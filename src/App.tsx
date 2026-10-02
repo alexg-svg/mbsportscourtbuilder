@@ -163,7 +163,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-theme-base text-theme-primary font-sans flex flex-col">
+    <div className="h-dvh bg-theme-base text-theme-primary font-sans flex flex-col">
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <header className="bg-theme-panel border-b border-theme-border px-4 py-2 flex items-center justify-between flex-shrink-0">
@@ -197,7 +197,7 @@ export default function App() {
       </header>
 
       {/* ── Body ────────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 min-h-0 flex overflow-hidden">
 
         {/* Left: Wizard panel */}
         <div className={`
@@ -212,7 +212,7 @@ export default function App() {
               <StepProgress current={step} />
               <div
                 key={step}
-                className={`flex-1 overflow-hidden ${direction === 'forward' ? 'animate-step-enter' : 'animate-step-enter-back'}`}
+                className={`flex-1 min-h-0 overflow-hidden ${direction === 'forward' ? 'animate-step-enter' : 'animate-step-enter-back'}`}
               >
                 {renderStep()}
               </div>

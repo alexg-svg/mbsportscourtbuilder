@@ -1,4 +1,26 @@
-import type { Accessory, CourtPreset, CourtColors, CourtType } from '../types/court';
+import type { Accessory, CourtPreset, CourtColors, CourtType, SurfaceFinish } from '../types/court';
+
+// ─── Shared labels and limits ─────────────────────────────────────────────────
+// Single source for display names. Typed as complete records so adding a court
+// type or finish fails to compile until every label is filled in. The quote
+// API (api/send-quote.ts) keeps its own copies and is type-checked against
+// these, since server code can't import browser modules at runtime.
+
+export const COURT_LABELS: Record<CourtType, string> = {
+  basketball: 'Basketball', tennis: 'Tennis',
+  pickleball: 'Pickleball', 'multi-sport': 'Multi-Sport',
+  'bocce-ball': 'Bocce Ball', shuffleboard: 'Shuffleboard',
+  volleyball: 'Volleyball', badminton: 'Badminton',
+  futsal: 'Futsal', 'inline-hockey': 'Inline Hockey',
+  handball: 'Handball', 'four-square': 'Four Square',
+};
+
+export const FINISH_LABELS: Record<SurfaceFinish, string> = {
+  smooth: 'Smooth Asphalt', textured: 'Textured Asphalt', cushioned: 'Cushioned Asphalt',
+};
+
+/** Allowed court size in feet (inclusive, whole feet). The quote API enforces the same. */
+export const DIM_LIMITS = { length: { min: 10, max: 300 }, width: { min: 4, max: 150 } } as const;
 
 // ─── Standard Court Presets ────────────────────────────────────────────────
 export const COURT_PRESETS: CourtPreset[] = [

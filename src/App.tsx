@@ -380,7 +380,7 @@ export default function App() {
   );
 }
 
-const COURT_DESC: Record<string, string> = {
+const COURT_DESC: Record<CourtType, string> = {
   basketball:     'Basketball court · key areas · three-point arcs · free throw circles',
   tennis:         'Tennis court · service boxes · singles & doubles sidelines',
   pickleball:     'Pickleball court · NVZ kitchen zones · centerline',

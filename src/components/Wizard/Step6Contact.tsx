@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { AlertCircle, CheckCircle2, MapPin } from 'lucide-react';
 import type { CourtConfig } from '../../types/court';
-import { ACCESSORIES, COURT_PRESETS } from '../../utils/courtData';
+import { ACCESSORIES, COURT_PRESETS, COURT_LABELS, FINISH_LABELS } from '../../utils/courtData';
 import { StepShell } from './StepShell';
 import { trackEvent, getRecaptchaToken } from '../../utils/analytics';
 
@@ -23,19 +23,6 @@ export interface ContactData {
   state?: string;
   message: string;
 }
-
-const COURT_LABELS: Record<string, string> = {
-  basketball: 'Basketball', tennis: 'Tennis',
-  pickleball: 'Pickleball', 'multi-sport': 'Multi-Sport',
-  'bocce-ball': 'Bocce Ball', shuffleboard: 'Shuffleboard',
-  volleyball: 'Volleyball', badminton: 'Badminton',
-  futsal: 'Futsal', 'inline-hockey': 'Inline Hockey',
-  handball: 'Handball', 'four-square': 'Four-Square',
-};
-
-const FINISH_LABELS: Record<string, string> = {
-  smooth: 'Smooth Asphalt', textured: 'Textured Asphalt', cushioned: 'Cushioned Asphalt',
-};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

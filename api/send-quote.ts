@@ -1,6 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import nodemailer from 'nodemailer';
 import { z } from 'zod';
+// Type-only imports are erased at build time, so the function never loads
+// browser code; they let the compiler check that the lists below match the app.
+import type { CourtType, AccessoryId, SurfaceFinish, PropertyType } from '../src/types/court';
+import type { DIM_LIMITS as APP_DIM_LIMITS } from '../src/utils/courtData';
+
+/** Compiles only when A and B are the same set of values. */
+type Exact<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never;
 
 // ─── Startup env guard ────────────────────────────────────────────────────────
 const REQUIRED_ENV = ['SMTP_USER', 'SMTP_PASS', 'QUOTE_TO'] as const;
@@ -29,17 +36,30 @@ const COURT_TYPES   = [
 ] as const;
 const PROP_TYPES    = ['residential', 'commercial'] as const;
 const FINISHES      = ['smooth', 'textured', 'cushioned'] as const;
-const ACCESSORY_IDS = [
-  'custom-logo',
-  'basketball-hoop-single', 'basketball-hoop-double',
-  'tennis-net', 'pickleball-net',
-  'volleyball-net', 'badminton-net',
-  'futsal-goals', 'handball-goals', 'hockey-goals',
-  'dasher-boards', 'bocce-side-rails',
-  'lighting-2-pole', 'lighting-4-pole', 'lighting-6-pole',
-  'chain-link-fence', 'vinyl-fence', 'windscreen',
-  'bench-2', 'bench-4', 'water-fountain', 'scoreboards',
-] as const;
+// Display names for the email; also the list of accepted accessory ids
+const ACCESSORY_LABELS: Record<AccessoryId, string> = {
+  'custom-logo': 'Custom Logo',
+  'basketball-hoop-single': 'Basketball Hoop (1)', 'basketball-hoop-double': 'Basketball Hoops (2)',
+  'tennis-net': 'Tennis Net & Posts', 'pickleball-net': 'Pickleball Net & Posts',
+  'volleyball-net': 'Volleyball Net & Posts', 'badminton-net': 'Badminton Net & Posts',
+  'futsal-goals': 'Futsal Goals (pair)', 'handball-goals': 'Handball Goals (pair)', 'hockey-goals': 'Hockey Goals (pair)',
+  'dasher-boards': 'Dasher Boards', 'bocce-side-rails': 'Bocce Side Rails',
+  'lighting-2-pole': 'Lighting – 2 Poles', 'lighting-4-pole': 'Lighting – 4 Poles', 'lighting-6-pole': 'Lighting – 6 Poles',
+  'chain-link-fence': 'Chain Link Fence', 'vinyl-fence': 'Vinyl Fence', 'windscreen': 'Windscreen',
+  'bench-2': 'Player Benches (2)', 'bench-4': 'Player Benches (4)', 'water-fountain': 'Water Fountain',
+  'scoreboards': 'Scoreboard',
+};
+const ACCESSORY_IDS = Object.keys(ACCESSORY_LABELS) as [AccessoryId, ...AccessoryId[]];
+
+const DIM_LIMITS = { length: { min: 10, max: 300 }, width: { min: 4, max: 150 } } as const;
+
+// If the app gains a court type, finish, property type or size limit, these
+// lines stop compiling until this file is updated to match.
+const _courtsMatch: Exact<typeof COURT_TYPES[number], CourtType> = true;
+const _finishesMatch: Exact<typeof FINISHES[number], SurfaceFinish> = true;
+const _propsMatch: Exact<typeof PROP_TYPES[number], PropertyType> = true;
+const _limitsMatch: Exact<typeof DIM_LIMITS, typeof APP_DIM_LIMITS> = true;
+void _courtsMatch; void _finishesMatch; void _propsMatch; void _limitsMatch;
 
 const schema = z.object({
   contact: z.object({
@@ -56,8 +76,8 @@ const schema = z.object({
     propertyType:  z.enum(PROP_TYPES),
     surfaceFinish: z.enum(FINISHES),
     dimensions: z.object({
-      length: z.number().int().min(10).max(300),
-      width:  z.number().int().min(4).max(150),
+      length: z.number().int().min(DIM_LIMITS.length.min).max(DIM_LIMITS.length.max),
+      width:  z.number().int().min(DIM_LIMITS.width.min).max(DIM_LIMITS.width.max),
     }),
     colors: z.object({
       surface:    HEX_COLOR,
@@ -105,15 +125,15 @@ function isRateLimited(ip: string): boolean {
 }
 
 // ─── Email template ───────────────────────────────────────────────────────────
-const COURT_LABELS: Record<string, string> = {
+const COURT_LABELS: Record<CourtType, string> = {
   basketball: 'Basketball', tennis: 'Tennis',
   pickleball: 'Pickleball', 'multi-sport': 'Multi-Sport',
   'bocce-ball': 'Bocce Ball', badminton: 'Badminton',
   futsal: 'Futsal', 'inline-hockey': 'Inline Hockey',
   handball: 'Handball', volleyball: 'Volleyball',
-  shuffleboard: 'Shuffleboard', 'four-square': 'Four-Square',
+  shuffleboard: 'Shuffleboard', 'four-square': 'Four Square',
 };
-const FINISH_LABELS: Record<string, string> = {
+const FINISH_LABELS: Record<SurfaceFinish, string> = {
   smooth: 'Smooth Asphalt', textured: 'Textured Asphalt', cushioned: 'Cushioned Asphalt',
 };
 
@@ -125,7 +145,7 @@ function swatch(color: string) {
 function buildHtml(data: z.infer<typeof schema>, hasImage: boolean, has3D: boolean): string {
   const { contact, config } = data;
   const { dimensions: dims, colors } = config;
-  const acc = config.selectedAccessories.join(', ') || 'None';
+  const acc = config.selectedAccessories.map((id) => ACCESSORY_LABELS[id]).join(', ') || 'None';
 
   return `
 <!DOCTYPE html>

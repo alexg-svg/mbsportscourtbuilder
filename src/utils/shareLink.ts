@@ -1,5 +1,5 @@
 import type { CourtConfig, CourtType, PropertyType, SurfaceFinish, AccessoryId } from '../types/court';
-import { ACCESSORIES, DEFAULT_COLORS } from './courtData';
+import { ACCESSORIES, DEFAULT_COLORS, DIM_LIMITS } from './courtData';
 
 // A shareable link carries the whole design in the URL hash (#d=…), so it
 // works without a server and the design never leaves the link itself.
@@ -32,7 +32,8 @@ export function readSharedDesign(): CourtConfig | null {
     if (!(type in DEFAULT_COLORS)) return null;
     const num = (v: unknown, lo: number, hi: number) =>
       typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi ? Math.round(v) : null;
-    const length = num(d.l, 10, 300), width = num(d.w, 4, 150);
+    const length = num(d.l, DIM_LIMITS.length.min, DIM_LIMITS.length.max);
+    const width = num(d.w, DIM_LIMITS.width.min, DIM_LIMITS.width.max);
     if (length === null || width === null) return null;
 
     const defaults = DEFAULT_COLORS[type];

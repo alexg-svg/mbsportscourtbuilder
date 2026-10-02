@@ -10,6 +10,7 @@ interface Props {
   onBack: () => void;
   onSubmit: (data: ContactData) => void;
   getCaptureImage?: () => Promise<string | undefined>;
+  getCapture3D?: () => Promise<string | undefined>;
   verifiedEmail?: string;
 }
 
@@ -112,7 +113,7 @@ async function lookupZip(zip: string): Promise<{ city: string; state: string } |
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCaptureImage, verifiedEmail }) => {
+export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCaptureImage, getCapture3D, verifiedEmail }) => {
   const [form, setForm]         = useState<ContactData>({ name: '', email: verifiedEmail ?? '', phone: '', zip: '', message: '' });
   const [touched, setTouched]   = useState<Partial<Record<keyof ContactData, boolean>>>({});
   const [zipLooking, setZipLooking] = useState(false);
@@ -166,15 +167,22 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
     setSending(true);
     setError(null);
     try {
-      const [rawImage, recaptchaToken] = await Promise.all([
+      const [rawImage, raw3D, recaptchaToken] = await Promise.all([
         getCaptureImage?.(),
+        // Never let the 3D render hold up the quote
+        Promise.race([
+          getCapture3D?.() ?? Promise.resolve(undefined),
+          new Promise<undefined>((r) => setTimeout(() => r(undefined), 6000)),
+        ]).catch(() => undefined),
         getRecaptchaToken('submit_quote').catch(() => undefined),
       ]);
+      // Skip images that would exceed the server's size limits
       const courtImageBase64 = rawImage && rawImage.length <= 650_000 ? rawImage : undefined;
+      const court3DImageBase64 = raw3D && raw3D.length <= 950_000 ? raw3D : undefined;
       const res = await fetch('/api/send-quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact: form, config, courtImageBase64, recaptchaToken }),
+        body: JSON.stringify({ contact: form, config, courtImageBase64, court3DImageBase64, recaptchaToken }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string; details?: { fieldErrors?: Record<string, string[]> } };

@@ -1,15 +1,18 @@
 import React from 'react';
-import { CheckCircle, Phone, FileText, MapPin, HardHat } from 'lucide-react';
+import { CheckCircle, Phone, FileText, MapPin, HardHat, Download } from 'lucide-react';
+import { trackEvent } from '../../utils/analytics';
 
 interface Props {
   name: string;
   email: string;
+  render3D?: string;
   onReset: () => void;
 }
 
-export const StepDone: React.FC<Props> = ({ name, email, onReset }) => (
-  <div className="flex flex-col items-center justify-center h-full px-8 py-12 text-center">
-    <div className="w-20 h-20 rounded-full bg-pink-600/20 border-2 border-pink-500 flex items-center justify-center mb-6 animate-scale-in">
+export const StepDone: React.FC<Props> = ({ name, email, render3D, onReset }) => (
+  <div className="h-full overflow-y-auto">
+  <div className="min-h-full flex flex-col items-center justify-center px-8 py-10 text-center">
+    <div className="w-20 h-20 flex-shrink-0 rounded-full bg-pink-600/20 border-2 border-pink-500 flex items-center justify-center mb-6 animate-scale-in">
       <CheckCircle className="w-10 h-10 text-pink-400" />
     </div>
 
@@ -19,6 +22,25 @@ export const StepDone: React.FC<Props> = ({ name, email, onReset }) => (
       court design and will send a detailed quote to{' '}
       <span className="text-pink-400">{email}</span> within 24–48 hours.
     </p>
+
+    {render3D && (
+      <div className="w-full mb-6 animate-fade-in" style={{ animationDelay: '240ms' }}>
+        <img
+          src={`data:image/jpeg;base64,${render3D}`}
+          alt="3D render of your court design"
+          className="w-full rounded-xl border border-theme-mid shadow-lg"
+        />
+        <a
+          href={`data:image/jpeg;base64,${render3D}`}
+          download="my-court-design.jpg"
+          onClick={() => trackEvent('design_downloaded')}
+          className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-pink-500 hover:text-pink-400"
+        >
+          <Download className="w-3.5 h-3.5" />
+          Download your design
+        </a>
+      </div>
+    )}
 
     <div className="w-full bg-theme-raised/60 border border-theme-mid rounded-2xl p-4 text-left space-y-3 mb-8 animate-slide-up" style={{ animationDelay: '280ms' }}>
       <div className="text-xs text-theme-muted font-semibold uppercase tracking-wider mb-1">What happens next</div>
@@ -39,6 +61,7 @@ export const StepDone: React.FC<Props> = ({ name, email, onReset }) => (
     >
       Start a new design
     </button>
+  </div>
   </div>
 );
 

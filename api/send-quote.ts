@@ -70,6 +70,7 @@ const schema = z.object({
     selectedAccessories: z.array(z.enum(ACCESSORY_IDS)).max(20),
   }),
   courtImageBase64: z.string().max(700_000).optional(),
+  court3DImageBase64: z.string().max(1_000_000).optional(),
   recaptchaToken: z.string().max(10_000).optional(),
 });
 
@@ -121,7 +122,7 @@ function swatch(color: string) {
   return `<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${color};border:1px solid #ddd;vertical-align:middle;margin-right:4px;"></span>${color}`;
 }
 
-function buildHtml(data: z.infer<typeof schema>, hasImage: boolean): string {
+function buildHtml(data: z.infer<typeof schema>, hasImage: boolean, has3D: boolean): string {
   const { contact, config } = data;
   const { dimensions: dims, colors } = config;
   const acc = config.selectedAccessories.join(', ') || 'None';
@@ -142,9 +143,18 @@ function buildHtml(data: z.infer<typeof schema>, hasImage: boolean): string {
           </td>
         </tr>
 
-        ${hasImage ? `
+        ${has3D ? `
         <tr>
           <td style="padding:20px 32px 0;">
+            <img src="cid:court-3d" alt="3D Court Render" width="536"
+              style="width:100%;border-radius:8px;display:block;border:1px solid #e2e8f0;" />
+          </td>
+        </tr>` : ''}
+
+        ${hasImage ? `
+        <tr>
+          <td style="padding:${has3D ? '12px' : '20px'} 32px 0;">
+            ${has3D ? '<p style="margin:0 0 6px;font-size:12px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em;">Court layout</p>' : ''}
             <img src="cid:court-preview" alt="Court Preview" width="536"
               style="width:100%;border-radius:8px;display:block;border:1px solid #e2e8f0;" />
           </td>
@@ -262,11 +272,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
   }
 
-  const { contact, courtImageBase64, recaptchaToken } = parsed.data;
+  const { contact, courtImageBase64, court3DImageBase64, recaptchaToken } = parsed.data;
   if (recaptchaToken && !(await verifyRecaptcha(recaptchaToken))) {
     return res.status(400).json({ error: 'reCAPTCHA verification failed' });
   }
   const imgBuf = courtImageBase64 ? Buffer.from(courtImageBase64, 'base64') : undefined;
+  const img3DBuf = court3DImageBase64 ? Buffer.from(court3DImageBase64, 'base64') : undefined;
 
   try {
     await transporter.sendMail({
@@ -276,13 +287,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       bcc:     process.env.QUOTE_TO_BCC || undefined,
       replyTo: contact.email,
       subject: `New Court Quote – ${contact.name} (${contact.zip})`,
-      html:    buildHtml(parsed.data, !!imgBuf),
-      attachments: imgBuf ? [{
-        filename:    'court-preview.jpg',
-        content:     imgBuf,
-        contentType: 'image/jpeg',
-        cid:         'court-preview',
-      }] : undefined,
+      html:    buildHtml(parsed.data, !!imgBuf, !!img3DBuf),
+      attachments: [
+        ...(img3DBuf ? [{
+          filename:    'court-3d.jpg',
+          content:     img3DBuf,
+          contentType: 'image/jpeg',
+          cid:         'court-3d',
+        }] : []),
+        ...(imgBuf ? [{
+          filename:    'court-preview.jpg',
+          content:     imgBuf,
+          contentType: 'image/jpeg',
+          cid:         'court-preview',
+        }] : []),
+      ],
     });
 
     return res.status(200).json({ ok: true });

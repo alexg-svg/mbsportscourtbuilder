@@ -49,6 +49,8 @@ export default function App() {
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const [config, setConfig]       = useState<CourtConfig>(initialConfig);
   const [submitted, setSubmitted] = useState<ContactData | null>(null);
+  const [render3D, setRender3D] = useState<string | undefined>();
+  const render3DPromise = useRef<Promise<string | undefined> | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [view3D, setView3D]       = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -83,6 +85,21 @@ export default function App() {
     } catch {
       return undefined;
     }
+  }, []);
+
+  // Render the 3D picture for the quote email in the background as soon as the
+  // customer reaches the contact step, so submitting isn't slowed down.
+  useEffect(() => {
+    if (step !== TOTAL_STEPS - 1) return;
+    render3DPromise.current = import('./components/Court/Court3D')
+      .then((m) => m.renderCourtSnapshot(config))
+      .catch(() => undefined);
+  }, [step, config]);
+
+  const getCapture3D = useCallback(async (): Promise<string | undefined> => {
+    const img = await (render3DPromise.current ?? Promise.resolve(undefined));
+    setRender3D(img);
+    return img;
   }, []);
 
   const next = () => { setDirection('forward'); setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1)); };
@@ -130,7 +147,7 @@ export default function App() {
   }, []);
 
   const handleSubmit = (data: ContactData) => { setSubmitted(data); setStep(-1); };
-  const handleReset  = () => { setConfig(initialConfig); setSubmitted(null); setStep(0); setShowPreview(false); };
+  const handleReset  = () => { setConfig(initialConfig); setSubmitted(null); setRender3D(undefined); setStep(0); setShowPreview(false); };
 
   const renderStep = () => {
     switch (step) {
@@ -153,7 +170,7 @@ export default function App() {
         />
       );
       case 4: return <Step5Accessories courtType={config.type} selected={config.selectedAccessories} onToggle={handleAccessoryToggle} onBack={back} onNext={next} />;
-      case 5: return <Step6Contact config={config} onBack={back} onSubmit={handleSubmit} getCaptureImage={getCaptureImage} verifiedEmail={verifiedEmail === 'bypass' ? undefined : verifiedEmail ?? undefined} />;
+      case 5: return <Step6Contact config={config} onBack={back} onSubmit={handleSubmit} getCaptureImage={getCaptureImage} getCapture3D={getCapture3D} verifiedEmail={verifiedEmail === 'bypass' ? undefined : verifiedEmail ?? undefined} />;
       default: return null;
     }
   };
@@ -206,7 +223,7 @@ export default function App() {
           bg-theme-panel border-r border-theme-border flex-shrink-0 overflow-hidden
         `}>
           {step === -1 ? (
-            <StepDone name={submitted?.name ?? ''} email={submitted?.email ?? ''} onReset={handleReset} />
+            <StepDone name={submitted?.name ?? ''} email={submitted?.email ?? ''} render3D={render3D} onReset={handleReset} />
           ) : (
             <>
               <StepProgress current={step} />

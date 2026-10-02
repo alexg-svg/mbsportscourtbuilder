@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, createRoot, extend, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, PerformanceMonitor } from '@react-three/drei';
 import type { CourtConfig, CourtType } from '../../types/court';
 import {
@@ -776,6 +776,105 @@ function Toggle<T extends string>({ value, options, onChange }: {
   );
 }
 
+// ─── Scene ────────────────────────────────────────────────────────────────────
+/** Everything in the 3D world except camera and controls. */
+function SceneContents({ config, time, mapSize }: { config: CourtConfig; time: TimeOfDay; mapSize: number }) {
+  const { length: L, width: W } = config.dimensions;
+  const span = Math.max(L, W) * S;
+  const pad = BORDER_PAD[config.type] ?? 8;
+  return (
+    <>
+      <fog attach="fog" color={FOG_COLOR[time]} near={span * 2 + 8} far={span * 6 + 40} />
+      <SceneLighting span={span} mapSize={mapSize} time={time} />
+      <Lawn size={span * 6 + 60} />
+      <Surroundings L={L} W={W} pad={pad} residential={config.propertyType === 'residential'} />
+      <Apron L={L} W={W} pad={pad} />
+      <FinishContext.Provider value={config.surfaceFinish}>
+        <CourtScene config={config} />
+      </FinishContext.Provider>
+      <ShadowGroup deps={config}>
+        <CourtAccessories3D config={config} night={time === 'night'} />
+        <SportSpecificAccessories3D config={config} />
+      </ShadowGroup>
+    </>
+  );
+}
+
+// ─── Snapshot for the quote email ─────────────────────────────────────────────
+/** Waits a few frames for lighting and shadows to settle, then reports. */
+function FrameCounter({ frames, onDone }: { frames: number; onDone: () => void }) {
+  const n = useRef(0);
+  useFrame(() => { n.current += 1; if (n.current === frames) onDone(); });
+  return null;
+}
+
+/**
+ * Renders the court off-screen from the corner view and returns a JPEG as
+ * base64 (no data: prefix), watermarked like the live preview.
+ */
+export function renderCourtSnapshot(config: CourtConfig, width = 1200, height = 750): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    const { length: L, width: W } = config.dimensions;
+    const pad = BORDER_PAD[config.type] ?? 8;
+    const fov = 40;
+    const dir = new THREE.Vector3(...VIEW_DIR.corner).normalize();
+    const camPos = dir.multiplyScalar(fitDistance(dir, (W / 2 + pad) * S, (L / 2 + pad) * S, fov, width / height));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    // <Canvas> registers three.js objects itself; a bare root has to do it here
+    extend(THREE as unknown as Parameters<typeof extend>[0]);
+    const root = createRoot(canvas);
+    let settled = false;
+    const finish = (b64?: string) => {
+      if (settled) return;
+      settled = true;
+      resolve(b64);
+      setTimeout(() => root.unmount(), 0);
+    };
+    const capture = () => {
+      try {
+        const out = document.createElement('canvas');
+        out.width = width;
+        out.height = height;
+        const ctx = out.getContext('2d')!;
+        ctx.drawImage(canvas, 0, 0);
+        const g = ctx.createRadialGradient(width / 2, height / 2, height * 0.45, width / 2, height / 2, width * 0.62);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(1, 'rgba(0,0,0,0.25)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, width, height);
+        ctx.font = '600 18px system-ui, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 4;
+        ctx.fillText('mbsportsbuilders.com', width - 18, height - 16);
+        finish(out.toDataURL('image/jpeg', 0.86).split(',')[1]);
+      } catch {
+        finish(undefined);
+      }
+    };
+
+    root.configure({
+      size: { width, height, top: 0, left: 0 },
+      dpr: 1,
+      shadows: 'soft',
+      gl: { antialias: true, preserveDrawingBuffer: true, toneMapping: THREE.NeutralToneMapping },
+      camera: { fov, near: 0.01, far: 500, position: camPos.toArray() as [number, number, number] },
+      onCreated: ({ camera }) => camera.lookAt(0, 0, 0),
+    });
+    root.render(
+      <>
+        <SceneContents config={config} time="day" mapSize={2048} />
+        <FrameCounter frames={12} onDone={capture} />
+      </>,
+    );
+    setTimeout(() => finish(undefined), 15000);
+  });
+}
+
 // ─── Exported component ───────────────────────────────────────────────────────
 const coarsePointer = typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;
 
@@ -821,18 +920,7 @@ export function Court3D({ config }: { config: CourtConfig }) {
       gl={{ antialias: true, toneMapping: THREE.NeutralToneMapping, toneMappingExposure: 1.0 }}
     >
       <PerformanceMonitor onDecline={() => setDpr(1)} />
-      <fog attach="fog" color={FOG_COLOR[time]} near={span * 2 + 8} far={span * 6 + 40} />
-      <SceneLighting span={span} mapSize={coarsePointer ? 1024 : 2048} time={time} />
-      <Lawn size={span * 6 + 60} />
-      <Surroundings L={L} W={W} pad={pad} residential={config.propertyType === 'residential'} />
-      <Apron L={L} W={W} pad={pad} />
-      <FinishContext.Provider value={config.surfaceFinish}>
-        <CourtScene config={config} />
-      </FinishContext.Provider>
-      <ShadowGroup deps={config}>
-        <CourtAccessories3D config={config} night={time === 'night'} />
-        <SportSpecificAccessories3D config={config} />
-      </ShadowGroup>
+      <SceneContents config={config} time={time} mapSize={coarsePointer ? 1024 : 2048} />
       <CameraRig view={view} hx={(W / 2 + pad) * S} hz={(L / 2 + pad) * S} />
       <OrbitControls
         makeDefault

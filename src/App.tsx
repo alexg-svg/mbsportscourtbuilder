@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useRef, lazy, Suspense, useEffect } from 'react';
-import { Eye, ClipboardList, Box, Map, ImagePlus } from 'lucide-react';
+import { Eye, ClipboardList, Box, Map, ImagePlus, Link2, Check } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES } from './utils/courtData';
 import { trackEvent } from './utils/analytics';
+import { designUrl, readSharedDesign } from './utils/shareLink';
 import { CourtSVG } from './components/Court/CourtSVG';
 
 const Court3D = lazy(() => import('./components/Court/Court3D').then((m) => ({ default: m.Court3D })));
@@ -46,9 +47,28 @@ export default function App() {
   const [verifiedEmail, setVerifiedEmail] = useState<string | null>(
     'bypass', // TODO: re-enable gate → localStorage.getItem('mb_verified_email')
   );
-  const [step, setStep]           = useState(0);
+  // A shared design link (#d=…) opens straight onto the Colors step
+  const [sharedDesign] = useState(() => readSharedDesign());
+  const [step, setStep]           = useState(sharedDesign ? 3 : 0);
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
-  const [config, setConfig]       = useState<CourtConfig>(initialConfig);
+  const [config, setConfig]       = useState<CourtConfig>(sharedDesign ?? initialConfig);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  useEffect(() => {
+    if (sharedDesign) trackEvent('shared_design_opened', { court_type: sharedDesign.type });
+  }, [sharedDesign]);
+
+  const shareDesign = async () => {
+    const url = designUrl(config);
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      window.prompt('Copy this link to share your design:', url);
+    }
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+    trackEvent('design_shared', { court_type: config.type });
+  };
   const [submitted, setSubmitted] = useState<ContactData | null>(null);
   const [render3D, setRender3D] = useState<string | undefined>();
   const render3DPromise = useRef<Promise<string | undefined> | null>(null);
@@ -149,7 +169,7 @@ export default function App() {
   }, []);
 
   const handleSubmit = (data: ContactData) => { setSubmitted(data); setStep(-1); };
-  const handleReset  = () => { setConfig(initialConfig); setSubmitted(null); setRender3D(undefined); setStep(0); setShowPreview(false); };
+  const handleReset  = () => { if (location.hash) history.replaceState(null, '', location.pathname + location.search); setConfig(initialConfig); setSubmitted(null); setRender3D(undefined); setStep(0); setShowPreview(false); };
 
   const renderStep = () => {
     switch (step) {
@@ -200,7 +220,7 @@ export default function App() {
         <div className="hidden sm:flex items-center gap-4 text-xs">
           <span className="text-pink-500 font-semibold">mbsportsbuilders.com</span>
           <span className="text-theme-faint">·</span>
-          <span className="text-theme-muted">Tennis · Basketball · Pickleball · Multi-Sport</span>
+          <span className="text-theme-muted">12 court types · Residential &amp; Commercial</span>
         </div>
         {step >= 0 && (
           <button
@@ -229,6 +249,21 @@ export default function App() {
           ) : (
             <>
               <StepProgress current={step} />
+              {/* Phones: small live preview on every step; tap to open the full view */}
+              {step > 0 && (
+                <button
+                  onClick={() => setShowPreview(true)}
+                  className="sm:hidden relative mx-4 mt-3 h-32 flex-shrink-0 rounded-xl overflow-hidden border border-theme-border bg-theme-canvas"
+                  aria-label="Open the full court preview"
+                >
+                  <div className="absolute inset-0 pointer-events-none">
+                    <CourtSVG config={config} width={900} height={560} />
+                  </div>
+                  <span className="absolute bottom-1.5 right-1.5 flex items-center gap-1 text-[10px] font-semibold bg-black/60 text-white px-2 py-0.5 rounded-full">
+                    <Eye className="w-3 h-3" /> Tap for 3D &amp; full view
+                  </span>
+                </button>
+              )}
               <div
                 key={step}
                 className={`flex-1 min-h-0 overflow-hidden ${direction === 'forward' ? 'animate-step-enter' : 'animate-step-enter-back'}`}
@@ -285,6 +320,14 @@ export default function App() {
                   <ImagePlus className="w-3 h-3" />
                   <span className="hidden lg:inline">See it in my yard</span>
                   <span className="lg:hidden">My yard</span>
+                </button>
+                <button
+                  onClick={shareDesign}
+                  title="Copy a link to this design"
+                  className="flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 border-pink-500/60 bg-theme-raised text-pink-400 hover:bg-pink-600 hover:text-white hover:border-pink-500"
+                >
+                  {linkCopied ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
+                  <span className="hidden lg:inline">{linkCopied ? 'Link copied' : 'Share'}</span>
                 </button>
               </div>
             )}
@@ -364,12 +407,12 @@ const STEP_HINTS: Record<number, string> = {
 function CourtLegend({ config, step }: { config: CourtConfig; step: number }) {
   const area = config.dimensions.length * config.dimensions.width;
   if (step === 0) return (
-    <div className="text-xs text-theme-faint">
-      <p className="text-pink-400/60">{STEP_HINTS[0]}</p>
+    <div className="text-xs text-theme-muted">
+      <p className="text-pink-500">{STEP_HINTS[0]}</p>
     </div>
   );
   return (
-    <div className="text-xs text-theme-faint space-y-0.5">
+    <div className="text-xs text-theme-muted space-y-0.5">
       <p>{COURT_DESC[config.type]}</p>
       <p className="flex gap-3">
         <span>{config.dimensions.length} × {config.dimensions.width} ft</span>
@@ -379,7 +422,7 @@ function CourtLegend({ config, step }: { config: CourtConfig; step: number }) {
           <><span>·</span><span>{config.selectedAccessories.length} accessor{config.selectedAccessories.length === 1 ? 'y' : 'ies'}</span></>
         )}
       </p>
-      {step >= 0 && <p className="text-pink-400/60">{STEP_HINTS[step]}</p>}
+      {step >= 0 && <p className="text-pink-500">{STEP_HINTS[step]}</p>}
     </div>
   );
 }

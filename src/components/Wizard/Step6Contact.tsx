@@ -112,6 +112,7 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
     name: '', email: verifiedEmail ?? '', phone: '', zip: '', message: '', timeline: '', site: '', source: '',
   });
   const [touched, setTouched]   = useState<Partial<Record<keyof ContactData, boolean>>>({});
+  const formId = useId();
   const [zipLooking, setZipLooking] = useState(false);
   const [sending, setSending]   = useState(false);
   const [error, setError]       = useState<string | null>(null);
@@ -246,8 +247,8 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
         {/* Form fields */}
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2 sm:col-span-1">
-            <label className="block text-xs text-theme-muted mb-1">Full Name *</label>
-            <input required type="text" value={form.name}
+            <label htmlFor={`${formId}-name`} className="block text-xs text-theme-muted mb-1">Full Name *</label>
+            <input id={`${formId}-name`} required type="text" value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
               placeholder="Jane Smith"
               className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none focus:border-pink-500" />
@@ -255,9 +256,9 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
 
           {/* Phone with auto-format */}
           <div className="col-span-2 sm:col-span-1">
-            <label className="block text-xs text-theme-muted mb-1">Phone</label>
+            <label htmlFor={`${formId}-phone`} className="block text-xs text-theme-muted mb-1">Phone</label>
             <div className="relative">
-              <input type="tel" value={form.phone}
+              <input id={`${formId}-phone`} type="tel" value={form.phone}
                 onChange={handlePhoneChange} onBlur={blur('phone')}
                 placeholder="(555) 000-0000"
                 className={inputClass('phone')} />
@@ -272,9 +273,9 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
 
           {/* Email with live validation indicator */}
           <div className="col-span-2">
-            <label className="block text-xs text-theme-muted mb-1">Email *</label>
+            <label htmlFor={`${formId}-email`} className="block text-xs text-theme-muted mb-1">Email *</label>
             <div className="relative">
-              <input required type="email" value={form.email}
+              <input id={`${formId}-email`} required type="email" value={form.email}
                 onChange={e => { setForm(f => ({ ...f, email: e.target.value })); }}
                 onBlur={blur('email')}
                 placeholder="jane@example.com"
@@ -290,9 +291,9 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
 
           {/* ZIP with city/state lookup */}
           <div className="col-span-2">
-            <label className="block text-xs text-theme-muted mb-1">ZIP Code *</label>
+            <label htmlFor={`${formId}-zip`} className="block text-xs text-theme-muted mb-1">ZIP Code *</label>
             <div className="relative">
-              <input required type="text" value={form.zip}
+              <input id={`${formId}-zip`} required type="text" value={form.zip}
                 onChange={handleZipChange} onBlur={handleZipBlur}
                 placeholder="e.g. 90210"
                 className={inputClass('zip')} />
@@ -321,8 +322,8 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
             onChange={(v) => setForm((f) => ({ ...f, source: v as LeadSource | '' }))} />
 
           <div className="col-span-2">
-            <label className="block text-xs text-theme-muted mb-1">Notes (optional)</label>
-            <textarea rows={2} value={form.message}
+            <label htmlFor={`${formId}-message`} className="block text-xs text-theme-muted mb-1">Notes (optional)</label>
+            <textarea id={`${formId}-message`} rows={2} value={form.message}
               onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
               placeholder="Timeline, site conditions, questions..."
               className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary placeholder-theme-faint focus:outline-none focus:border-pink-500 resize-none" />

@@ -997,7 +997,8 @@ export function Court3D({ config }: { config: CourtConfig }) {
   const hasLights = config.selectedAccessories.some((a) => a.startsWith('lighting-'));
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}
+      role="img" aria-label={`3D view of your ${config.dimensions.length} by ${config.dimensions.width} ft court. Drag to rotate.`}>
     {/* Soft lens vignette */}
     <div style={{ position: 'absolute', inset: 0, zIndex: 5, pointerEvents: 'none',
       background: 'radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.28) 100%)' }} />

@@ -148,10 +148,10 @@ export const Step4Colors: React.FC<Props> = ({
             ))}
           </div>
           <div className="flex gap-2 items-center">
-            <input type="color" value={colors.surface}
+            <input type="color" value={colors.surface} aria-label="Pick a custom surface color"
               onChange={(e) => onColorsChange({ ...colors, surface: e.target.value })}
               className="w-8 h-8 rounded cursor-pointer border border-theme-mid bg-theme-raised" />
-            <input type="text" value={colors.surface}
+            <input type="text" value={colors.surface} aria-label="Surface color hex code"
               onChange={(e) => { if (/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) onColorsChange({ ...colors, surface: e.target.value }); }}
               className="w-24 bg-theme-panel border border-theme-mid rounded-lg px-2 py-1 text-xs text-theme-primary/80 font-mono focus:outline-none focus:border-pink-500" />
           </div>

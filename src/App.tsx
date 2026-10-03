@@ -303,13 +303,13 @@ export default function App() {
           </div>
         </div>
         <div className="hidden sm:flex items-center gap-4 text-xs">
-          <span className="text-pink-500 font-semibold">mbsportsbuilders.com</span>
+          <span className="text-pink-700 dark:text-pink-300 font-semibold">mbsportsbuilders.com</span>
           <span className="text-theme-faint">·</span>
           <span className="text-theme-muted">12 court types · Residential &amp; Commercial</span>
         </div>
         {step >= 0 && (
           <button
-            className="sm:hidden text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-semibold transition-all active:scale-95 bg-pink-600 border border-pink-500 text-white shadow-sm shadow-pink-900/30"
+            className="sm:hidden text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-semibold transition-all active:scale-95 bg-pink-700 border border-pink-500 text-white shadow-sm shadow-pink-900/30"
             onClick={() => setShowPreview((v) => !v)}
           >
             {showPreview
@@ -343,7 +343,7 @@ export default function App() {
               {step === 0 && draft && (
                 <div className="mx-4 mt-3 p-3 rounded-xl border border-pink-500/50 bg-pink-600/10 flex-shrink-0">
                   <div className="flex items-start gap-2.5">
-                    <History className="w-4 h-4 text-pink-500 mt-0.5 flex-shrink-0" />
+                    <History className="w-4 h-4 text-pink-700 dark:text-pink-300 mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-theme-primary">Pick up where you left off?</p>
                       <p className="text-xs text-theme-muted mt-0.5">
@@ -351,7 +351,7 @@ export default function App() {
                       </p>
                       <div className="flex gap-2 mt-2">
                         <button onClick={resumeDraft}
-                          className="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-xs font-semibold">
+                          className="px-3 py-1.5 rounded-lg bg-pink-700 hover:bg-pink-800 text-white text-xs font-semibold">
                           Continue my design
                         </button>
                         <button onClick={discardDraft}
@@ -423,8 +423,8 @@ export default function App() {
                   }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 ${
                     view3D
-                      ? 'border-pink-500 bg-pink-600 text-white shadow-sm shadow-pink-900/30'
-                      : 'border-pink-500/60 bg-theme-raised text-pink-400 hover:bg-pink-600 hover:text-white hover:border-pink-500'
+                      ? 'border-pink-500 bg-pink-700 text-white shadow-sm shadow-pink-900/30'
+                      : 'border-pink-500/60 bg-theme-raised text-pink-700 dark:text-pink-300 hover:bg-pink-700 hover:text-white hover:border-pink-500'
                   }`}
                 >
                   {view3D ? <Map className="w-3 h-3" /> : <Box className="w-3 h-3" />}
@@ -432,7 +432,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setShowYard(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 border-pink-500/60 bg-theme-raised text-pink-400 hover:bg-pink-600 hover:text-white hover:border-pink-500"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 border-pink-500/60 bg-theme-raised text-pink-700 dark:text-pink-300 hover:bg-pink-700 hover:text-white hover:border-pink-500"
                 >
                   <ImagePlus className="w-3 h-3" />
                   <span className="hidden lg:inline">See it in my yard</span>
@@ -516,7 +516,7 @@ function CourtLegend({ config, step }: { config: CourtConfig; step: number }) {
   const area = config.dimensions.length * config.dimensions.width;
   if (step === 0) return (
     <div className="text-xs text-theme-muted">
-      <p className="text-pink-500">{STEP_HINTS[0]}</p>
+      <p className="text-pink-700 dark:text-pink-300">{STEP_HINTS[0]}</p>
     </div>
   );
   return (
@@ -530,7 +530,7 @@ function CourtLegend({ config, step }: { config: CourtConfig; step: number }) {
           <><span>·</span><span>{config.selectedAccessories.length} accessor{config.selectedAccessories.length === 1 ? 'y' : 'ies'}</span></>
         )}
       </p>
-      {step >= 0 && <p className="text-pink-500">{STEP_HINTS[step]}</p>}
+      {step >= 0 && <p className="text-pink-700 dark:text-pink-300">{STEP_HINTS[step]}</p>}
     </div>
   );
 }

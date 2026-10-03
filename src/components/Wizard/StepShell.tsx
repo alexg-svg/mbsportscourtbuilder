@@ -21,7 +21,7 @@ export const StepShell: React.FC<Props> = ({
   <div className="flex flex-col h-full">
     {/* Heading */}
     <div className="px-6 pt-5 pb-4">
-      <p className="text-xs text-pink-400 font-semibold uppercase tracking-widest mb-1">
+      <p className="text-xs text-pink-700 dark:text-pink-300 font-semibold uppercase tracking-widest mb-1">
         Step {step} of {totalSteps}
       </p>
       <h2 className="text-xl font-bold text-theme-primary leading-tight">{title}</h2>
@@ -49,7 +49,7 @@ export const StepShell: React.FC<Props> = ({
         className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all relative overflow-hidden group ${
           nextDisabled
             ? 'bg-theme-raised text-theme-faint cursor-not-allowed'
-            : 'bg-pink-600 hover:bg-pink-500 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white shadow-lg shadow-pink-900/30 hover:shadow-pink-500/40 hover:shadow-xl active:shadow-md'
+            : 'bg-pink-700 hover:bg-pink-800 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white shadow-lg shadow-pink-900/30 hover:shadow-pink-500/40 hover:shadow-xl active:shadow-md'
         }`}
       >
         {nextLabel}

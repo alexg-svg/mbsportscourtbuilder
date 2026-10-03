@@ -97,7 +97,7 @@ export const Step3Size: React.FC<Props> = ({
               : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-theme-mid hover:text-theme-primary'
           }`}
         >
-          <Ruler className={`w-5 h-5 flex-shrink-0 ${customDimensions ? 'text-pink-400' : 'text-theme-muted'}`} />
+          <Ruler className={`w-5 h-5 flex-shrink-0 ${customDimensions ? 'text-pink-700 dark:text-pink-300' : 'text-theme-muted'}`} />
           <div>
             <div className="text-sm font-semibold">Custom Dimensions</div>
             <div className={`text-xs mt-0.5 ${customDimensions ? 'text-pink-700 dark:text-pink-200' : 'text-theme-muted'}`}>

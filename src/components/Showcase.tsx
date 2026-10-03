@@ -45,7 +45,7 @@ export const Showcase: React.FC<{ onUse: (item: ShowcaseItem) => void; compact?:
           </div>
           <button
             onClick={() => onUse(item)}
-            className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-xs font-semibold"
+            className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-pink-700 hover:bg-pink-800 text-xs font-semibold"
           >
             {compact ? 'Use this' : 'Start with this design'} <ArrowRight className="w-3.5 h-3.5" />
           </button>

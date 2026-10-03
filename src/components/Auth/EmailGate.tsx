@@ -71,7 +71,7 @@ export const EmailGate: React.FC<Props> = ({ onVerified }) => {
                 className={`w-full py-2.5 text-sm font-semibold rounded-xl transition-all relative overflow-hidden group ${
                   !email.trim()
                     ? 'bg-theme-raised text-theme-faint cursor-not-allowed'
-                    : 'bg-pink-600 hover:bg-pink-500 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white shadow-lg shadow-pink-900/30 hover:shadow-pink-500/40 hover:shadow-xl'
+                    : 'bg-pink-700 hover:bg-pink-800 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white shadow-lg shadow-pink-900/30 hover:shadow-pink-500/40 hover:shadow-xl'
                 }`}
               >
                 Get Started →

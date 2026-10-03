@@ -19,8 +19,8 @@
     --border:      #e2e8f0;
     --border-mid:  #cbd5e1;
     --text-primary:#0f172a;
-    --text-muted:  #64748b;
-    --text-faint:  #94a3b8;
+    --text-muted:  #4b5563;
+    --text-faint:  #5f6b7d;
     --canvas-bg:   #e2e8f0;
   }
 
@@ -34,7 +34,7 @@
       --border-mid:  #374151;
       --text-primary:#f9fafb;
       --text-muted:  #9ca3af;
-      --text-faint:  #4b5563;
+      --text-faint:  #8b95a3;
       --canvas-bg:   #030712;
     }
   }
@@ -77,4 +77,20 @@
   0%, 100% { transform: translate(0, 0) scale(1); }
   33%       { transform: translate(-45px, 30px) scale(1.06); }
   66%       { transform: translate(35px, -20px) scale(0.96); }
+}
+
+/* Visible keyboard focus (mouse clicks don't trigger it) */
+button:focus-visible, a:focus-visible, [role='button']:focus-visible, summary:focus-visible {
+  outline: 2px solid #be185d;
+  outline-offset: 2px;
+}
+
+/* Respect the operating system's "reduce motion" setting */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

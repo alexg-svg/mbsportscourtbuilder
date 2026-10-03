@@ -15,20 +15,20 @@ interface Props {
 
 const doneBtn =
   'inline-flex items-center justify-center gap-1.5 px-2 py-2 whitespace-nowrap rounded-lg border border-pink-500/60 bg-theme-raised ' +
-  'text-xs font-semibold text-pink-500 hover:bg-pink-600 hover:text-white hover:border-pink-500 transition-colors disabled:opacity-60';
+  'text-xs font-semibold text-pink-700 dark:text-pink-300 hover:bg-pink-700 hover:text-white hover:border-pink-500 transition-colors disabled:opacity-60';
 
 export const StepDone: React.FC<Props> = ({ name, email, render3D, onDownloadPdf, pdfBusy, onShare, linkCopied, onReset }) => (
   <div className="h-full overflow-y-auto">
   <div className="min-h-full flex flex-col items-center justify-center px-8 py-10 text-center">
     <div className="w-20 h-20 flex-shrink-0 rounded-full bg-pink-600/20 border-2 border-pink-500 flex items-center justify-center mb-6 animate-scale-in">
-      <CheckCircle className="w-10 h-10 text-pink-400" />
+      <CheckCircle className="w-10 h-10 text-pink-700 dark:text-pink-300" />
     </div>
 
     <h2 className="text-2xl font-bold text-theme-primary mb-2 animate-fade-in" style={{ animationDelay: '120ms' }}>Design Submitted!</h2>
     <p className="text-theme-muted text-sm leading-relaxed mb-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
       Thanks, <span className="text-theme-primary font-medium">{name}</span>! We've received your custom
       court design and will send a detailed quote to{' '}
-      <span className="text-pink-400">{email}</span> within 24–48 hours.
+      <span className="text-pink-700 dark:text-pink-300">{email}</span> within 24–48 hours.
     </p>
 
     {render3D && (
@@ -75,7 +75,7 @@ export const StepDone: React.FC<Props> = ({ name, email, render3D, onDownloadPdf
     </div>
 
     <div className="text-xs text-theme-muted mb-6 animate-fade-in" style={{ animationDelay: '560ms' }}>
-      Questions? Visit <span className="text-pink-400">mbsportsbuilders.com</span>
+      Questions? Visit <span className="text-pink-700 dark:text-pink-300">mbsportsbuilders.com</span>
     </div>
 
     <button
@@ -91,7 +91,7 @@ export const StepDone: React.FC<Props> = ({ name, email, render3D, onDownloadPdf
 
 const NextStep: React.FC<{ Icon: React.FC<{ className?: string }>; text: string; delay: number }> = ({ Icon, text, delay }) => (
   <div className="flex items-center gap-3 animate-slide-up" style={{ animationDelay: `${delay}ms` }}>
-    <Icon className="w-4 h-4 text-pink-400 flex-shrink-0" />
+    <Icon className="w-4 h-4 text-pink-700 dark:text-pink-300 flex-shrink-0" />
     <span className="text-sm text-theme-primary/80">{text}</span>
   </div>
 );

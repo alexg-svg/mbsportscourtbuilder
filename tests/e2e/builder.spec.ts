@@ -175,3 +175,16 @@ test('pick-one accessories replace each other and windscreen needs chain link', 
   expect(await checked('Water Fountain')).toBe(true);
   expect(await checked('Scoreboard')).toBe(true);
 });
+
+test('will it fit: sizes are checked against the customer\'s space', async ({ page }) => {
+  await startDesign(page, 'Residential', 'Basketball');
+  await page.getByLabel('Space length (ft)').fill('80');
+  await page.getByLabel('Space width (ft)').fill('50');
+  await expect(page.getByText(/2 of 4 standard sizes fit your 80 × 50 ft space/)).toBeVisible();
+  const card = (name: string) => page.getByRole('button', { name: new RegExp(name) });
+  await expect(card('Half Court')).toContainText('Fits');
+  await expect(card('Recreational Court')).toContainText('Fits');
+  await expect(card('NBA Full Court')).toContainText('Too big');
+  await page.getByRole('button', { name: 'Use a custom size that fills my space' }).click();
+  await expect(page.locator('span.font-mono').first()).toHaveText('80 × 50 ft');
+});

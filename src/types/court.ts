@@ -79,6 +79,8 @@ export interface CourtConfig {
   customDimensions: boolean;
   /** Customer's logo for the Custom Logo option: a PNG data URL, at most 512 px. */
   logo?: CourtLogo;
+  /** Space the customer has available (from "Will it fit?"), in feet. */
+  space?: CourtDimensions;
 }
 
 export interface CourtLogo {

@@ -279,6 +279,7 @@ export default function App() {
           courtType={config.type} dimensions={config.dimensions} customDimensions={config.customDimensions}
           onDimensionsChange={(d: CourtDimensions) => update('dimensions', d)}
           onCustomToggle={(v: boolean) => update('customDimensions', v)}
+          space={config.space} onSpaceChange={(space) => setConfig((c) => ({ ...c, space }))}
           onBack={back} onNext={next}
         />
       );

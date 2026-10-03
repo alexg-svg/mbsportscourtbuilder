@@ -120,6 +120,16 @@ export function normalizeAccessories(ids: AccessoryId[]): AccessoryId[] {
   return dropOrphans(ids.reduce<AccessoryId[]>((acc, id) => addAccessory(acc, id), []));
 }
 
+// ─── Will it fit? ─────────────────────────────────────────────────────────────
+/** Accepted range for the customer's available space, in feet. */
+export const SPACE_LIMITS = { min: 4, max: 1000 } as const;
+
+/** True if a court fits the space, turned whichever way works. */
+export function fitsInSpace(court: { length: number; width: number }, space: { length: number; width: number }) {
+  return (court.length <= space.length && court.width <= space.width)
+    || (court.length <= space.width && court.width <= space.length);
+}
+
 /** Allowed court size in feet (inclusive, whole feet). The quote API enforces the same. */
 export const DIM_LIMITS = { length: { min: 10, max: 300 }, width: { min: 4, max: 150 } } as const;
 

@@ -110,6 +110,10 @@ const schema = z.object({
       kitchen:    HEX_COLOR.optional(),
     }),
     selectedAccessories: z.array(z.enum(ACCESSORY_IDS)).max(20),
+    space: z.object({
+      length: z.number().int().min(1).max(5000),
+      width:  z.number().int().min(1).max(5000),
+    }).optional(),
   }),
   courtImageBase64: z.string().max(700_000).optional(),
   court3DImageBase64: z.string().max(1_000_000).optional(),
@@ -296,6 +300,8 @@ function buildHtml(data: z.infer<typeof schema>, hasImage: boolean, has3D: boole
                 <td style="padding:5px 0;color:#6b7280;font-size:14px;">Size</td>
                 <td style="padding:5px 0;color:#111827;font-size:14px;">${dims.length} × ${dims.width} ft &nbsp;<span style="color:#6b7280;">(${(dims.length * dims.width).toLocaleString()} sq ft)</span></td>
               </tr>
+              ${config.space ? row('Their space', `${config.space.length} × ${config.space.width} ft — ${
+                courtFits(dims, config.space) ? 'court fits' : 'court is larger than this space'}`) : ''}
               <tr>
                 <td style="padding:5px 0;color:#6b7280;font-size:14px;">Surface</td>
                 <td style="padding:5px 0;color:#111827;font-size:14px;">${FINISH_LABELS[config.surfaceFinish]}</td>
@@ -329,6 +335,11 @@ function buildHtml(data: z.infer<typeof schema>, hasImage: boolean, has3D: boole
   </table>
 </body>
 </html>`;
+}
+
+/** Same rule as fitsInSpace in src/utils/courtData.ts: either orientation. */
+function courtFits(c: { length: number; width: number }, s: { length: number; width: number }) {
+  return (c.length <= s.length && c.width <= s.width) || (c.length <= s.width && c.width <= s.length);
 }
 
 function row(label: string, value: string) {
@@ -430,6 +441,7 @@ async function postLeadWebhook(data: z.infer<typeof schema>): Promise<void> {
     property: config.propertyType,
     lengthFt: config.dimensions.length, widthFt: config.dimensions.width,
     areaSqFt: config.dimensions.length * config.dimensions.width,
+    spaceLengthFt: config.space?.length ?? '', spaceWidthFt: config.space?.width ?? '',
     surface: FINISH_LABELS[config.surfaceFinish],
     surfaceColor: config.colors.surface, lineColor: config.colors.lines, borderColor: config.colors.border,
     extras: config.selectedAccessories.map((id) => ACCESSORY_LABELS[id]).join(', '),

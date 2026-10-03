@@ -29,6 +29,13 @@ describe('share links', () => {
     expect(readSharedDesign()).toEqual(design);
   });
 
+  it('carries the available space, and drops an invalid one', () => {
+    openLink(designUrl({ ...design, space: { length: 90, width: 55 } }));
+    expect(readSharedDesign()!.space).toEqual({ length: 90, width: 55 });
+    (globalThis as any).location.hash = tamper({ t: 'tennis', l: 78, w: 36, s: [99999, 'x'] });
+    expect(readSharedDesign()!.space).toBeUndefined();
+  });
+
   it('never puts the logo in a link', () => {
     const url = designUrl({ ...design, logo: { url: 'data:image/png;base64,AAAA', w: 10, h: 10 } });
     expect(url).not.toContain('AAAA');

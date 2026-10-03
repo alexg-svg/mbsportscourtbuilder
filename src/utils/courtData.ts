@@ -1,4 +1,127 @@
-import type { Accessory, CourtPreset, CourtColors, CourtType } from '../types/court';
+import type { Accessory, AccessoryId, CourtPreset, CourtColors, CourtType, SurfaceFinish } from '../types/court';
+
+// ─── Shared labels and limits ─────────────────────────────────────────────────
+// Single source for display names. Typed as complete records so adding a court
+// type or finish fails to compile until every label is filled in. The quote
+// API (api/send-quote.ts) keeps its own copies and is type-checked against
+// these, since server code can't import browser modules at runtime.
+
+export const COURT_LABELS: Record<CourtType, string> = {
+  basketball: 'Basketball', tennis: 'Tennis',
+  pickleball: 'Pickleball', 'multi-sport': 'Multi-Sport',
+  'bocce-ball': 'Bocce Ball', shuffleboard: 'Shuffleboard',
+  volleyball: 'Volleyball', badminton: 'Badminton',
+  futsal: 'Futsal', 'inline-hockey': 'Inline Hockey',
+  handball: 'Handball', 'four-square': 'Four Square',
+};
+
+export const FINISH_LABELS: Record<SurfaceFinish, string> = {
+  smooth: 'Smooth Asphalt', textured: 'Textured Asphalt', cushioned: 'Cushioned Asphalt',
+};
+
+// Optional sales questions on the contact form (the quote API keeps a
+// type-checked copy of these labels for the email)
+export const LEAD_TIMELINE = {
+  asap: 'As soon as possible',
+  '1-3-months': 'In 1–3 months',
+  '3-6-months': 'In 3–6 months',
+  '6-plus-months': 'In 6+ months',
+  researching: 'Just researching',
+} as const;
+export const LEAD_SITE = {
+  'existing-slab': 'Existing concrete or asphalt slab',
+  resurface: 'Resurfacing an existing court',
+  'new-ground': 'New ground (needs a base)',
+  'not-sure': 'Not sure yet',
+} as const;
+export const LEAD_SOURCE = {
+  google: 'Google search',
+  social: 'Facebook / Instagram',
+  referral: 'Friend or neighbor',
+  'saw-court': 'Saw one of your courts',
+  other: 'Other',
+} as const;
+export type LeadTimeline = keyof typeof LEAD_TIMELINE;
+export type LeadSite = keyof typeof LEAD_SITE;
+export type LeadSource = keyof typeof LEAD_SOURCE;
+
+/**
+ * Where the customer's logo is painted, in court feet (x along the length,
+ * y across the width), and the largest side of its box. Net sports get it in
+ * the backcourt so it isn't under the net; basketball half courts get it in
+ * the open area away from the hoop.
+ */
+export function logoPlacement(type: CourtType, L: number, W: number): { x: number; y: number; size: number } {
+  const mid = W / 2;
+  switch (type) {
+    case 'tennis': {
+      const back = Math.max((L - 42) / 2, 6);
+      return { x: back / 2, y: mid, size: Math.min(W * 0.35, back * 0.85) };
+    }
+    case 'pickleball': {
+      const playL = Math.min(L, 44), offX = (L - playL) / 2;
+      return { x: offX + 7.5, y: mid, size: Math.min(Math.min(W, 20) * 0.4, 12) };
+    }
+    case 'badminton': return { x: 7, y: mid, size: Math.min(W * 0.35, 10) };
+    case 'volleyball': return { x: L / 2 - 20, y: mid, size: Math.min(W * 0.4, 16) };
+    case 'basketball':
+      return L < 60
+        ? { x: L * 0.74, y: mid, size: Math.min(W * 0.32, L * 0.36) }
+        : { x: L / 2, y: mid, size: Math.min(W * 0.24, 12) };
+    case 'shuffleboard':
+    case 'bocce-ball': return { x: L / 2, y: mid, size: Math.min(W * 0.8, L * 0.15) };
+    case 'four-square': return { x: L / 2, y: mid, size: Math.min(W, L) * 0.3 };
+    default: return { x: L / 2, y: mid, size: Math.min(W * 0.28, 14) };
+  }
+}
+
+/** Logo box in feet, fitted inside `size` × `size` keeping its aspect ratio. */
+export function logoBox(logo: { w: number; h: number }, size: number) {
+  const k = size / Math.max(logo.w, logo.h);
+  return { w: logo.w * k, h: logo.h * k };
+}
+
+// ─── Accessory rules ──────────────────────────────────────────────────────────
+/** Options where only one in each group can be chosen. */
+export const EXCLUSIVE_GROUPS: AccessoryId[][] = [
+  ['lighting-2-pole', 'lighting-4-pole', 'lighting-6-pole'],
+  ['basketball-hoop-single', 'basketball-hoop-double'],
+  ['chain-link-fence', 'vinyl-fence'],
+  ['bench-2', 'bench-4'],
+];
+/** Add-ons that only make sense with another option (windscreen hangs on chain link). */
+export const REQUIRES: Partial<Record<AccessoryId, AccessoryId>> = {
+  windscreen: 'chain-link-fence',
+};
+
+export const isPickOne = (id: AccessoryId) => EXCLUSIVE_GROUPS.some((g) => g.includes(id));
+
+/** Adds `id` to the selection, removing anything it can't be combined with. */
+function addAccessory(selected: AccessoryId[], id: AccessoryId): AccessoryId[] {
+  const group = EXCLUSIVE_GROUPS.find((g) => g.includes(id));
+  const next = selected.filter((x) => x !== id && !group?.includes(x));
+  return [...next, id];
+}
+
+/** Drops add-ons whose required option isn't selected. */
+const dropOrphans = (ids: AccessoryId[]) => ids.filter((x) => !REQUIRES[x] || ids.includes(REQUIRES[x]!));
+
+/** Selecting or unselecting an accessory, applying the pick-one and add-on rules. */
+export function toggleAccessory(selected: AccessoryId[], id: AccessoryId): AccessoryId[] {
+  if (selected.includes(id)) return dropOrphans(selected.filter((x) => x !== id));
+  let next = addAccessory(selected, id);
+  const need = REQUIRES[id];
+  if (need && !next.includes(need)) next = addAccessory(next, need);
+  return dropOrphans(next);
+}
+
+/** Cleans a selection from an older draft or a link: last choice wins in each group. */
+export function normalizeAccessories(ids: AccessoryId[]): AccessoryId[] {
+  return dropOrphans(ids.reduce<AccessoryId[]>((acc, id) => addAccessory(acc, id), []));
+}
+
+/** Allowed court size in feet (inclusive, whole feet). The quote API enforces the same. */
+export const DIM_LIMITS = { length: { min: 10, max: 300 }, width: { min: 4, max: 150 } } as const;
 
 // ─── Standard Court Presets ────────────────────────────────────────────────
 export const COURT_PRESETS: CourtPreset[] = [
@@ -341,9 +464,12 @@ export const ACCESSORIES: Accessory[] = [
   {
     id: 'custom-logo',
     name: 'Custom Logo',
-    description: 'Add your team, school, or brand logo to the court surface. Send artwork separately after submitting.',
+    description: 'Add your team, school, or brand logo to the court surface. Upload it to see it on your design.',
     category: 'customization',
-    compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
+    compatibleCourts: [
+      'basketball', 'tennis', 'pickleball', 'multi-sport', 'bocce-ball', 'badminton',
+      'futsal', 'inline-hockey', 'handball', 'volleyball', 'shuffleboard', 'four-square',
+    ],
   },
   // Sport Equipment
   {

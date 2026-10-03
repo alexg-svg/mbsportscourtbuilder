@@ -77,4 +77,12 @@ export interface CourtConfig {
   surfaceFinish: SurfaceFinish;
   selectedAccessories: AccessoryId[];
   customDimensions: boolean;
+  /** Customer's logo for the Custom Logo option: a PNG data URL, at most 512 px. */
+  logo?: CourtLogo;
+}
+
+export interface CourtLogo {
+  url: string;
+  w: number;
+  h: number;
 }

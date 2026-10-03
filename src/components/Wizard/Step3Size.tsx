@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Ruler } from 'lucide-react';
 import type { CourtType, CourtDimensions } from '../../types/court';
-import { COURT_PRESETS } from '../../utils/courtData';
+import { COURT_PRESETS, DIM_LIMITS } from '../../utils/courtData';
 import { StepShell } from './StepShell';
 
 interface Props {
@@ -13,6 +13,41 @@ interface Props {
   onBack: () => void;
   onNext: () => void;
 }
+
+/**
+ * Whole-feet input. Accepts any text while typing and only commits values
+ * inside the allowed range; on blur it rounds and clamps, so the quote API
+ * never sees a size it would reject.
+ */
+const FeetInput: React.FC<{ label: string; value: number; min: number; max: number; onChange: (v: number) => void }> = ({
+  label, value, min, max, onChange,
+}) => {
+  const [text, setText] = useState(String(value));
+  useEffect(() => { setText(String(value)); }, [value]);
+  const commit = (raw: string) => {
+    const n = Math.round(Number(raw));
+    const v = Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : value;
+    setText(String(v));
+    if (v !== value) onChange(v);
+  };
+  return (
+    <div>
+      <label className="block text-xs text-theme-muted mb-1">{label}</label>
+      <input
+        type="number" inputMode="numeric" min={min} max={max} step={1}
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value);
+          const n = Number(e.target.value);
+          if (Number.isInteger(n) && n >= min && n <= max) onChange(n);
+        }}
+        onBlur={(e) => commit(e.target.value)}
+        className="w-full bg-theme-panel border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary focus:outline-none focus:border-pink-500"
+      />
+      <p className="text-[10px] text-theme-muted mt-1">{min}–{max} ft</p>
+    </div>
+  );
+};
 
 export const Step3Size: React.FC<Props> = ({
   courtType, dimensions, customDimensions,
@@ -73,24 +108,12 @@ export const Step3Size: React.FC<Props> = ({
 
         {customDimensions && (
           <div className="grid grid-cols-2 gap-3 p-4 bg-theme-raised rounded-xl border border-theme-mid">
-            <div>
-              <label className="block text-xs text-theme-muted mb-1">Length (ft)</label>
-              <input
-                type="number" min={20} max={200}
-                value={dimensions.length}
-                onChange={(e) => onDimensionsChange({ ...dimensions, length: Math.max(20, +e.target.value) })}
-                className="w-full bg-theme-panel border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary focus:outline-none focus:border-pink-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-theme-muted mb-1">Width (ft)</label>
-              <input
-                type="number" min={10} max={100}
-                value={dimensions.width}
-                onChange={(e) => onDimensionsChange({ ...dimensions, width: Math.max(10, +e.target.value) })}
-                className="w-full bg-theme-panel border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary focus:outline-none focus:border-pink-500"
-              />
-            </div>
+            <FeetInput label="Length (ft)" value={dimensions.length}
+              min={DIM_LIMITS.length.min} max={DIM_LIMITS.length.max}
+              onChange={(length) => onDimensionsChange({ ...dimensions, length })} />
+            <FeetInput label="Width (ft)" value={dimensions.width}
+              min={DIM_LIMITS.width.min} max={DIM_LIMITS.width.max}
+              onChange={(width) => onDimensionsChange({ ...dimensions, width })} />
             <div className="col-span-2 text-xs text-theme-muted bg-theme-panel/50 rounded-lg p-2 text-center">
               Total area: <span className="text-theme-primary font-medium">{(dimensions.length * dimensions.width).toLocaleString()} sq ft</span>
             </div>

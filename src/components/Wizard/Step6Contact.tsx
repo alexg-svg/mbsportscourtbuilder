@@ -1,7 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useId } from 'react';
 import { AlertCircle, CheckCircle2, MapPin } from 'lucide-react';
 import type { CourtConfig } from '../../types/court';
-import { ACCESSORIES, COURT_PRESETS } from '../../utils/courtData';
+import {
+  ACCESSORIES, COURT_PRESETS, COURT_LABELS, FINISH_LABELS, LEAD_TIMELINE, LEAD_SITE, LEAD_SOURCE,
+} from '../../utils/courtData';
+import type { LeadTimeline, LeadSite, LeadSource } from '../../utils/courtData';
 import { StepShell } from './StepShell';
 import { trackEvent, getRecaptchaToken } from '../../utils/analytics';
 
@@ -10,6 +13,7 @@ interface Props {
   onBack: () => void;
   onSubmit: (data: ContactData) => void;
   getCaptureImage?: () => Promise<string | undefined>;
+  getCapture3D?: () => Promise<string | undefined>;
   verifiedEmail?: string;
 }
 
@@ -21,20 +25,11 @@ export interface ContactData {
   city?: string;
   state?: string;
   message: string;
+  /** Optional sales questions; '' when not answered */
+  timeline: LeadTimeline | '';
+  site: LeadSite | '';
+  source: LeadSource | '';
 }
-
-const COURT_LABELS: Record<string, string> = {
-  basketball: 'Basketball', tennis: 'Tennis',
-  pickleball: 'Pickleball', 'multi-sport': 'Multi-Sport',
-  'bocce-ball': 'Bocce Ball', shuffleboard: 'Shuffleboard',
-  volleyball: 'Volleyball', badminton: 'Badminton',
-  futsal: 'Futsal', 'inline-hockey': 'Inline Hockey',
-  handball: 'Handball', 'four-square': 'Four-Square',
-};
-
-const FINISH_LABELS: Record<string, string> = {
-  smooth: 'Smooth Asphalt', textured: 'Textured Asphalt', cushioned: 'Cushioned Asphalt',
-};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -112,8 +107,10 @@ async function lookupZip(zip: string): Promise<{ city: string; state: string } |
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCaptureImage, verifiedEmail }) => {
-  const [form, setForm]         = useState<ContactData>({ name: '', email: verifiedEmail ?? '', phone: '', zip: '', message: '' });
+export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCaptureImage, getCapture3D, verifiedEmail }) => {
+  const [form, setForm]         = useState<ContactData>({
+    name: '', email: verifiedEmail ?? '', phone: '', zip: '', message: '', timeline: '', site: '', source: '',
+  });
   const [touched, setTouched]   = useState<Partial<Record<keyof ContactData, boolean>>>({});
   const [zipLooking, setZipLooking] = useState(false);
   const [sending, setSending]   = useState(false);
@@ -166,15 +163,33 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
     setSending(true);
     setError(null);
     try {
-      const [rawImage, recaptchaToken] = await Promise.all([
+      const [rawImage, raw3D, recaptchaToken] = await Promise.all([
         getCaptureImage?.(),
+        // Never let the 3D render hold up the quote
+        Promise.race([
+          getCapture3D?.() ?? Promise.resolve(undefined),
+          new Promise<undefined>((r) => setTimeout(() => r(undefined), 6000)),
+        ]).catch(() => undefined),
         getRecaptchaToken('submit_quote').catch(() => undefined),
       ]);
+      // Skip images that would exceed the server's size limits
       const courtImageBase64 = rawImage && rawImage.length <= 650_000 ? rawImage : undefined;
+      const court3DImageBase64 = raw3D && raw3D.length <= 950_000 ? raw3D : undefined;
+      // PDF summary for the emails; skipped quietly if anything goes wrong
+      const pdfBase64 = await import('../../utils/designPdf')
+        .then(({ buildDesignPdf }) => blobToBase64(buildDesignPdf(
+          config,
+          court3DImageBase64 ? { b64: court3DImageBase64, w: 1200, h: 750 } : undefined,
+          courtImageBase64 ? { b64: courtImageBase64, w: 900, h: 560 } : undefined,
+        )))
+        .then((b64) => (b64.length <= 1_400_000 ? b64 : undefined))
+        .catch(() => undefined);
+      // The logo lives in the PDF and pictures; the server doesn't need it
+      const { logo: _logo, ...configForServer } = config;
       const res = await fetch('/api/send-quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact: form, config, courtImageBase64, recaptchaToken }),
+        body: JSON.stringify({ contact: form, config: configForServer, courtImageBase64, court3DImageBase64, pdfBase64, recaptchaToken }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string; details?: { fieldErrors?: Record<string, string[]> } };
@@ -298,6 +313,13 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
             )}
           </div>
 
+          <Choice label="When do you want it built?" value={form.timeline} options={LEAD_TIMELINE}
+            onChange={(v) => setForm((f) => ({ ...f, timeline: v as LeadTimeline | '' }))} />
+          <Choice label="What's there now?" value={form.site} options={LEAD_SITE}
+            onChange={(v) => setForm((f) => ({ ...f, site: v as LeadSite | '' }))} />
+          <Choice label="How did you hear about us?" value={form.source} options={LEAD_SOURCE} wide
+            onChange={(v) => setForm((f) => ({ ...f, source: v as LeadSource | '' }))} />
+
           <div className="col-span-2">
             <label className="block text-xs text-theme-muted mb-1">Notes (optional)</label>
             <textarea rows={2} value={form.message}
@@ -319,6 +341,32 @@ export const Step6Contact: React.FC<Props> = ({ config, onBack, onSubmit, getCap
         </p>
       </div>
     </StepShell>
+  );
+};
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1] ?? '');
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
+/** Optional dropdown; the first entry means "not answered". */
+const Choice: React.FC<{
+  label: string; value: string; options: Record<string, string>; onChange: (v: string) => void; wide?: boolean;
+}> = ({ label, value, options, onChange, wide }) => {
+  const id = useId();
+  return (
+  <div className={wide ? 'col-span-2' : 'col-span-2 sm:col-span-1'}>
+    <label htmlFor={id} className="block text-xs text-theme-muted mb-1">{label}</label>
+    <select id={id} value={value} onChange={(e) => onChange(e.target.value)}
+      className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary focus:outline-none focus:border-pink-500">
+      <option value="">Choose (optional)</option>
+      {Object.entries(options).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+    </select>
+  </div>
   );
 };
 

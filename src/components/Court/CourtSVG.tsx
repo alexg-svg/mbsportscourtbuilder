@@ -1,10 +1,13 @@
-import React, { useState, useEffect, forwardRef } from 'react';
+import React, { useState, useEffect, useId, useLayoutEffect, useRef, forwardRef } from 'react';
 import type { CourtConfig } from '../../types/court';
+import { logoPlacement, logoBox } from '../../utils/courtData';
 
 interface Props {
   config: CourtConfig;
   width?: number;
   height?: number;
+  /** Omit the clickable info markers (for images in emails and PDFs). */
+  hideHotspots?: boolean;
 }
 
 interface HotspotDef {
@@ -16,12 +19,12 @@ interface HotspotDef {
   tipDir: 'right' | 'left';
 }
 
-const PADDING = 40;
+const PADDING = 64;
 const TIP_W = 188;
 const TIP_H = 62;
-const MARKER_R = 8;
+const MARKER_R = 6;
 
-export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ config, width = 800, height = 560 }, ref) {
+export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ config, width = 800, height = 560, hideHotspots = false }, ref) {
   const { type, dimensions, colors, selectedAccessories, surfaceFinish } = config;
   const cW = dimensions.width;   // court width  (feet)
   const cL = dimensions.length;  // court length (feet)
@@ -54,10 +57,35 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
   const px = (x: number) => ox + x * scale;
   const py = (y: number) => oy + y * scale;
 
+  // Out-of-bounds border strip (8 ft, or as much as fits while leaving a
+  // band of lawn outside it for the dimension lines)
+  const pad = Math.max(10, Math.min(8 * scale, ox - 26, oy - 26));
+
   // Line props without fill so spread doesn't conflict with explicit fill attrs
   const ls = { stroke: colors.lines, strokeWidth: Math.max(1.5, scale * 0.08) };
 
   const hasAcc = (id: string) => selectedAccessories.includes(id as never);
+  const showLogo = hasAcc('custom-logo') && !!config.logo;
+
+  // Pattern ids must be unique per instance: several copies of this SVG can be
+  // on the page (preview, phone strip, email capture) and url(#id) resolves to
+  // the first match, even if that copy is hidden.
+  const uid = useId().replace(/:/g, '');
+  const finishId = `surface-finish-${uid}`;
+  const lawnId = `lawn-${uid}`;
+  const revealId = `reveal-${uid}`;
+
+  // When the sport changes, sweep the new court in from left to right. The
+  // clip rect's base width is the full court, so a serialized copy (email/PDF
+  // capture) always shows everything; only the running animation hides part.
+  // fill="remove" hands back to the base width afterwards, so later size
+  // changes are never clipped by a stale animated value.
+  const revealRef = useRef<SVGAnimateElement>(null);
+  useLayoutEffect(() => {
+    if (hideHotspots) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    revealRef.current?.beginElement?.();
+  }, [type, hideHotspots]);
 
   // ─── HOTSPOT STATE ────────────────────────────────────────────────────────
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
@@ -227,22 +255,23 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
         <g key={h.id}>
           {/* Pulse ring */}
           <circle cx={h.svgX} cy={h.svgY} r={MARKER_R} fill="none" stroke="#ec4899" strokeWidth={1.5}>
-            <animate attributeName="r"       values={`${MARKER_R};${MARKER_R + 9};${MARKER_R}`} dur="2.4s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.7;0;0.7"                                  dur="2.4s" repeatCount="indefinite" />
+            <animate attributeName="r"       values={`${MARKER_R};${MARKER_R + 8};${MARKER_R}`} dur="2.4s" repeatCount="3" fill="freeze" />
+            <animate attributeName="opacity" values="0.6;0;0.6"                                  dur="2.4s" repeatCount="3" fill="freeze" />
           </circle>
 
           {/* Marker */}
           <circle
             cx={h.svgX} cy={h.svgY} r={MARKER_R}
             fill={isActive ? '#be185d' : '#ec4899'}
-            stroke="white" strokeWidth={1.5}
+            fillOpacity={isActive ? 1 : 0.8}
+            stroke="white" strokeWidth={1.2}
             style={{ cursor: 'pointer' }}
             onClick={() => setActiveHotspot(isActive ? null : h.id)}
           />
           <text
             x={h.svgX} y={h.svgY + 0.5}
             textAnchor="middle" dominantBaseline="middle"
-            fill="white" fontSize={9} fontWeight="bold" fontFamily={FONT}
+            fill="white" fontSize={8} fontWeight="bold" fontFamily={FONT}
             style={{ pointerEvents: 'none', userSelect: 'none' }}
           >
             i
@@ -457,7 +486,7 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
       <g>
         {/* Surface */}
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill={`url(#${finishId})`} />}
 
         {/* Key / paint areas */}
         <rect {...rp(0, (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? colors.border} opacity={0.55} />
@@ -543,7 +572,7 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
       <g>
         {/* Surface */}
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill={`url(#${finishId})`} />}
 
         {/* Service box tints */}
         <rect {...rp(0,        sOff,            svcLen, singlesW / 2)} fill={colors.serviceBox ?? colors.surface} opacity={0.8} />
@@ -593,7 +622,7 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
       <g>
         {/* Surface */}
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill={`url(#${finishId})`} />}
 
         {/* NVZ kitchen zones */}
         <rect {...rp(offX,              offY, nvz,    playW)} fill={colors.kitchen ?? '#60A5FA'} opacity={0.5} />
@@ -645,7 +674,7 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
       <g>
         {/* Surface */}
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill={`url(#${finishId})`} />}
 
         {/* Paint areas */}
         <rect {...rp(0,        (cW - keyW) / 2, keyLen, keyW)} fill={colors.keyArea ?? '#1A3A6B'} opacity={0.5} />
@@ -758,7 +787,7 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
     return (
       <g>
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill={`url(#${finishId})`} />}
         {/* Boundary */}
         <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
         {/* Center line */}
@@ -793,7 +822,7 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
     return (
       <g>
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill={`url(#${finishId})`} />}
         {/* Outer boundary (doubles) */}
         <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
         {/* Singles sidelines (only for doubles court) */}
@@ -850,7 +879,7 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
     return (
       <g>
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill={`url(#${finishId})`} />}
         {/* Boundary */}
         <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
         {/* Center line */}
@@ -890,7 +919,7 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
     return (
       <g>
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill={`url(#${finishId})`} />}
         {/* Rink boundary with rounded corners */}
         <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} rx={cornerR * scale} />
         {/* Center line */}
@@ -944,7 +973,7 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
     return (
       <g>
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill={`url(#${finishId})`} />}
         {/* Boundary */}
         <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
         {/* Center line */}
@@ -988,7 +1017,7 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
     return (
       <g>
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill={`url(#${finishId})`} />}
         {/* Boundary */}
         <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
         {/* Center (net) line */}
@@ -1022,7 +1051,7 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
     return (
       <g>
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill={`url(#${finishId})`} />}
         {/* Boundary */}
         <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
         {/* Scoring triangles — left end */}
@@ -1058,7 +1087,7 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
     return (
       <g>
         <rect {...rp(0, 0, cL, cW)} fill={colors.surface} />
-        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill="url(#surface-finish)" />}
+        {surfaceFinish !== 'smooth' && <rect {...rp(0, 0, cL, cW)} fill={`url(#${finishId})`} />}
         {/* Outer boundary */}
         <rect {...rp(0, 0, cL, cW)} fill="none" {...ls} />
         {/* Dividing lines */}
@@ -1082,24 +1111,31 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
   };
 
   // ─── DIMENSION LABELS ─────────────────────────────────────────────────────
+  // Dimension lines on the lawn just outside the border: length along the top,
+  // width on the left, clear of accessory icons on the border strip
   const renderLabels = () => {
-    const labelColor = '#6B7280';
-    const arrowColor = '#4B5563';
+    const c = 'rgba(255,255,255,0.8)';
+    const yT = oy - pad - 4 - 11;
+    const xL = ox - pad - 4 - 11;
+    const tick = 5;
+    const pill = (x: number, y: number, text: string, rotate = false) => (
+      <g transform={rotate ? `rotate(-90, ${x}, ${y})` : undefined}>
+        <rect x={x - 22} y={y - 8} width={44} height={16} rx={8} fill="rgba(15,23,42,0.75)" />
+        <text x={x} y={y + 0.5} textAnchor="middle" dominantBaseline="middle" fill="white"
+          fontSize={10.5} fontWeight={600}>{text}</text>
+      </g>
+    );
     return (
-      <g fontFamily="Inter, sans-serif" fontSize={11}>
-        <text x={ox + svgCW / 2} y={oy + svgCH + 24} textAnchor="middle" fill={labelColor}>
-          {cL} ft
-        </text>
-        <text
-          x={ox - 20} y={oy + svgCH / 2}
-          textAnchor="middle" dominantBaseline="middle" fill={labelColor}
-          transform={`rotate(-90, ${ox - 20}, ${oy + svgCH / 2})`}
-        >
-          {cW} ft
-        </text>
-        <line x1={ox} y1={oy - 10} x2={ox + svgCW} y2={oy - 10} stroke={arrowColor} strokeWidth={1} />
-        <polygon points={`${ox - 5},${oy - 10} ${ox + 5},${oy - 6} ${ox + 5},${oy - 14}`} fill={arrowColor} />
-        <polygon points={`${ox + svgCW + 5},${oy - 10} ${ox + svgCW - 5},${oy - 6} ${ox + svgCW - 5},${oy - 14}`} fill={arrowColor} />
+      <g fontFamily="Inter, system-ui, sans-serif" style={{ userSelect: 'none' }}>
+        <line x1={ox} y1={yT} x2={ox + svgCW} y2={yT} stroke={c} strokeWidth={1} />
+        <line x1={ox} y1={yT - tick} x2={ox} y2={yT + tick} stroke={c} strokeWidth={1} />
+        <line x1={ox + svgCW} y1={yT - tick} x2={ox + svgCW} y2={yT + tick} stroke={c} strokeWidth={1} />
+        {/* Off-center: light poles sit at 1/6, 1/4, 1/2 and 3/4 of the length, scoreboards mid-side */}
+        {pill(ox + svgCW * 0.38, yT, `${cL} ft`)}
+        <line x1={xL} y1={oy} x2={xL} y2={oy + svgCH} stroke={c} strokeWidth={1} />
+        <line x1={xL - tick} y1={oy} x2={xL + tick} y2={oy} stroke={c} strokeWidth={1} />
+        <line x1={xL - tick} y1={oy + svgCH} x2={xL + tick} y2={oy + svgCH} stroke={c} strokeWidth={1} />
+        {pill(xL, oy + svgCH * 0.3, `${cW} ft`, true)}
       </g>
     );
   };
@@ -1131,27 +1167,58 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
     >
       <defs>
         {surfaceFinish === 'textured' && (
-          <pattern id="surface-finish" patternUnits="userSpaceOnUse" width="6" height="6">
+          <pattern id={finishId} patternUnits="userSpaceOnUse" width="6" height="6">
             <circle cx="3" cy="3" r="1" fill="rgba(0,0,0,0.22)" />
           </pattern>
         )}
         {surfaceFinish === 'cushioned' && (
-          <pattern id="surface-finish" patternUnits="userSpaceOnUse" width="12" height="12">
+          <pattern id={finishId} patternUnits="userSpaceOnUse" width="12" height="12">
             <rect width="6" height="6" fill="rgba(255,255,255,0.09)" />
             <rect x="6" y="6" width="6" height="6" fill="rgba(255,255,255,0.09)" />
             <rect width="12" height="12" fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="0.5" />
           </pattern>
         )}
+        <clipPath id={revealId}>
+          <rect x={ox - pad - 6} y={0} width={svgCW + (pad + 6) * 2} height={height}>
+            {!hideHotspots && (
+              <animate ref={revealRef} attributeName="width" from={0} to={svgCW + (pad + 6) * 2}
+                dur="0.9s" begin="indefinite" fill="remove"
+                calcMode="spline" keyTimes="0;1" keySplines="0.3 0 0.2 1" />
+            )}
+          </rect>
+        </clipPath>
+        <pattern id={lawnId} patternUnits="userSpaceOnUse" width="64" height="64">
+          <rect width="64" height="64" fill="#467535" />
+          <rect width="32" height="64" fill="#4d7d3b" />
+        </pattern>
       </defs>
-      <rect width={width} height={height} fill={colors.border} rx={8} />
+      <rect width={width} height={height} fill={`url(#${lawnId})`} rx={8} />
+      <rect x={ox - pad - 4} y={oy - pad - 4} width={svgCW + (pad + 4) * 2} height={svgCH + (pad + 4) * 2}
+        fill="#b9b4aa" rx={3} />
+      <rect x={ox - pad} y={oy - pad} width={svgCW + pad * 2} height={svgCH + pad * 2} fill={colors.border} rx={2} />
       {renderFencing()}
       {renderLighting()}
-      {renderCourt()}
+      <g clipPath={`url(#${revealId})`}>{renderCourt()}</g>
+      {showLogo && (() => {
+        const at = logoPlacement(type, cL, cW);
+        const box = logoBox(config.logo!, at.size);
+        return (
+          <>
+            <image href={config.logo!.url} x={px(at.x - box.w / 2)} y={py(at.y - box.h / 2)}
+              width={box.w * scale} height={box.h * scale} opacity={0.92} preserveAspectRatio="xMidYMid meet" />
+            {/* Repaint just the lines over the logo, as on a real court. fill-opacity 0 is
+                inherited, so surfaces and labels in this copy are invisible. */}
+            <g clipPath={`url(#${revealId})`} style={{ fillOpacity: 0 }} pointerEvents="none" aria-hidden>
+              {renderCourt()}
+            </g>
+          </>
+        );
+      })()}
       {renderBenches()}
       {renderScoreboards()}
       {renderWaterFountain()}
       {renderLabels()}
-      {renderHotspots()}
+      {!hideHotspots && renderHotspots()}
       <text
         x={width - 10} y={height - 10}
         textAnchor="end" fontSize={11}

@@ -32,7 +32,7 @@ export const Step1Property: React.FC<Props> = ({ propertyType, onChange, onNext 
               : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-pink-500/50 hover:text-theme-primary hover:shadow-md hover:shadow-pink-500/10'
           }`}
         >
-          <Icon className={`w-8 h-8 mt-0.5 flex-shrink-0 ${propertyType === id ? 'text-pink-400' : 'text-theme-muted'}`} />
+          <Icon className={`w-8 h-8 mt-0.5 flex-shrink-0 ${propertyType === id ? 'text-pink-700 dark:text-pink-300' : 'text-theme-muted'}`} />
           <div>
             <div className="text-lg font-bold">{label}</div>
             <div className={`text-sm mt-1 ${propertyType === id ? 'text-pink-700 dark:text-pink-200' : 'text-theme-muted'}`}>{desc}</div>

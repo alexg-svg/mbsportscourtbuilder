@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useRef, lazy, Suspense, useEffect } from 'react';
-import { Eye, ClipboardList, Box, Map, ImagePlus, History } from 'lucide-react';
+import { Eye, ClipboardList, Box, Map, ImagePlus, History, Columns2 } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES, COURT_LABELS, toggleAccessory } from './utils/courtData';
-import { trackEvent } from './utils/analytics';
+import { trackEvent, loadRecaptcha } from './utils/analytics';
 import { designUrl, readSharedDesign, saveDraft, loadDraft, clearDraft } from './utils/shareLink';
 import { Showcase } from './components/Showcase';
 import type { ShowcaseItem } from './utils/showcase';
@@ -10,6 +10,7 @@ import { CourtSVG } from './components/Court/CourtSVG';
 
 const Court3D = lazy(() => import('./components/Court/Court3D').then((m) => ({ default: m.Court3D })));
 const YardView = lazy(() => import('./components/Yard/YardView'));
+const CompareView = lazy(() => import('./components/CompareView'));
 import { StepProgress } from './components/Wizard/StepProgress';
 import { Step1Property } from './components/Wizard/Step1Property';
 import { Step2CourtType } from './components/Wizard/Step2CourtType';
@@ -110,6 +111,7 @@ export default function App() {
   const [showPreview, setShowPreview] = useState(false);
   const [view3D, setView3D]       = useState(false);
   const [showYard, setShowYard]   = useState(false);
+  const [showCompare, setShowCompare] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
 
   const handleVerified = (email: string) => {
@@ -143,6 +145,21 @@ export default function App() {
       return undefined;
     }
   }, []);
+
+  // Once a design is under way, fetch the 3D code in idle time so opening the
+  // 3D view (and the email picture) doesn't wait on the download
+  useEffect(() => {
+    if (step < 1) return;
+    const load = () => { void import('./components/Court/Court3D'); };
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+    if (w.requestIdleCallback) w.requestIdleCallback(load, { timeout: 4000 });
+    else setTimeout(load, 1500);
+  }, [step >= 1]);
+
+  // reCAPTCHA is only needed to submit, so load it when the contact step opens
+  useEffect(() => {
+    if (step === TOTAL_STEPS - 1) loadRecaptcha().catch(() => undefined);
+  }, [step]);
 
   // Render the 3D picture for the quote email in the background as soon as the
   // customer reaches the contact step, so submitting isn't slowed down.
@@ -264,6 +281,7 @@ export default function App() {
           courtType={config.type} dimensions={config.dimensions} customDimensions={config.customDimensions}
           onDimensionsChange={(d: CourtDimensions) => update('dimensions', d)}
           onCustomToggle={(v: boolean) => update('customDimensions', v)}
+          space={config.space} onSpaceChange={(space) => setConfig((c) => ({ ...c, space }))}
           onBack={back} onNext={next}
         />
       );
@@ -303,13 +321,13 @@ export default function App() {
           </div>
         </div>
         <div className="hidden sm:flex items-center gap-4 text-xs">
-          <span className="text-pink-500 font-semibold">mbsportsbuilders.com</span>
+          <span className="text-pink-700 dark:text-pink-300 font-semibold">mbsportsbuilders.com</span>
           <span className="text-theme-faint">·</span>
           <span className="text-theme-muted">12 court types · Residential &amp; Commercial</span>
         </div>
         {step >= 0 && (
           <button
-            className="sm:hidden text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-semibold transition-all active:scale-95 bg-pink-600 border border-pink-500 text-white shadow-sm shadow-pink-900/30"
+            className="sm:hidden text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-semibold transition-all active:scale-95 bg-pink-700 border border-pink-500 text-white shadow-sm shadow-pink-900/30"
             onClick={() => setShowPreview((v) => !v)}
           >
             {showPreview
@@ -343,7 +361,7 @@ export default function App() {
               {step === 0 && draft && (
                 <div className="mx-4 mt-3 p-3 rounded-xl border border-pink-500/50 bg-pink-600/10 flex-shrink-0">
                   <div className="flex items-start gap-2.5">
-                    <History className="w-4 h-4 text-pink-500 mt-0.5 flex-shrink-0" />
+                    <History className="w-4 h-4 text-pink-700 dark:text-pink-300 mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-theme-primary">Pick up where you left off?</p>
                       <p className="text-xs text-theme-muted mt-0.5">
@@ -351,7 +369,7 @@ export default function App() {
                       </p>
                       <div className="flex gap-2 mt-2">
                         <button onClick={resumeDraft}
-                          className="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-xs font-semibold">
+                          className="px-3 py-1.5 rounded-lg bg-pink-700 hover:bg-pink-800 text-white text-xs font-semibold">
                           Continue my design
                         </button>
                         <button onClick={discardDraft}
@@ -423,8 +441,8 @@ export default function App() {
                   }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 ${
                     view3D
-                      ? 'border-pink-500 bg-pink-600 text-white shadow-sm shadow-pink-900/30'
-                      : 'border-pink-500/60 bg-theme-raised text-pink-400 hover:bg-pink-600 hover:text-white hover:border-pink-500'
+                      ? 'border-pink-500 bg-pink-700 text-white shadow-sm shadow-pink-900/30'
+                      : 'border-pink-500/60 bg-theme-raised text-pink-700 dark:text-pink-300 hover:bg-pink-700 hover:text-white hover:border-pink-500'
                   }`}
                 >
                   {view3D ? <Map className="w-3 h-3" /> : <Box className="w-3 h-3" />}
@@ -432,11 +450,20 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setShowYard(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 border-pink-500/60 bg-theme-raised text-pink-400 hover:bg-pink-600 hover:text-white hover:border-pink-500"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 border-pink-500/60 bg-theme-raised text-pink-700 dark:text-pink-300 hover:bg-pink-700 hover:text-white hover:border-pink-500"
                 >
                   <ImagePlus className="w-3 h-3" />
                   <span className="hidden lg:inline">See it in my yard</span>
                   <span className="lg:hidden">My yard</span>
+                </button>
+                <button
+                  onClick={() => { setShowCompare(true); trackEvent('compare_opened', { court_type: config.type }); }}
+                  title="Save designs and compare them side by side"
+                  aria-label="Compare designs"
+                  className="flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 border-pink-500/60 bg-theme-raised text-pink-700 dark:text-pink-300 hover:bg-pink-700 hover:text-white hover:border-pink-500"
+                >
+                  <Columns2 className="w-3 h-3" />
+                  <span className="hidden lg:inline">Compare</span>
                 </button>
               </div>
             )}
@@ -470,6 +497,16 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {showCompare && (
+        <Suspense fallback={null}>
+          <CompareView
+            current={config}
+            onClose={() => setShowCompare(false)}
+            onUse={(c) => { setConfig((prev) => ({ ...c, logo: prev.logo })); setShowCompare(false); }}
+          />
+        </Suspense>
+      )}
 
       {showYard && (
         <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center text-white/70 text-sm">Loading…</div>}>
@@ -516,7 +553,7 @@ function CourtLegend({ config, step }: { config: CourtConfig; step: number }) {
   const area = config.dimensions.length * config.dimensions.width;
   if (step === 0) return (
     <div className="text-xs text-theme-muted">
-      <p className="text-pink-500">{STEP_HINTS[0]}</p>
+      <p className="text-pink-700 dark:text-pink-300">{STEP_HINTS[0]}</p>
     </div>
   );
   return (
@@ -530,7 +567,7 @@ function CourtLegend({ config, step }: { config: CourtConfig; step: number }) {
           <><span>·</span><span>{config.selectedAccessories.length} accessor{config.selectedAccessories.length === 1 ? 'y' : 'ies'}</span></>
         )}
       </p>
-      {step >= 0 && <p className="text-pink-500">{STEP_HINTS[step]}</p>}
+      {step >= 0 && <p className="text-pink-700 dark:text-pink-300">{STEP_HINTS[step]}</p>}
     </div>
   );
 }

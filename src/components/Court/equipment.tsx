@@ -284,8 +284,27 @@ export function LightPole({ x, z, aim, night }: {
         </mesh>
         {[-0.12, 0.12].map((fx) => (
           <group key={fx} position={[fx, H - 0.05, 0.1]} rotation={[-0.55, 0, 0]}>
+            {/* Yoke bracket */}
+            {[-0.07, 0.07].map((yx) => (
+              <mesh key={yx} position={[yx, 0.012, -0.01]}>
+                <boxGeometry args={[0.008, 0.04, 0.03]} />
+                <meshStandardMaterial {...galvanized} />
+              </mesh>
+            ))}
             <mesh castShadow>
               <boxGeometry args={[0.13, 0.025, 0.1]} />
+              <meshStandardMaterial color="#2d3036" metalness={0.4} roughness={0.5} />
+            </mesh>
+            {/* Cooling fins */}
+            {[-0.04, -0.013, 0.013, 0.04].map((fz) => (
+              <mesh key={fz} position={[0, 0.016, fz]}>
+                <boxGeometry args={[0.12, 0.008, 0.004]} />
+                <meshStandardMaterial color="#2d3036" metalness={0.4} roughness={0.5} />
+              </mesh>
+            ))}
+            {/* Glare visor along the front edge */}
+            <mesh position={[0, -0.02, 0.052]} rotation={[0.5, 0, 0]}>
+              <boxGeometry args={[0.13, 0.004, 0.035]} />
               <meshStandardMaterial color="#2d3036" metalness={0.4} roughness={0.5} />
             </mesh>
             <mesh position={[0, -0.014, 0]}>

@@ -96,7 +96,7 @@ test('share and PDF are offered only after submitting, and the link reopens the 
 test('custom sizes are kept to whole feet within limits', async ({ page }) => {
   await startDesign(page, 'Residential', 'Shuffleboard');
   await page.getByText('Custom Dimensions', { exact: true }).click();
-  const [length, width] = [page.locator('input[type=number]').nth(0), page.locator('input[type=number]').nth(1)];
+  const [length, width] = [page.getByLabel('Length (ft)', { exact: true }), page.getByLabel('Width (ft)', { exact: true })];
   await length.fill('47.5'); await width.click();
   await expect(length).toHaveValue('48');
   await length.fill('999'); await width.click();
@@ -174,4 +174,37 @@ test('pick-one accessories replace each other and windscreen needs chain link', 
   await card('Scoreboard').click();
   expect(await checked('Water Fountain')).toBe(true);
   expect(await checked('Scoreboard')).toBe(true);
+});
+
+test('will it fit: sizes are checked against the customer\'s space', async ({ page }) => {
+  await startDesign(page, 'Residential', 'Basketball');
+  await page.getByLabel('Space length (ft)').fill('80');
+  await page.getByLabel('Space width (ft)').fill('50');
+  await expect(page.getByText(/2 of 4 standard sizes fit your 80 × 50 ft space/)).toBeVisible();
+  const card = (name: string) => page.getByRole('button', { name: new RegExp(name) });
+  await expect(card('Half Court')).toContainText('Fits');
+  await expect(card('Recreational Court')).toContainText('Fits');
+  await expect(card('NBA Full Court')).toContainText('Too big');
+  await page.getByRole('button', { name: 'Use a custom size that fills my space' }).click();
+  await expect(page.locator('span.font-mono').first()).toHaveText('80 × 50 ft');
+});
+
+test('designs can be saved and compared side by side', async ({ page }) => {
+  await startDesign(page, 'Residential', 'Pickleball');
+  await next(page);
+  await page.getByText('Pro Blue').click();
+  await page.getByRole('button', { name: 'Compare designs' }).click();
+  await page.getByRole('button', { name: 'Save current design' }).click();
+  await page.getByRole('button', { name: 'Close comparison' }).click();
+
+  await page.getByText('Park Green').click();
+  await page.getByRole('button', { name: 'Compare designs' }).click();
+  await page.getByRole('button', { name: 'Save current design' }).click();
+  await expect(page.getByRole('article')).toHaveCount(2);
+  // Only the colors differ, so only that row is highlighted
+  const designA = page.getByRole('article', { name: 'Design A' });
+  await expect(designA.locator('dd.font-semibold')).toHaveCount(1);
+
+  await designA.getByRole('button', { name: /Continue with this design/ }).click();
+  await expect(page.getByText('Court Surface · Sport Blue')).toBeVisible();
 });

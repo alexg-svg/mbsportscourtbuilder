@@ -31,7 +31,7 @@ export const StepProgress: React.FC<Props> = ({ current }) => {
             <div
               className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                 i < current
-                  ? 'bg-pink-600 text-white'
+                  ? 'bg-pink-700 text-white'
                   : i === current
                   ? 'bg-pink-500 text-white ring-2 ring-pink-400/40'
                   : 'bg-theme-raised text-theme-faint'
@@ -39,7 +39,7 @@ export const StepProgress: React.FC<Props> = ({ current }) => {
             >
               {i < current ? <Check className="w-3 h-3" strokeWidth={3} /> : i + 1}
             </div>
-            <span className={`text-[10px] font-semibold whitespace-nowrap hidden sm:block ${i === current ? 'text-pink-500' : 'text-theme-muted'}`}>
+            <span className={`text-[10px] font-semibold whitespace-nowrap hidden sm:block ${i === current ? 'text-pink-700 dark:text-pink-300' : 'text-theme-muted'}`}>
               {label}
             </span>
           </div>

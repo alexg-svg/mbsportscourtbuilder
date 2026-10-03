@@ -130,6 +130,15 @@ describe('send-quote API', () => {
     expect(status).toBe(200);
   });
 
+  it("reports the customer's space and whether the court fits", async () => {
+    await call({ ...quote(), config: { ...quote().config, space: { length: 70, width: 40 } } });
+    expect(sent[0].html).toContain('70 × 40 ft — court is larger than this space');
+    sent.length = 0;
+    await call({ ...quote(), config: { ...quote().config, space: { length: 40, width: 80 } } });
+    expect(sent[0].html).toContain('40 × 80 ft — court fits');
+    expect(hooks[hooks.length - 1]).toMatchObject({ spaceLengthFt: 40, spaceWidthFt: 80 });
+  });
+
   it('accepts long reCAPTCHA tokens', async () => {
     const [status] = await call(quote({}, { recaptchaToken: 'x'.repeat(5000) }));
     expect(status).toBe(200);

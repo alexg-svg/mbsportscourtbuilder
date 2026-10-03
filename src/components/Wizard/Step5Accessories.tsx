@@ -98,7 +98,7 @@ const LogoUpload: React.FC<{ logo?: CourtLogo; onChange: (l: CourtLogo | undefin
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-theme-primary">Logo added to your court</p>
             <div className="flex gap-3 mt-1">
-              <button onClick={() => input.current?.click()} className="text-xs font-semibold text-pink-500 hover:text-pink-400">Replace</button>
+              <button onClick={() => input.current?.click()} className="text-xs font-semibold text-pink-700 dark:text-pink-300 hover:text-pink-800 dark:hover:text-pink-200">Replace</button>
               <button onClick={() => onChange(undefined)} className="text-xs font-semibold text-theme-muted hover:text-theme-primary inline-flex items-center gap-1">
                 <Trash2 className="w-3 h-3" /> Remove
               </button>
@@ -107,7 +107,7 @@ const LogoUpload: React.FC<{ logo?: CourtLogo; onChange: (l: CourtLogo | undefin
         </div>
       ) : (
         <button onClick={() => input.current?.click()}
-          className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-pink-500 hover:text-pink-400">
+          className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-pink-700 dark:text-pink-300 hover:text-pink-800 dark:hover:text-pink-200">
           <Upload className="w-4 h-4" /> Upload your logo to preview it
         </button>
       )}
@@ -166,7 +166,7 @@ export const Step5Accessories: React.FC<Props> = ({ courtType, selected, onToggl
                         {isSelected && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
                       </div>
 
-                      <Icon size={16} className={`mt-0.5 flex-shrink-0 ${isSelected ? 'text-pink-400' : 'text-theme-muted'}`} />
+                      <Icon size={16} className={`mt-0.5 flex-shrink-0 ${isSelected ? 'text-pink-700 dark:text-pink-300' : 'text-theme-muted'}`} />
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">

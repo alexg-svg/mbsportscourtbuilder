@@ -1,5 +1,5 @@
 import type { CourtConfig, CourtLogo, CourtType, PropertyType, SurfaceFinish, AccessoryId } from '../types/court';
-import { ACCESSORIES, DEFAULT_COLORS, DIM_LIMITS, normalizeAccessories } from './courtData';
+import { ACCESSORIES, DEFAULT_COLORS, DIM_LIMITS, SPACE_LIMITS, normalizeAccessories } from './courtData';
 
 // Designs travel in two ways: a shareable link that carries the whole design
 // in the URL hash (#d=…, no server needed), and an autosaved draft in this
@@ -18,16 +18,17 @@ const fromB64Url = (s: string) =>
   decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/'))));
 
 /** Compact payload. The logo is left out of share links (too long for a URL). */
-function toPayload(c: CourtConfig) {
+export function toPayload(c: CourtConfig) {
   return {
     t: c.type, p: c.propertyType, f: c.surfaceFinish,
     l: c.dimensions.length, w: c.dimensions.width, cd: c.customDimensions,
     c: c.colors, a: c.selectedAccessories,
+    ...(c.space ? { s: [c.space.length, c.space.width] } : {}),
   };
 }
 
 /** Validates an untrusted payload; returns null if it isn't a usable design. */
-function fromPayload(d: any): CourtConfig | null {
+export function fromPayload(d: any): CourtConfig | null {
   if (!d || typeof d !== 'object') return null;
   const type = d.t as CourtType;
   if (typeof type !== 'string' || !(type in DEFAULT_COLORS)) return null;
@@ -47,7 +48,11 @@ function fromPayload(d: any): CourtConfig | null {
     ? (d.a as unknown[]).filter((id): id is AccessoryId => typeof id === 'string' && known.has(id as AccessoryId))
     : []);
 
+  const sl = Array.isArray(d.s) ? num(d.s[0], SPACE_LIMITS.min, SPACE_LIMITS.max) : null;
+  const sw = Array.isArray(d.s) ? num(d.s[1], SPACE_LIMITS.min, SPACE_LIMITS.max) : null;
+
   return {
+    ...(sl !== null && sw !== null ? { space: { length: sl, width: sw } } : {}),
     type,
     propertyType: PROPS.includes(d.p) ? d.p : 'residential',
     surfaceFinish: FINISHES.includes(d.f) ? d.f : 'smooth',

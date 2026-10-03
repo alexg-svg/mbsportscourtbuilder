@@ -231,6 +231,98 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
           },
         ];
       }
+      case 'volleyball': {
+        const midX = cL / 2, midY = cW / 2;
+        return [
+          { id: 'net', title: 'Net', svgX: px(midX), svgY: py(cW * 0.15), tipDir: 'left',
+            lines: ['7 ft 11⅝ in high for men', '7 ft 4⅛ in for women'] },
+          { id: 'attack', title: 'Attack Line', svgX: px(midX - 10), svgY: py(midY + cW * 0.2), tipDir: 'right',
+            lines: ['10 ft (3 m) from the net', 'Back-row hitters stay behind it'] },
+          { id: 'endline', title: 'End Line', svgX: px(2), svgY: py(midY), tipDir: 'right',
+            lines: ['Serve from behind this line', '30 ft from the net'] },
+        ];
+      }
+
+      case 'badminton': {
+        const singlesW = 17;
+        const isSingles = cW <= singlesW;
+        const sOff = isSingles ? 0 : (cW - singlesW) / 2;
+        const svcLen = (cL - 13) / 2;
+        const spots: HotspotDef[] = [
+          { id: 'net', title: 'Net', svgX: px(cL / 2), svgY: py(cW * 0.5), tipDir: 'left',
+            lines: ['5 ft high at center', '5 ft 1 in at the posts'] },
+          { id: 'short-svc', title: 'Short Service Line', svgX: px(svcLen), svgY: py(sOff + singlesW * 0.3), tipDir: 'right',
+            lines: ['6.5 ft from the net', 'Serves must land past it'] },
+        ];
+        if (!isSingles) spots.push({ id: 'alley', title: 'Doubles Alley', svgX: px(cL * 0.22), svgY: py(sOff / 2), tipDir: 'right',
+          lines: ['1.5 ft strip on each side', 'In play for doubles only'] });
+        return spots;
+      }
+
+      case 'futsal': {
+        const midX = cL / 2, midY = cW / 2;
+        return [
+          { id: 'penalty', title: 'Penalty Area', svgX: px(13 * 0.55), svgY: py(midY - 6), tipDir: 'right',
+            lines: ['Goalkeeper may handle the ball', 'Fouls here give a penalty kick'] },
+          { id: 'center', title: 'Center Circle', svgX: px(midX), svgY: py(midY - 9), tipDir: 'left',
+            lines: ['10 ft (3 m) radius', 'Kick-off from the center mark'] },
+          { id: 'goal', title: 'Goal', svgX: px(cL - 1), svgY: py(midY + 7), tipDir: 'left',
+            lines: ['10 × 6.5 ft (3 × 2 m)', 'Smaller than outdoor soccer'] },
+        ];
+      }
+
+      case 'inline-hockey': {
+        const midX = cL / 2, midY = cW / 2;
+        return [
+          { id: 'goal-line', title: 'Goal Line', svgX: px(11), svgY: py(cW * 0.22), tipDir: 'right',
+            lines: ['11 ft from the end boards', 'Puck must fully cross to score'] },
+          { id: 'center', title: 'Center Face-off', svgX: px(midX), svgY: py(midY - 12), tipDir: 'left',
+            lines: ['Face-off starts each period', 'and restarts after goals'] },
+          { id: 'crease', title: 'Goal Crease', svgX: px(cL - 14), svgY: py(midY), tipDir: 'left',
+            lines: ["Goalie's protected area", 'In front of each goal'] },
+        ];
+      }
+
+      case 'handball': {
+        const midX = cL / 2, midY = cW / 2;
+        return [
+          { id: 'goal-area', title: 'Goal Area (6 m)', svgX: px(19.7), svgY: py(midY - 3), tipDir: 'right',
+            lines: ['19.7 ft (6 m) from the goal', 'Only the goalkeeper may enter'] },
+          { id: 'free-throw', title: 'Free-Throw Line (9 m)', svgX: px(29.5), svgY: py(midY + 3), tipDir: 'right',
+            lines: ['Dashed line 29.5 ft out', 'Free throws are taken from here'] },
+          { id: 'center', title: 'Center Line', svgX: px(midX), svgY: py(cW * 0.2), tipDir: 'left',
+            lines: ['Throw-off starts play', 'and restarts after each goal'] },
+        ];
+      }
+
+      case 'bocce-ball': {
+        const midX = cL / 2, midY = cW / 2;
+        return [
+          { id: 'pallino', title: 'Pallino', svgX: px(midX + cL * 0.06), svgY: py(midY), tipDir: 'left',
+            lines: ['Small target ball thrown first', 'Closest balls to it score'] },
+          { id: 'foul', title: 'Foul Lines', svgX: px(cL * 0.25), svgY: py(cW * 0.3), tipDir: 'right',
+            lines: ['Throw from behind these', 'Dashed lines at each quarter'] },
+          { id: 'center', title: 'Center Line', svgX: px(midX), svgY: py(cW * 0.2), tipDir: 'left',
+            lines: ['Pallino must pass this line', 'Splits the lane in half'] },
+        ];
+      }
+
+      case 'shuffleboard':
+        return [
+          { id: 'scoring', title: 'Scoring Triangle', svgX: px(9.5), svgY: py(cW / 2), tipDir: 'right',
+            lines: ['Zones score 10, 8 and 7', 'Discs must sit fully inside'] },
+          { id: 'dead-zone', title: 'Dead Zone', svgX: px(cL / 2), svgY: py(cW / 2), tipDir: 'left',
+            lines: ['Center 10 ft of the court', 'Discs stopping here are removed'] },
+        ];
+
+      case 'four-square':
+        return [
+          { id: 'squares', title: 'Four Squares', svgX: px(cL * 0.25), svgY: py(cW * 0.25), tipDir: 'right',
+            lines: ['Four equal squares', 'Players move up toward the King'] },
+          { id: 'king', title: "King's Square", svgX: px(cL * 0.75), svgY: py(cW * 0.75), tipDir: 'left',
+            lines: ['The King serves from here', 'Ball must bounce in another square'] },
+        ];
+
       default:
         return [];
     }
@@ -966,9 +1058,18 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
     const midX   = cL / 2;
     const midY   = cW / 2;
     const goalW  = 10;
-    const goalAreaR = 19.7; // 6m goal area radius
-    const penaltyAreaR = 30.5; // 9m free throw line radius
+    const goalAreaR = 19.7; // 6 m goal area line
+    const penaltyAreaR = 29.5; // 9 m free-throw line
     const goalLen = 2;
+    // Each line is two quarter circles centred on the goal posts, joined by a
+    // straight segment as wide as the goal (3 m)
+    const post1 = midY - 4.92, post2 = midY + 4.92;
+    const dLine = (r: number, atRight: boolean) => {
+      const x0 = atRight ? cL : 0, xr = atRight ? cL - r : r, sweep = atRight ? 0 : 1;
+      return `M ${px(x0)} ${py(post1 - r)} A ${r * scale} ${r * scale} 0 0 ${sweep} ${px(xr)} ${py(post1)}`
+        + ` L ${px(xr)} ${py(post2)} A ${r * scale} ${r * scale} 0 0 ${sweep} ${px(x0)} ${py(post2 + r)}`;
+    };
+    const courtClip = `hb-court-${uid}`;
 
     return (
       <g>
@@ -980,16 +1081,16 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
         <line {...lp(midX, 0, midX, cW)} {...ls} />
         {/* Center circle */}
         <circle cx={px(midX)} cy={py(midY)} r={9.84 * scale} fill="none" {...ls} />
-        {/* Goal areas (D-zone arcs) */}
-        <path fill="none" {...ls}
-          d={`M ${px(0)} ${py(midY - goalAreaR * 0.5)} A ${goalAreaR * scale} ${goalAreaR * scale} 0 0 1 ${px(0)} ${py(midY + goalAreaR * 0.5)}`} />
-        <path fill="none" {...ls}
-          d={`M ${px(cL)} ${py(midY - goalAreaR * 0.5)} A ${goalAreaR * scale} ${goalAreaR * scale} 0 0 0 ${px(cL)} ${py(midY + goalAreaR * 0.5)}`} />
-        {/* 9m free throw dashed lines */}
-        <path fill="none" stroke={colors.lines} strokeWidth={Math.max(1, scale * 0.07)} strokeDasharray={`${scale * 0.5} ${scale * 0.3}`}
-          d={`M ${px(0)} ${py(midY - penaltyAreaR * 0.5)} A ${penaltyAreaR * scale} ${penaltyAreaR * scale} 0 0 1 ${px(0)} ${py(midY + penaltyAreaR * 0.5)}`} />
-        <path fill="none" stroke={colors.lines} strokeWidth={Math.max(1, scale * 0.07)} strokeDasharray={`${scale * 0.5} ${scale * 0.3}`}
-          d={`M ${px(cL)} ${py(midY - penaltyAreaR * 0.5)} A ${penaltyAreaR * scale} ${penaltyAreaR * scale} 0 0 0 ${px(cL)} ${py(midY + penaltyAreaR * 0.5)}`} />
+        {/* Goal areas (6 m) and free-throw lines (9 m, dashed), trimmed at the sidelines */}
+        <clipPath id={courtClip}><rect {...rp(0, 0, cL, cW)} /></clipPath>
+        <g clipPath={`url(#${courtClip})`}>
+          <path fill="none" {...ls} d={dLine(goalAreaR, false)} />
+          <path fill="none" {...ls} d={dLine(goalAreaR, true)} />
+          <path fill="none" stroke={colors.lines} strokeWidth={Math.max(1, scale * 0.07)} strokeDasharray={`${scale * 0.5} ${scale * 0.3}`}
+            d={dLine(penaltyAreaR, false)} />
+          <path fill="none" stroke={colors.lines} strokeWidth={Math.max(1, scale * 0.07)} strokeDasharray={`${scale * 0.5} ${scale * 0.3}`}
+            d={dLine(penaltyAreaR, true)} />
+        </g>
         {/* Penalty spots */}
         <circle cx={px(22.97)} cy={py(midY)} r={Math.max(2, scale * 0.15)} fill={colors.lines} />
         <circle cx={px(cL - 22.97)} cy={py(midY)} r={Math.max(2, scale * 0.15)} fill={colors.lines} />

@@ -28,8 +28,8 @@ export const Showcase: React.FC<{ onUse: (item: ShowcaseItem) => void; compact?:
       {SHOWCASE.map((s, k) => (
         <img
           key={s.id}
-          src={`/showcase/${s.id}.jpg`}
-          srcSet={`/showcase/${s.id}.jpg 960w, /showcase/${s.id}-1600.jpg 1600w`}
+          src={`/showcase/${s.id}.webp`}
+          srcSet={`/showcase/${s.id}.webp 960w, /showcase/${s.id}-1600.webp 1600w`}
           sizes={compact ? '100vw' : 'min(80vw, 1600px)'}
           alt={`${s.title}: ${s.caption}`}
           loading={k === 0 ? 'eager' : 'lazy'}
@@ -45,7 +45,7 @@ export const Showcase: React.FC<{ onUse: (item: ShowcaseItem) => void; compact?:
           </div>
           <button
             onClick={() => onUse(item)}
-            className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-xs font-semibold"
+            className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-pink-700 hover:bg-pink-800 text-xs font-semibold"
           >
             {compact ? 'Use this' : 'Start with this design'} <ArrowRight className="w-3.5 h-3.5" />
           </button>

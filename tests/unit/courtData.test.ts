@@ -41,3 +41,13 @@ describe('court catalog', () => {
     }
   });
 });
+
+describe('will it fit', () => {
+  it('accepts a court that fits either way round', async () => {
+    const { fitsInSpace } = await import('../../src/utils/courtData');
+    expect(fitsInSpace({ length: 94, width: 50 }, { length: 100, width: 60 })).toBe(true);
+    expect(fitsInSpace({ length: 94, width: 50 }, { length: 60, width: 100 })).toBe(true);
+    expect(fitsInSpace({ length: 94, width: 50 }, { length: 90, width: 60 })).toBe(false);
+    expect(fitsInSpace({ length: 44, width: 20 }, { length: 44, width: 20 })).toBe(true);
+  });
+});

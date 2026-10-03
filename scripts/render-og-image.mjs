@@ -4,7 +4,7 @@
 import { chromium } from '@playwright/test';
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const bg = `data:image/jpeg;base64,${readFileSync('public/showcase/backyard-hoops-night.jpg').toString('base64')}`;
+const bg = `data:image/webp;base64,${readFileSync('public/showcase/backyard-hoops-night-1600.webp').toString('base64')}`;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 const page = await browser.newPage();
 const out = await page.evaluate(async (src) => {

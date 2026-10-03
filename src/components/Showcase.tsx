@@ -28,8 +28,8 @@ export const Showcase: React.FC<{ onUse: (item: ShowcaseItem) => void; compact?:
       {SHOWCASE.map((s, k) => (
         <img
           key={s.id}
-          src={`/showcase/${s.id}.jpg`}
-          srcSet={`/showcase/${s.id}.jpg 960w, /showcase/${s.id}-1600.jpg 1600w`}
+          src={`/showcase/${s.id}.webp`}
+          srcSet={`/showcase/${s.id}.webp 960w, /showcase/${s.id}-1600.webp 1600w`}
           sizes={compact ? '100vw' : 'min(80vw, 1600px)'}
           alt={`${s.title}: ${s.caption}`}
           loading={k === 0 ? 'eager' : 'lazy'}

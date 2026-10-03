@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, lazy, Suspense, useEffect } from 
 import { Eye, ClipboardList, Box, Map, ImagePlus, History } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES, COURT_LABELS, toggleAccessory } from './utils/courtData';
-import { trackEvent } from './utils/analytics';
+import { trackEvent, loadRecaptcha } from './utils/analytics';
 import { designUrl, readSharedDesign, saveDraft, loadDraft, clearDraft } from './utils/shareLink';
 import { Showcase } from './components/Showcase';
 import type { ShowcaseItem } from './utils/showcase';
@@ -143,6 +143,21 @@ export default function App() {
       return undefined;
     }
   }, []);
+
+  // Once a design is under way, fetch the 3D code in idle time so opening the
+  // 3D view (and the email picture) doesn't wait on the download
+  useEffect(() => {
+    if (step < 1) return;
+    const load = () => { void import('./components/Court/Court3D'); };
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+    if (w.requestIdleCallback) w.requestIdleCallback(load, { timeout: 4000 });
+    else setTimeout(load, 1500);
+  }, [step >= 1]);
+
+  // reCAPTCHA is only needed to submit, so load it when the contact step opens
+  useEffect(() => {
+    if (step === TOTAL_STEPS - 1) loadRecaptcha().catch(() => undefined);
+  }, [step]);
 
   // Render the 3D picture for the quote email in the background as soon as the
   // customer reaches the contact step, so submitting isn't slowed down.

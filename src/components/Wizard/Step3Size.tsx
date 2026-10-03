@@ -26,6 +26,7 @@ const FeetInput: React.FC<{ label: string; value: number; min: number; max: numb
   label, value, min, max, onChange,
 }) => {
   const [text, setText] = useState(String(value));
+  const inputId = useId();
   useEffect(() => { setText(String(value)); }, [value]);
   const commit = (raw: string) => {
     const n = Math.round(Number(raw));
@@ -35,9 +36,9 @@ const FeetInput: React.FC<{ label: string; value: number; min: number; max: numb
   };
   return (
     <div>
-      <label className="block text-xs text-theme-muted mb-1">{label}</label>
+      <label htmlFor={inputId} className="block text-xs text-theme-muted mb-1">{label}</label>
       <input
-        type="number" inputMode="numeric" min={min} max={max} step={1}
+        id={inputId} type="number" inputMode="numeric" min={min} max={max} step={1}
         value={text}
         onChange={(e) => {
           setText(e.target.value);

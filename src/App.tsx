@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, lazy, Suspense, useEffect } from 'react';
-import { Eye, ClipboardList, Box, Map, ImagePlus, History } from 'lucide-react';
+import { Eye, ClipboardList, Box, Map, ImagePlus, History, Columns2 } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES, COURT_LABELS, toggleAccessory } from './utils/courtData';
 import { trackEvent, loadRecaptcha } from './utils/analytics';
@@ -10,6 +10,7 @@ import { CourtSVG } from './components/Court/CourtSVG';
 
 const Court3D = lazy(() => import('./components/Court/Court3D').then((m) => ({ default: m.Court3D })));
 const YardView = lazy(() => import('./components/Yard/YardView'));
+const CompareView = lazy(() => import('./components/CompareView'));
 import { StepProgress } from './components/Wizard/StepProgress';
 import { Step1Property } from './components/Wizard/Step1Property';
 import { Step2CourtType } from './components/Wizard/Step2CourtType';
@@ -110,6 +111,7 @@ export default function App() {
   const [showPreview, setShowPreview] = useState(false);
   const [view3D, setView3D]       = useState(false);
   const [showYard, setShowYard]   = useState(false);
+  const [showCompare, setShowCompare] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
 
   const handleVerified = (email: string) => {
@@ -454,6 +456,15 @@ export default function App() {
                   <span className="hidden lg:inline">See it in my yard</span>
                   <span className="lg:hidden">My yard</span>
                 </button>
+                <button
+                  onClick={() => { setShowCompare(true); trackEvent('compare_opened', { court_type: config.type }); }}
+                  title="Save designs and compare them side by side"
+                  aria-label="Compare designs"
+                  className="flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 border-pink-500/60 bg-theme-raised text-pink-700 dark:text-pink-300 hover:bg-pink-700 hover:text-white hover:border-pink-500"
+                >
+                  <Columns2 className="w-3 h-3" />
+                  <span className="hidden lg:inline">Compare</span>
+                </button>
               </div>
             )}
           </div>
@@ -486,6 +497,16 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {showCompare && (
+        <Suspense fallback={null}>
+          <CompareView
+            current={config}
+            onClose={() => setShowCompare(false)}
+            onUse={(c) => { setConfig((prev) => ({ ...c, logo: prev.logo })); setShowCompare(false); }}
+          />
+        </Suspense>
+      )}
 
       {showYard && (
         <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center text-white/70 text-sm">Loading…</div>}>

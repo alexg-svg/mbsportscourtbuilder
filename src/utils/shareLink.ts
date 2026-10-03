@@ -18,7 +18,7 @@ const fromB64Url = (s: string) =>
   decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/'))));
 
 /** Compact payload. The logo is left out of share links (too long for a URL). */
-function toPayload(c: CourtConfig) {
+export function toPayload(c: CourtConfig) {
   return {
     t: c.type, p: c.propertyType, f: c.surfaceFinish,
     l: c.dimensions.length, w: c.dimensions.width, cd: c.customDimensions,
@@ -28,7 +28,7 @@ function toPayload(c: CourtConfig) {
 }
 
 /** Validates an untrusted payload; returns null if it isn't a usable design. */
-function fromPayload(d: any): CourtConfig | null {
+export function fromPayload(d: any): CourtConfig | null {
   if (!d || typeof d !== 'object') return null;
   const type = d.t as CourtType;
   if (typeof type !== 'string' || !(type in DEFAULT_COLORS)) return null;

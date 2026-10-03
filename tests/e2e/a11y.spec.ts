@@ -32,6 +32,11 @@ test('every step passes the accessibility check', async ({ page }) => {
   await next(); await audit(page, 'Step 5');
   await next(); await audit(page, 'Step 6');
 
+  await page.getByRole('button', { name: 'Compare designs' }).click();
+  await page.getByRole('button', { name: 'Save current design' }).click();
+  await audit(page, 'Compare view');
+  await page.getByRole('button', { name: 'Close comparison' }).click();
+
   await page.route('**/api/send-quote', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }));
   await page.getByLabel('Full Name *').fill('Test Person');
   await page.getByLabel('Email *').fill('test.person@gmail.com');

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, lazy, Suspense, useEffect } from 'react';
-import { Eye, ClipboardList, Box, Map, ImagePlus, Link2, Check, FileDown, Loader2, History } from 'lucide-react';
+import { Eye, ClipboardList, Box, Map, ImagePlus, History } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES, COURT_LABELS, toggleAccessory } from './utils/courtData';
 import { trackEvent } from './utils/analytics';
@@ -330,7 +330,8 @@ export default function App() {
           bg-theme-panel border-r border-theme-border flex-shrink-0 overflow-hidden
         `}>
           {step === -1 ? (
-            <StepDone name={submitted?.name ?? ''} email={submitted?.email ?? ''} render3D={render3D} onDownloadPdf={downloadPdf} pdfBusy={pdfBusy} onReset={handleReset} />
+            <StepDone name={submitted?.name ?? ''} email={submitted?.email ?? ''} render3D={render3D} onDownloadPdf={downloadPdf} pdfBusy={pdfBusy}
+              onShare={shareDesign} linkCopied={linkCopied} onReset={handleReset} />
           ) : (
             <>
               <StepProgress current={step} />
@@ -436,23 +437,6 @@ export default function App() {
                   <ImagePlus className="w-3 h-3" />
                   <span className="hidden lg:inline">See it in my yard</span>
                   <span className="lg:hidden">My yard</span>
-                </button>
-                <button
-                  onClick={shareDesign}
-                  title="Copy a link to this design"
-                  className="flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 border-pink-500/60 bg-theme-raised text-pink-400 hover:bg-pink-600 hover:text-white hover:border-pink-500"
-                >
-                  {linkCopied ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
-                  <span className="hidden lg:inline">{linkCopied ? 'Link copied' : 'Share'}</span>
-                </button>
-                <button
-                  onClick={downloadPdf}
-                  disabled={pdfBusy}
-                  title="Download a PDF summary of this design"
-                  className="flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 border-pink-500/60 bg-theme-raised text-pink-400 hover:bg-pink-600 hover:text-white hover:border-pink-500 disabled:opacity-60"
-                >
-                  {pdfBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileDown className="w-3 h-3" />}
-                  <span className="hidden lg:inline">PDF</span>
                 </button>
               </div>
             )}

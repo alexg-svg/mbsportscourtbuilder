@@ -58,14 +58,30 @@ test('fake contact details are caught before submitting', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Submit My Design →' })).toBeDisabled();
 });
 
-test('a shared link reopens the same design, and a broken one starts fresh', async ({ page, context }) => {
+test('share and PDF are offered only after submitting, and the link reopens the design', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.route('**/api/send-quote', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }));
+
   await startDesign(page, 'Commercial', 'Tennis');
   await next(page);
   await page.getByText('Park Green').click();
-  await page.getByRole('button', { name: /Share/ }).click();
-  const url = await page.evaluate(() => navigator.clipboard.readText());
+  // Not available while designing
+  await expect(page.getByRole('button', { name: /Share/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /PDF/ })).toHaveCount(0);
 
+  await next(page); await next(page);
+  await page.getByPlaceholder('Jane Smith').fill('Test Person');
+  await page.getByPlaceholder('jane@example.com').fill('test.person@gmail.com');
+  await page.getByPlaceholder('e.g. 90210').fill('90210');
+  await page.getByRole('button', { name: 'Submit My Design →' }).click();
+  await expect(page.getByText('Design Submitted!')).toBeVisible({ timeout: 30_000 });
+
+  const [pdf] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Save PDF' }).click()]);
+  expect(pdf.suggestedFilename()).toBe('MB-Sports-tennis-court-design.pdf');
+
+  await page.getByRole('button', { name: 'Share link' }).click();
+  await expect(page.getByRole('button', { name: 'Link copied' })).toBeVisible();
+  const url = await page.evaluate(() => navigator.clipboard.readText());
   const other = await context.newPage();
   await other.goto(url);
   await expect(other.getByText('Pick your colors')).toBeVisible();

@@ -859,7 +859,9 @@ function FrameCounter({ frames, onDone }: { frames: number; onDone: () => void }
  * Renders the court off-screen from the corner view and returns a JPEG as
  * base64 (no data: prefix), watermarked like the live preview.
  */
-export function renderCourtSnapshot(config: CourtConfig, width = 1200, height = 750): Promise<string | undefined> {
+export function renderCourtSnapshot(
+  config: CourtConfig, width = 1200, height = 750, time: TimeOfDay = 'day',
+): Promise<string | undefined> {
   return new Promise((resolve) => {
     const { length: L, width: W } = config.dimensions;
     const pad = BORDER_PAD[config.type] ?? 8;
@@ -914,7 +916,7 @@ export function renderCourtSnapshot(config: CourtConfig, width = 1200, height = 
     });
     root.render(
       <>
-        <SceneContents config={config} time="day" mapSize={2048} />
+        <SceneContents config={config} time={time} mapSize={2048} />
         <FrameCounter frames={12} onDone={capture} />
       </>,
     );

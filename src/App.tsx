@@ -4,6 +4,8 @@ import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES, COURT_LABELS } from './utils/courtData';
 import { trackEvent } from './utils/analytics';
 import { designUrl, readSharedDesign, saveDraft, loadDraft, clearDraft } from './utils/shareLink';
+import { Showcase } from './components/Showcase';
+import type { ShowcaseItem } from './utils/showcase';
 import { CourtSVG } from './components/Court/CourtSVG';
 
 const Court3D = lazy(() => import('./components/Court/Court3D').then((m) => ({ default: m.Court3D })));
@@ -81,6 +83,15 @@ export default function App() {
     trackEvent('draft_resumed', { court_type: draft.config.type, step_number: draft.step });
   };
   const discardDraft = () => { clearDraft(); setDraft(null); };
+
+  // "Start with this design" from the Step 1 showcase: load it and go to Colors
+  const applyShowcaseDesign = (item: ShowcaseItem) => {
+    setConfig(item.config);
+    setDirection('forward');
+    setStep(3);
+    setDraft(null);
+    trackEvent('showcase_design_used', { showcase_id: item.id, court_type: item.config.type });
+  };
 
   const shareDesign = async () => {
     const url = designUrl(config);
@@ -338,6 +349,11 @@ export default function App() {
           ) : (
             <>
               <StepProgress current={step} />
+              {step === 0 && (
+                <div className="sm:hidden mx-4 mt-3 flex-shrink-0">
+                  <Showcase onUse={applyShowcaseDesign} compact />
+                </div>
+              )}
               {step === 0 && draft && (
                 <div className="mx-4 mt-3 p-3 rounded-xl border border-pink-500/50 bg-pink-600/10 flex-shrink-0">
                   <div className="flex items-start gap-2.5">
@@ -459,14 +475,10 @@ export default function App() {
 
           <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
             {step === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-4 text-center animate-fade-in">
-                <img
-                  src="/mb-sports-builders-logo.webp"
-                  alt="MB Sports Builders"
-                  className="w-48 opacity-60"
-                />
-                <p className="text-theme-muted text-sm max-w-xs">
-                  Your court preview will appear here as you configure your build.
+              <div className="w-full max-w-4xl animate-fade-in">
+                <Showcase onUse={applyShowcaseDesign} />
+                <p className="text-theme-muted text-xs text-center mt-3">
+                  Start from a sample or choose your property type to design from scratch.
                 </p>
               </div>
             ) : view3D ? (

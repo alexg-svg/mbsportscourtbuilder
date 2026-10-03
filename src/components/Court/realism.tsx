@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Environment, Lightformer, Sky } from '@react-three/drei';
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { SurfaceFinish } from '../../types/court';
 
 // Procedural textures and scenery for the 3D preview. Everything is generated
@@ -100,6 +101,8 @@ function surfaceTextures(finish: SurfaceFinish) {
 }
 
 export const FinishContext = createContext<SurfaceFinish>('smooth');
+/** True at night: the surface is rendered more matte so floodlights don't leave glossy pools. */
+export const NightContext = createContext(false);
 
 const TILE_FT = 20; // one texture tile covers 20 × 20 ft
 
@@ -120,6 +123,7 @@ export function SurfaceMaterial({ color, wFt, hFt, alpha = 1 }: {
   color: string; wFt: number; hFt: number; alpha?: number;
 }) {
   const finish = useContext(FinishContext);
+  const night = useContext(NightContext);
   const { map, bump } = surfaceTextures(finish);
   // Box top face: u runs along the box's X (court width), v along Z (length)
   const map2 = useRepeated(map, hFt / TILE_FT, wFt / TILE_FT);
@@ -131,7 +135,7 @@ export function SurfaceMaterial({ color, wFt, hFt, alpha = 1 }: {
       map={map2}
       bumpMap={bump2}
       bumpScale={f.bump}
-      roughness={f.roughness}
+      roughness={night ? Math.max(f.roughness, 0.82) : f.roughness}
       transparent={alpha < 1}
       opacity={alpha}
     />
@@ -266,27 +270,84 @@ export function BackyardFence({ hx, hz }: { hx: number; hz: number }) {
 // ─── Trees and shrubs ────────────────────────────────────────────────────────
 const LEAF = ['#3d6b2e', '#4a7d36', '#56893f', '#2f5a25', '#5f9445'];
 
+/**
+ * A lumpy, smoothly shaded foliage mass: a sphere pushed in and out by a few
+ * random waves, darker underneath and with speckled leaf colour, so it reads
+ * as a canopy rather than a faceted ball.
+ */
+function foliageGeometry(radius: number, seed: number, base: string) {
+  const rand = rng(seed);
+  // Icosahedrons store each triangle's corners separately; merge them so the
+  // displaced surface stays closed and shades smoothly
+  const ico = new THREE.IcosahedronGeometry(radius, 3);
+  ico.deleteAttribute('normal');
+  ico.deleteAttribute('uv');
+  const g = mergeVertices(ico);
+  ico.dispose();
+  const pos = g.attributes.position as THREE.BufferAttribute;
+  const waves = Array.from({ length: 5 }, () => ({
+    d: new THREE.Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize(),
+    f: 2 + rand() * 4, p: rand() * Math.PI * 2, a: 0.05 + rand() * 0.06,
+  }));
+  const c0 = new THREE.Color(base), dark = new THREE.Color('#1f3a18'), light = new THREE.Color('#8fbf5a');
+  const colors = new Float32Array(pos.count * 3);
+  const v = new THREE.Vector3(), n = new THREE.Vector3(), col = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    n.copy(v).normalize();
+    let k = 1;
+    for (const w of waves) k += w.a * Math.sin(n.dot(w.d) * w.f * Math.PI + w.p);
+    k += (rand() - 0.5) * 0.04;                    // fine leafy roughness
+    v.copy(n).multiplyScalar(radius * k);
+    v.y *= 0.88;                                    // slightly flattened crown
+    pos.setXYZ(i, v.x, v.y, v.z);
+    // darker underneath, sunlit tips on top, speckled
+    const up = (n.y + 1) / 2;
+    col.copy(c0).lerp(dark, (1 - up) * 0.55).lerp(light, Math.max(0, n.y) * 0.18 * rand());
+    colors.set([col.r, col.g, col.b], i * 3);
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  g.computeVertexNormals();
+  return g;
+}
+
+const barkMat = { color: '#5a4030', roughness: 0.95 };
+
 export function LeafyTree({ position, height, seed }: {
   position: [number, number, number]; height: number; seed: number;
 }) {
-  const rand = rng(seed);
-  const trunkH = height * 0.42;
-  const crown = height * 0.32;
-  const blobs = Array.from({ length: 5 }, () => ({
-    p: [(rand() - 0.5) * crown, trunkH + crown * (0.55 + rand() * 0.7), (rand() - 0.5) * crown] as [number, number, number],
-    r: crown * (0.55 + rand() * 0.35),
-    c: LEAF[Math.floor(rand() * LEAF.length)],
-  }));
+  const { trunkH, crown, blobs, branches, spin } = useMemo(() => {
+    const rand = rng(seed);
+    const trunkH = height * 0.45;
+    const crown = height * 0.3;
+    const blobs = Array.from({ length: 4 }, (_, i) => {
+      const r = crown * (0.6 + rand() * 0.3);
+      return {
+        p: [(rand() - 0.5) * crown * 1.1, trunkH + crown * (0.5 + rand() * 0.6), (rand() - 0.5) * crown * 1.1] as [number, number, number],
+        geo: foliageGeometry(r, seed * 10 + i, LEAF[Math.floor(rand() * LEAF.length)]),
+      };
+    });
+    const branches = Array.from({ length: 3 }, () => ({ yaw: rand() * Math.PI * 2, tilt: 0.5 + rand() * 0.35 }));
+    return { trunkH, crown, blobs, branches, spin: rand() * Math.PI * 2 };
+  }, [height, seed]);
+  useEffect(() => () => blobs.forEach((b) => b.geo.dispose()), [blobs]);
   return (
-    <group position={position} rotation={[0, rand() * Math.PI * 2, 0]}>
-      <mesh position={[0, trunkH / 2 + 0.2, 0]} castShadow>
-        <cylinderGeometry args={[height * 0.025, height * 0.04, trunkH + 0.4, 7]} />
-        <meshStandardMaterial color="#5a4030" roughness={0.95} />
+    <group position={position} rotation={[0, spin, 0]}>
+      <mesh position={[0, trunkH / 2, 0]} castShadow>
+        <cylinderGeometry args={[height * 0.022, height * 0.04, trunkH, 9]} />
+        <meshStandardMaterial {...barkMat} />
       </mesh>
+      {branches.map((b, i) => (
+        <group key={i} position={[0, trunkH * 0.85, 0]} rotation={[0, b.yaw, b.tilt]}>
+          <mesh position={[0, crown * 0.35, 0]} castShadow>
+            <cylinderGeometry args={[height * 0.008, height * 0.016, crown * 0.7, 6]} />
+            <meshStandardMaterial {...barkMat} />
+          </mesh>
+        </group>
+      ))}
       {blobs.map((b, i) => (
-        <mesh key={i} position={b.p} castShadow>
-          <icosahedronGeometry args={[b.r, 1]} />
-          <meshStandardMaterial color={b.c} roughness={0.9} flatShading />
+        <mesh key={i} position={b.p} geometry={b.geo} castShadow receiveShadow>
+          <meshStandardMaterial vertexColors roughness={0.85} />
         </mesh>
       ))}
     </group>
@@ -296,13 +357,19 @@ export function LeafyTree({ position, height, seed }: {
 export function Shrub({ position, size, seed }: {
   position: [number, number, number]; size: number; seed: number;
 }) {
-  const rand = rng(seed);
+  const parts = useMemo(() => {
+    const rand = rng(seed);
+    return Array.from({ length: 3 }, (_, i) => ({
+      p: [(rand() - 0.5) * size, size * 0.32, (rand() - 0.5) * size] as [number, number, number],
+      geo: foliageGeometry(size * (0.4 + rand() * 0.22), seed * 31 + i, LEAF[Math.floor(rand() * LEAF.length)]),
+    }));
+  }, [size, seed]);
+  useEffect(() => () => parts.forEach((p) => p.geo.dispose()), [parts]);
   return (
     <group position={position}>
-      {Array.from({ length: 3 }, (_, i) => (
-        <mesh key={i} position={[(rand() - 0.5) * size, size * 0.35, (rand() - 0.5) * size]} castShadow>
-          <icosahedronGeometry args={[size * (0.4 + rand() * 0.25), 1]} />
-          <meshStandardMaterial color={LEAF[Math.floor(rand() * LEAF.length)]} roughness={0.9} flatShading />
+      {parts.map((p, i) => (
+        <mesh key={i} position={p.p} geometry={p.geo} castShadow receiveShadow>
+          <meshStandardMaterial vertexColors roughness={0.85} />
         </mesh>
       ))}
     </group>

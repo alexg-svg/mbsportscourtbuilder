@@ -5,7 +5,7 @@ import { OrbitControls, PerformanceMonitor } from '@react-three/drei';
 import type { CourtConfig, CourtType } from '../../types/court';
 import { logoPlacement, logoBox } from '../../utils/courtData';
 import {
-  FinishContext, SurfaceMaterial, LinePaintMaterial, ribbonGeometry,
+  FinishContext, NightContext, SurfaceMaterial, LinePaintMaterial, ribbonGeometry, canvas, toTexture,
   Lawn, BackyardFence, LeafyTree, Shrub, SceneLighting, ShadowGroup, FOG_COLOR,
 } from './realism';
 import type { TimeOfDay } from './realism';
@@ -150,48 +150,89 @@ function Surroundings({ L, W, pad, residential }: {
 
 // ─── Accessory building blocks ────────────────────────────────────────────────
 
-/** Pole-mounted scoreboard; the display faces local +Z. */
-function Scoreboard3D({ x, z, rotY = 0 }: { x: number; z: number; rotY?: number }) {
+// LED scoreboard face, drawn once on a canvas and lit with an emissive map
+let scoreboardFace: THREE.Texture | null = null;
+function scoreboardTexture() {
+  if (scoreboardFace) return scoreboardFace;
+  const [c, x] = canvas(512);
+  c.height = 256;
+  x.fillStyle = '#05070c'; x.fillRect(0, 0, 512, 256);
+  x.textAlign = 'center';
+  x.fillStyle = '#e5e7eb'; x.font = '700 30px system-ui, sans-serif';
+  x.fillText('HOME', 100, 52); x.fillText('GUEST', 412, 52);
+  x.font = '600 20px system-ui, sans-serif'; x.fillText('PERIOD', 256, 160);
+  x.fillStyle = '#f59e0b'; x.font = '700 96px "Courier New", monospace';
+  x.fillText('42', 100, 150); x.fillText('38', 412, 150);
+  x.font = '700 56px "Courier New", monospace'; x.fillText('2', 256, 222);
+  x.fillStyle = '#ef4444'; x.font = '700 44px "Courier New", monospace'; x.fillText('8:14', 256, 92);
+  scoreboardFace = toTexture(c, true);
+  scoreboardFace.wrapS = scoreboardFace.wrapT = THREE.ClampToEdgeWrapping;
+  return scoreboardFace;
+}
+
+/** 8 × 4 ft LED scoreboard on twin posts; the display faces local +Z. */
+function Scoreboard3D({ x, z, rotY = 0, night = false }: { x: number; z: number; rotY?: number; night?: boolean }) {
+  const face = scoreboardTexture();
+  const W = 0.72, H = 0.36, bottom = 0.55;
+  const steel = { color: '#9ca3af', metalness: 0.7, roughness: 0.35 };
   return (
     <group position={[x, 0, z]} rotation={[0, rotY, 0]}>
-      <mesh position={[0, 0.28, 0]}>
-        <cylinderGeometry args={[0.025, 0.03, 0.56, 8]} />
-        <meshStandardMaterial color="#475569" roughness={0.7} />
+      {[-W * 0.35, W * 0.35].map((px) => (
+        <mesh key={px} position={[px, (bottom + H * 0.6) / 2, -0.035]}>
+          <cylinderGeometry args={[0.014, 0.016, bottom + H * 0.6, 10]} />
+          <meshStandardMaterial {...steel} />
+        </mesh>
+      ))}
+      <mesh position={[0, bottom + H / 2, 0]}>
+        <boxGeometry args={[W + 0.03, H + 0.03, 0.05]} />
+        <meshStandardMaterial color="#111827" roughness={0.6} metalness={0.3} />
       </mesh>
-      <mesh position={[0, 0.70, 0]}>
-        <boxGeometry args={[0.46, 0.27, 0.08]} />
-        <meshStandardMaterial color="#1E293B" roughness={0.8} />
+      <mesh position={[0, bottom + H / 2, 0.0255]}>
+        <planeGeometry args={[W, H]} />
+        <meshStandardMaterial map={face} emissiveMap={face} emissive="#ffffff"
+          emissiveIntensity={night ? 1.8 : 0.9} roughness={0.4} toneMapped={!night} />
       </mesh>
-      <mesh position={[0, 0.70, 0.042]}>
-        <boxGeometry args={[0.38, 0.19, 0.01]} />
-        <meshStandardMaterial color="#0F172A" roughness={0.3} />
-      </mesh>
-      <mesh position={[0, 0.75, 0.048]}>
-        <boxGeometry args={[0.28, 0.038, 0.005]} />
-        <meshStandardMaterial color="#EF4444" emissive="#EF4444" emissiveIntensity={0.85} />
-      </mesh>
-      <mesh position={[0, 0.665, 0.048]}>
-        <boxGeometry args={[0.28, 0.038, 0.005]} />
-        <meshStandardMaterial color="#22C55E" emissive="#22C55E" emissiveIntensity={0.85} />
+      {/* Sun visor */}
+      <mesh position={[0, bottom + H + 0.02, 0.035]} rotation={[0.25, 0, 0]}>
+        <boxGeometry args={[W + 0.03, 0.006, 0.06]} />
+        <meshStandardMaterial color="#111827" roughness={0.6} />
       </mesh>
     </group>
   );
 }
 
+/** Stainless pedestal drinking fountain on a small concrete pad, with a pet bowl. */
 function WaterFountain3D({ x, z }: { x: number; z: number }) {
+  const steel = { color: '#c3c9d1', metalness: 0.85, roughness: 0.25 };
   return (
     <group position={[x, 0, z]}>
-      <mesh position={[0, 0.2, 0]}>
-        <boxGeometry args={[0.13, 0.4, 0.13]} />
-        <meshStandardMaterial color="#64748B" roughness={0.8} />
+      <mesh position={[0, 0.005, 0]} receiveShadow>
+        <boxGeometry args={[0.22, 0.01, 0.22]} />
+        <meshStandardMaterial color="#a8a29e" roughness={0.9} />
       </mesh>
-      <mesh position={[0, 0.43, 0]}>
-        <boxGeometry args={[0.19, 0.05, 0.15]} />
-        <meshStandardMaterial color="#94A3B8" roughness={0.6} />
+      <mesh position={[0, 0.17, 0]}>
+        <cylinderGeometry args={[0.03, 0.036, 0.32, 16]} />
+        <meshStandardMaterial {...steel} />
       </mesh>
-      <mesh position={[0, 0.46, 0]}>
-        <boxGeometry args={[0.15, 0.018, 0.11]} />
-        <meshStandardMaterial color="#60A5FA" transparent opacity={0.75} roughness={0.1} />
+      <mesh position={[0, 0.34, 0]}>
+        <cylinderGeometry args={[0.075, 0.05, 0.035, 24]} />
+        <meshStandardMaterial {...steel} />
+      </mesh>
+      <mesh position={[0, 0.3585, 0]}>
+        <cylinderGeometry args={[0.064, 0.064, 0.002, 24]} />
+        <meshStandardMaterial color="#64748b" metalness={0.6} roughness={0.15} />
+      </mesh>
+      <mesh position={[0.02, 0.37, 0]}>
+        <cylinderGeometry args={[0.006, 0.008, 0.025, 10]} />
+        <meshStandardMaterial {...steel} />
+      </mesh>
+      <mesh position={[0, 0.33, 0.07]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.011, 0.011, 0.01, 14]} />
+        <meshStandardMaterial color="#1d4ed8" roughness={0.4} />
+      </mesh>
+      <mesh position={[0.08, 0.018, 0.04]}>
+        <cylinderGeometry args={[0.035, 0.028, 0.016, 18]} />
+        <meshStandardMaterial {...steel} />
       </mesh>
     </group>
   );
@@ -242,8 +283,8 @@ function CourtAccessories3D({ config, night }: { config: CourtConfig; night: boo
     const sbZ = halfL + 0.5;   // fence is at halfL + 0.9
     const sbX = halfW * 0.45;
     nodes.push(
-      <Scoreboard3D key="sb1" x={-sbX} z={-sbZ} rotY={0} />,
-      <Scoreboard3D key="sb2" x={sbX} z={sbZ} rotY={Math.PI} />,
+      <Scoreboard3D key="sb1" x={-sbX} z={-sbZ} rotY={0} night={night} />,
+      <Scoreboard3D key="sb2" x={sbX} z={sbZ} rotY={Math.PI} night={night} />,
     );
   }
 
@@ -849,7 +890,9 @@ export function SceneContents({ config, time, mapSize, bare = false }: {
         </>
       )}
       <FinishContext.Provider value={config.surfaceFinish}>
-        <CourtScene config={config} />
+        <NightContext.Provider value={time === 'night'}>
+          <CourtScene config={config} />
+        </NightContext.Provider>
       </FinishContext.Provider>
       {config.logo && config.selectedAccessories.includes('custom-logo') && <CourtLogo config={config} />}
       <ShadowGroup deps={config}>

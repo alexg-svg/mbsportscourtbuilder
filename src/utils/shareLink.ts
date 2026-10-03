@@ -1,5 +1,5 @@
 import type { CourtConfig, CourtLogo, CourtType, PropertyType, SurfaceFinish, AccessoryId } from '../types/court';
-import { ACCESSORIES, DEFAULT_COLORS, DIM_LIMITS } from './courtData';
+import { ACCESSORIES, DEFAULT_COLORS, DIM_LIMITS, normalizeAccessories } from './courtData';
 
 // Designs travel in two ways: a shareable link that carries the whole design
 // in the URL hash (#d=…, no server needed), and an autosaved draft in this
@@ -43,9 +43,9 @@ function fromPayload(d: any): CourtConfig | null {
     if (typeof v === 'string' && HEX.test(v)) colors[k] = v;
   }
   const known = new Set(ACCESSORIES.filter((a) => a.compatibleCourts.includes(type)).map((a) => a.id));
-  const selectedAccessories = Array.isArray(d.a)
+  const selectedAccessories = normalizeAccessories(Array.isArray(d.a)
     ? (d.a as unknown[]).filter((id): id is AccessoryId => typeof id === 'string' && known.has(id as AccessoryId))
-    : [];
+    : []);
 
   return {
     type,

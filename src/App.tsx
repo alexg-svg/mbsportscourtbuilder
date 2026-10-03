@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, lazy, Suspense, useEffect } from 'react';
 import { Eye, ClipboardList, Box, Map, ImagePlus, Link2, Check, FileDown, Loader2, History } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
-import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES, COURT_LABELS } from './utils/courtData';
+import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES, COURT_LABELS, toggleAccessory } from './utils/courtData';
 import { trackEvent } from './utils/analytics';
 import { designUrl, readSharedDesign, saveDraft, loadDraft, clearDraft } from './utils/shareLink';
 import { Showcase } from './components/Showcase';
@@ -249,22 +249,7 @@ export default function App() {
       accessory_id: id, court_type: c.type,
       action: c.selectedAccessories.includes(id) ? 'removed' : 'added',
     });
-    setConfig((prev) => {
-      const exclusionGroups: AccessoryId[][] = [
-        ['lighting-2-pole', 'lighting-4-pole', 'lighting-6-pole'],
-        ['basketball-hoop-single', 'basketball-hoop-double'],
-      ];
-      let next = [...prev.selectedAccessories];
-      if (next.includes(id)) {
-        next = next.filter((x) => x !== id);
-      } else {
-        for (const group of exclusionGroups) {
-          if (group.includes(id)) next = next.filter((x) => !group.includes(x));
-        }
-        next.push(id);
-      }
-      return { ...prev, selectedAccessories: next };
-    });
+    setConfig((prev) => ({ ...prev, selectedAccessories: toggleAccessory(prev.selectedAccessories, id) }));
   }, []);
 
   const handleSubmit = (data: ContactData) => { clearDraft(); setSubmitted(data); setStep(-1); };

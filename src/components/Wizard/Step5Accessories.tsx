@@ -8,7 +8,7 @@ import { GiBasketballBasket } from 'react-icons/gi';
 import { MdSportsTennis } from 'react-icons/md';
 import { FaTableTennisPaddleBall } from 'react-icons/fa6';
 import type { AccessoryId, CourtLogo, CourtType } from '../../types/court';
-import { ACCESSORIES, ACCESSORY_CATEGORIES } from '../../utils/courtData';
+import { ACCESSORIES, ACCESSORY_CATEGORIES, REQUIRES, isPickOne } from '../../utils/courtData';
 import { StepShell } from './StepShell';
 import { trackEvent } from '../../utils/analytics';
 
@@ -144,10 +144,10 @@ export const Step5Accessories: React.FC<Props> = ({ courtType, selected, onToggl
                 {items.map((acc) => {
                   const isSelected = selected.includes(acc.id);
                   const Icon = ACC_ICONS[acc.id];
-                  const isExclusive =
-                    acc.category === 'lighting' ||
-                    acc.id === 'basketball-hoop-single' ||
-                    acc.id === 'basketball-hoop-double';
+                  const isExclusive = isPickOne(acc.id);
+                  const needs = REQUIRES[acc.id];
+                  const needsName = needs && !selected.includes(needs)
+                    ? ACCESSORIES.find((a) => a.id === needs)?.name : undefined;
 
                   return (
                     <React.Fragment key={acc.id}>
@@ -173,6 +173,9 @@ export const Step5Accessories: React.FC<Props> = ({ courtType, selected, onToggl
                           <span className="text-sm font-medium">{acc.name}</span>
                           {isExclusive && (
                             <span className="text-xs text-theme-faint">(pick one)</span>
+                          )}
+                          {needsName && (
+                            <span className="text-xs text-theme-faint">(adds {needsName})</span>
                           )}
                         </div>
                         <div className={`text-xs mt-0.5 leading-snug ${isSelected ? 'text-pink-700 dark:text-pink-200' : 'text-theme-muted'}`}>

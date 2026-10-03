@@ -132,3 +132,30 @@ test('the 3D view renders without errors', async ({ page }) => {
   await page.waitForTimeout(1500);
   expect(errors).toEqual([]);
 });
+
+test('pick-one accessories replace each other and windscreen needs chain link', async ({ page }) => {
+  await startDesign(page, 'Commercial', 'Tennis');
+  await next(page); await next(page);
+  const card = (name: string) => page.getByRole('button', { name: new RegExp(`^${name}`) });
+  const checked = async (name: string) => (await card(name).locator('svg.lucide-check').count()) > 0;
+
+  await card('Chain Link Fence').click();
+  await card('Vinyl Fence').click();
+  expect(await checked('Chain Link Fence')).toBe(false);
+  expect(await checked('Vinyl Fence')).toBe(true);
+
+  await card('Windscreen').click();               // brings chain link back, replacing vinyl
+  expect(await checked('Chain Link Fence')).toBe(true);
+  expect(await checked('Vinyl Fence')).toBe(false);
+  expect(await checked('Windscreen')).toBe(true);
+
+  await card('Player Benches \\(2\\)').click();
+  await card('Player Benches \\(4\\)').click();
+  expect(await checked('Player Benches \\(2\\)')).toBe(false);
+  expect(await checked('Player Benches \\(4\\)')).toBe(true);
+
+  await card('Water Fountain').click();
+  await card('Scoreboard').click();
+  expect(await checked('Water Fountain')).toBe(true);
+  expect(await checked('Scoreboard')).toBe(true);
+});

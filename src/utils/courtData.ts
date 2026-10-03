@@ -1,4 +1,4 @@
-import type { Accessory, CourtPreset, CourtColors, CourtType, SurfaceFinish } from '../types/court';
+import type { Accessory, AccessoryId, CourtPreset, CourtColors, CourtType, SurfaceFinish } from '../types/court';
 
 // ─── Shared labels and limits ─────────────────────────────────────────────────
 // Single source for display names. Typed as complete records so adding a court
@@ -79,6 +79,45 @@ export function logoPlacement(type: CourtType, L: number, W: number): { x: numbe
 export function logoBox(logo: { w: number; h: number }, size: number) {
   const k = size / Math.max(logo.w, logo.h);
   return { w: logo.w * k, h: logo.h * k };
+}
+
+// ─── Accessory rules ──────────────────────────────────────────────────────────
+/** Options where only one in each group can be chosen. */
+export const EXCLUSIVE_GROUPS: AccessoryId[][] = [
+  ['lighting-2-pole', 'lighting-4-pole', 'lighting-6-pole'],
+  ['basketball-hoop-single', 'basketball-hoop-double'],
+  ['chain-link-fence', 'vinyl-fence'],
+  ['bench-2', 'bench-4'],
+];
+/** Add-ons that only make sense with another option (windscreen hangs on chain link). */
+export const REQUIRES: Partial<Record<AccessoryId, AccessoryId>> = {
+  windscreen: 'chain-link-fence',
+};
+
+export const isPickOne = (id: AccessoryId) => EXCLUSIVE_GROUPS.some((g) => g.includes(id));
+
+/** Adds `id` to the selection, removing anything it can't be combined with. */
+function addAccessory(selected: AccessoryId[], id: AccessoryId): AccessoryId[] {
+  const group = EXCLUSIVE_GROUPS.find((g) => g.includes(id));
+  const next = selected.filter((x) => x !== id && !group?.includes(x));
+  return [...next, id];
+}
+
+/** Drops add-ons whose required option isn't selected. */
+const dropOrphans = (ids: AccessoryId[]) => ids.filter((x) => !REQUIRES[x] || ids.includes(REQUIRES[x]!));
+
+/** Selecting or unselecting an accessory, applying the pick-one and add-on rules. */
+export function toggleAccessory(selected: AccessoryId[], id: AccessoryId): AccessoryId[] {
+  if (selected.includes(id)) return dropOrphans(selected.filter((x) => x !== id));
+  let next = addAccessory(selected, id);
+  const need = REQUIRES[id];
+  if (need && !next.includes(need)) next = addAccessory(next, need);
+  return dropOrphans(next);
+}
+
+/** Cleans a selection from an older draft or a link: last choice wins in each group. */
+export function normalizeAccessories(ids: AccessoryId[]): AccessoryId[] {
+  return dropOrphans(ids.reduce<AccessoryId[]>((acc, id) => addAccessory(acc, id), []));
 }
 
 /** Allowed court size in feet (inclusive, whole feet). The quote API enforces the same. */

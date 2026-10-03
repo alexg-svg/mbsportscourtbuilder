@@ -582,9 +582,18 @@ function HandballCourt({ config }: { config: CourtConfig }) {
       <Border x={0} y={0} w={L} h={W} L={L} W={W} color={lc} />
       <Seg x1={L / 2} y1={0} x2={L / 2} y2={W} L={L} W={W} color={lc} />
       <ArcLine cxFt={L / 2} cyFt={midY} r={9.84} a0={0} a1={Math.PI * 2} L={L} W={W} color={lc} />
-      {/* Goal area arcs */}
-      <ArcLine cxFt={0} cyFt={midY} r={19.7} a0={-Math.PI / 6} a1={Math.PI / 6} L={L} W={W} color={lc} />
-      <ArcLine cxFt={L} cyFt={midY} r={19.7} a0={Math.PI - Math.PI / 6} a1={Math.PI + Math.PI / 6} L={L} W={W} color={lc} />
+      {/* 6 m goal areas: quarter circles centred on each post, joined by a straight line */}
+      {[0, L].map((gx) => {
+        const r = 19.7, p1 = midY - 4.92, p2 = midY + 4.92, left = gx === 0;
+        const xr = left ? r : L - r;
+        return (
+          <group key={gx}>
+            <ArcLine cxFt={gx} cyFt={p1} r={r} a0={left ? -Math.PI / 2 : Math.PI} a1={left ? 0 : Math.PI * 1.5} L={L} W={W} color={lc} />
+            <Seg x1={xr} y1={p1} x2={xr} y2={p2} L={L} W={W} color={lc} />
+            <ArcLine cxFt={gx} cyFt={p2} r={r} a0={left ? 0 : Math.PI / 2} a1={left ? Math.PI / 2 : Math.PI} L={L} W={W} color={lc} />
+          </group>
+        );
+      })}
       {/* Goals on court */}
       <Border x={0} y={(W - goalW) / 2} w={goalLen} h={goalW} L={L} W={W} color={lc} lw={0.06} />
       <Border x={L - goalLen} y={(W - goalW) / 2} w={goalLen} h={goalW} L={L} W={W} color={lc} lw={0.06} />

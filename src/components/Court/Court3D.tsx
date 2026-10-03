@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { Canvas, createRoot, extend, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, PerformanceMonitor } from '@react-three/drei';
 import type { CourtConfig, CourtType } from '../../types/court';
+import { logoPlacement, logoBox } from '../../utils/courtData';
 import {
   FinishContext, SurfaceMaterial, LinePaintMaterial, ribbonGeometry,
   Lawn, BackyardFence, LeafyTree, Shrub, SceneLighting, ShadowGroup, FOG_COLOR,
@@ -777,6 +778,35 @@ function Toggle<T extends string>({ value, options, onChange }: {
   );
 }
 
+// ─── Customer logo ────────────────────────────────────────────────────────────
+/**
+ * The uploaded logo painted on the surface: above the surface and zone tints,
+ * below the line paint. Oriented to match the 2D plan, readable from the
+ * default corner view.
+ */
+function CourtLogo({ config }: { config: CourtConfig }) {
+  const logo = config.logo!;
+  const { length: L, width: W } = config.dimensions;
+  const tex = useMemo(() => {
+    const t = new THREE.TextureLoader().load(logo.url);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 8;
+    return t;
+  }, [logo.url]);
+  useEffect(() => () => tex.dispose(), [tex]);
+  const at = logoPlacement(config.type, L, W);
+  const box = logoBox(logo, at.size);
+  return (
+    <group position={[tx(at.y, W), 0.0176, tz(at.x, L)]} rotation={[0, Math.PI / 2, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[box.w * S, box.h * S]} />
+        <meshStandardMaterial map={tex} transparent alphaTest={0.04} roughness={0.6}
+          polygonOffset polygonOffsetFactor={-1} opacity={0.95} />
+      </mesh>
+    </group>
+  );
+}
+
 // ─── Scene ────────────────────────────────────────────────────────────────────
 /**
  * Everything in the 3D world except camera and controls. `bare` drops the
@@ -808,6 +838,7 @@ export function SceneContents({ config, time, mapSize, bare = false }: {
       <FinishContext.Provider value={config.surfaceFinish}>
         <CourtScene config={config} />
       </FinishContext.Provider>
+      {config.logo && config.selectedAccessories.includes('custom-logo') && <CourtLogo config={config} />}
       <ShadowGroup deps={config}>
         <CourtAccessories3D config={config} night={time === 'night'} />
         <SportSpecificAccessories3D config={config} />

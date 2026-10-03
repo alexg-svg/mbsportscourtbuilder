@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useId, useLayoutEffect, useRef, forwardRef } from 'react';
 import type { CourtConfig } from '../../types/court';
+import { logoPlacement, logoBox } from '../../utils/courtData';
 
 interface Props {
   config: CourtConfig;
@@ -64,6 +65,7 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
   const ls = { stroke: colors.lines, strokeWidth: Math.max(1.5, scale * 0.08) };
 
   const hasAcc = (id: string) => selectedAccessories.includes(id as never);
+  const showLogo = hasAcc('custom-logo') && !!config.logo;
 
   // Pattern ids must be unique per instance: several copies of this SVG can be
   // on the page (preview, phone strip, email capture) and url(#id) resolves to
@@ -1197,6 +1199,21 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
       {renderFencing()}
       {renderLighting()}
       <g clipPath={`url(#${revealId})`}>{renderCourt()}</g>
+      {showLogo && (() => {
+        const at = logoPlacement(type, cL, cW);
+        const box = logoBox(config.logo!, at.size);
+        return (
+          <>
+            <image href={config.logo!.url} x={px(at.x - box.w / 2)} y={py(at.y - box.h / 2)}
+              width={box.w * scale} height={box.h * scale} opacity={0.92} preserveAspectRatio="xMidYMid meet" />
+            {/* Repaint just the lines over the logo, as on a real court. fill-opacity 0 is
+                inherited, so surfaces and labels in this copy are invisible. */}
+            <g clipPath={`url(#${revealId})`} style={{ fillOpacity: 0 }} pointerEvents="none" aria-hidden>
+              {renderCourt()}
+            </g>
+          </>
+        );
+      })()}
       {renderBenches()}
       {renderScoreboards()}
       {renderWaterFountain()}

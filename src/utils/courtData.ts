@@ -45,6 +45,42 @@ export type LeadTimeline = keyof typeof LEAD_TIMELINE;
 export type LeadSite = keyof typeof LEAD_SITE;
 export type LeadSource = keyof typeof LEAD_SOURCE;
 
+/**
+ * Where the customer's logo is painted, in court feet (x along the length,
+ * y across the width), and the largest side of its box. Net sports get it in
+ * the backcourt so it isn't under the net; basketball half courts get it in
+ * the open area away from the hoop.
+ */
+export function logoPlacement(type: CourtType, L: number, W: number): { x: number; y: number; size: number } {
+  const mid = W / 2;
+  switch (type) {
+    case 'tennis': {
+      const back = Math.max((L - 42) / 2, 6);
+      return { x: back / 2, y: mid, size: Math.min(W * 0.35, back * 0.85) };
+    }
+    case 'pickleball': {
+      const playL = Math.min(L, 44), offX = (L - playL) / 2;
+      return { x: offX + 7.5, y: mid, size: Math.min(Math.min(W, 20) * 0.4, 12) };
+    }
+    case 'badminton': return { x: 7, y: mid, size: Math.min(W * 0.35, 10) };
+    case 'volleyball': return { x: L / 2 - 20, y: mid, size: Math.min(W * 0.4, 16) };
+    case 'basketball':
+      return L < 60
+        ? { x: L * 0.74, y: mid, size: Math.min(W * 0.32, L * 0.36) }
+        : { x: L / 2, y: mid, size: Math.min(W * 0.24, 12) };
+    case 'shuffleboard':
+    case 'bocce-ball': return { x: L / 2, y: mid, size: Math.min(W * 0.8, L * 0.15) };
+    case 'four-square': return { x: L / 2, y: mid, size: Math.min(W, L) * 0.3 };
+    default: return { x: L / 2, y: mid, size: Math.min(W * 0.28, 14) };
+  }
+}
+
+/** Logo box in feet, fitted inside `size` × `size` keeping its aspect ratio. */
+export function logoBox(logo: { w: number; h: number }, size: number) {
+  const k = size / Math.max(logo.w, logo.h);
+  return { w: logo.w * k, h: logo.h * k };
+}
+
 /** Allowed court size in feet (inclusive, whole feet). The quote API enforces the same. */
 export const DIM_LIMITS = { length: { min: 10, max: 300 }, width: { min: 4, max: 150 } } as const;
 
@@ -389,9 +425,12 @@ export const ACCESSORIES: Accessory[] = [
   {
     id: 'custom-logo',
     name: 'Custom Logo',
-    description: 'Add your team, school, or brand logo to the court surface. Send artwork separately after submitting.',
+    description: 'Add your team, school, or brand logo to the court surface. Upload it to see it on your design.',
     category: 'customization',
-    compatibleCourts: ['basketball', 'tennis', 'pickleball', 'multi-sport'],
+    compatibleCourts: [
+      'basketball', 'tennis', 'pickleball', 'multi-sport', 'bocce-ball', 'badminton',
+      'futsal', 'inline-hockey', 'handball', 'volleyball', 'shuffleboard', 'four-square',
+    ],
   },
   // Sport Equipment
   {

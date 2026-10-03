@@ -279,7 +279,8 @@ export default function App() {
           onBack={back} onNext={next}
         />
       );
-      case 4: return <Step5Accessories courtType={config.type} selected={config.selectedAccessories} onToggle={handleAccessoryToggle} onBack={back} onNext={next} />;
+      case 4: return <Step5Accessories courtType={config.type} selected={config.selectedAccessories} onToggle={handleAccessoryToggle}
+        logo={config.logo} onLogoChange={(logo) => setConfig((c) => ({ ...c, logo }))} onBack={back} onNext={next} />;
       case 5: return <Step6Contact config={config} onBack={back} onSubmit={handleSubmit} getCaptureImage={getCaptureImage} getCapture3D={getCapture3D} verifiedEmail={verifiedEmail === 'bypass' ? undefined : verifiedEmail ?? undefined} />;
       default: return null;
     }

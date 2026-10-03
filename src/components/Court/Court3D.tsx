@@ -150,9 +150,10 @@ function Surroundings({ L, W, pad, residential }: {
 
 // ─── Accessory building blocks ────────────────────────────────────────────────
 
-function Scoreboard3D({ x, z }: { x: number; z: number }) {
+/** Pole-mounted scoreboard; the display faces local +Z. */
+function Scoreboard3D({ x, z, rotY = 0 }: { x: number; z: number; rotY?: number }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} rotation={[0, rotY, 0]}>
       <mesh position={[0, 0.28, 0]}>
         <cylinderGeometry args={[0.025, 0.03, 0.56, 8]} />
         <meshStandardMaterial color="#475569" roughness={0.7} />
@@ -235,11 +236,14 @@ function CourtAccessories3D({ config, night }: { config: CourtConfig; night: boo
     });
   }
 
-  // ── Scoreboards ──
+  // ── Scoreboards: one behind each baseline (as in the 2D plan), inside the
+  // fence line, facing the court, set off to one side so a hoop doesn't hide it
   if (acc.includes('scoreboards')) {
+    const sbZ = halfL + 0.5;   // fence is at halfL + 0.9
+    const sbX = halfW * 0.45;
     nodes.push(
-      <Scoreboard3D key="sb1" x={-(edgeX + 0.1)} z={0} />,
-      <Scoreboard3D key="sb2" x={ edgeX + 0.1}   z={0} />,
+      <Scoreboard3D key="sb1" x={-sbX} z={-sbZ} rotY={0} />,
+      <Scoreboard3D key="sb2" x={sbX} z={sbZ} rotY={Math.PI} />,
     );
   }
 

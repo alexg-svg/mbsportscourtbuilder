@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useId } from 'react';
 import { AlertCircle, CheckCircle2, MapPin } from 'lucide-react';
 import type { CourtConfig } from '../../types/court';
 import {
@@ -356,16 +356,19 @@ function blobToBase64(blob: Blob): Promise<string> {
 /** Optional dropdown; the first entry means "not answered". */
 const Choice: React.FC<{
   label: string; value: string; options: Record<string, string>; onChange: (v: string) => void; wide?: boolean;
-}> = ({ label, value, options, onChange, wide }) => (
+}> = ({ label, value, options, onChange, wide }) => {
+  const id = useId();
+  return (
   <div className={wide ? 'col-span-2' : 'col-span-2 sm:col-span-1'}>
-    <label className="block text-xs text-theme-muted mb-1">{label}</label>
-    <select value={value} onChange={(e) => onChange(e.target.value)}
+    <label htmlFor={id} className="block text-xs text-theme-muted mb-1">{label}</label>
+    <select id={id} value={value} onChange={(e) => onChange(e.target.value)}
       className="w-full bg-theme-raised border border-theme-mid rounded-lg px-3 py-2 text-sm text-theme-primary focus:outline-none focus:border-pink-500">
       <option value="">Choose (optional)</option>
       {Object.entries(options).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
     </select>
   </div>
-);
+  );
+};
 
 const FieldError: React.FC<{ msg: string }> = ({ msg }) => (
   <p className="flex items-center gap-1 mt-1 text-xs text-red-400">

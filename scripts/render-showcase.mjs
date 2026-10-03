@@ -1,5 +1,6 @@
-// Renders the Step 1 showcase pictures (public/showcase/*.jpg) from the sample
-// designs in src/utils/showcase.ts, using the app's own 3D renderer.
+// Renders the Step 1 showcase pictures from the sample designs in
+// src/utils/showcase.ts, using the app's own 3D renderer: public/showcase/<id>.jpg
+// (960 wide) and <id>-1600.jpg for large and high-resolution screens.
 //
 // Usage: start the dev server (npm run dev), then: npm run render:showcase
 // Optional: BASE_URL (default http://localhost:5173), CHROMIUM_PATH.
@@ -19,14 +20,15 @@ const shots = await page.evaluate(async () => {
   const { renderCourtSnapshot } = await import('/src/components/Court/Court3D.tsx');
   const out = [];
   for (const item of SHOWCASE) {
-    out.push({ id: item.id, b64: await renderCourtSnapshot(item.config, 960, 600, item.time) });
+    out.push({ file: `${item.id}.jpg`, b64: await renderCourtSnapshot(item.config, 960, 600, item.time) });
+    out.push({ file: `${item.id}-1600.jpg`, b64: await renderCourtSnapshot(item.config, 1600, 1000, item.time) });
   }
   return out;
 });
 
-for (const { id, b64 } of shots) {
-  if (!b64) throw new Error(`Render failed for ${id}`);
-  writeFileSync(`public/showcase/${id}.jpg`, Buffer.from(b64, 'base64'));
-  console.log(`public/showcase/${id}.jpg`);
+for (const { file, b64 } of shots) {
+  if (!b64) throw new Error(`Render failed for ${file}`);
+  writeFileSync(`public/showcase/${file}`, Buffer.from(b64, 'base64'));
+  console.log(`public/showcase/${file}`);
 }
 await browser.close();

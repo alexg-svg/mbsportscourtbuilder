@@ -29,6 +29,8 @@ export const Showcase: React.FC<{ onUse: (item: ShowcaseItem) => void; compact?:
         <img
           key={s.id}
           src={`/showcase/${s.id}.jpg`}
+          srcSet={`/showcase/${s.id}.jpg 960w, /showcase/${s.id}-1600.jpg 1600w`}
+          sizes={compact ? '100vw' : 'min(80vw, 1600px)'}
           alt={`${s.title}: ${s.caption}`}
           loading={k === 0 ? 'eager' : 'lazy'}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${k === i ? 'opacity-100' : 'opacity-0'}`}

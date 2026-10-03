@@ -473,9 +473,11 @@ export default function App() {
             )}
           </div>
 
-          <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
+          {/* Size container: the showcase and 2D plan grow to the largest 16:10 box
+              that fits (cqw/cqh are this box's width/height), on any screen size */}
+          <div className="flex-1 min-h-0 flex items-center justify-center p-4 lg:p-8 [container-type:size]">
             {step === 0 ? (
-              <div className="w-full max-w-4xl animate-fade-in">
+              <div className="w-[min(100cqw,calc((100cqh_-_2rem)_*_1.6),1600px)] animate-fade-in">
                 <Showcase onUse={applyShowcaseDesign} />
                 <p className="text-theme-muted text-xs text-center mt-3">
                   Start from a sample or choose your property type to design from scratch.
@@ -488,7 +490,7 @@ export default function App() {
                 </Suspense>
               </div>
             ) : (
-              <div key={config.type} className="w-full max-w-4xl aspect-[16/10] animate-fade-in">
+              <div key={config.type} className="w-[min(100cqw,calc(100cqh_*_1.607))] aspect-[900/560] animate-fade-in">
                 <CourtSVG config={config} width={900} height={560} />
               </div>
             )}

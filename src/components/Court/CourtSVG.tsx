@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useId, forwardRef } from 'react';
+import React, { useState, useEffect, useId, useLayoutEffect, useRef, forwardRef } from 'react';
 import type { CourtConfig } from '../../types/court';
 
 interface Props {
   config: CourtConfig;
   width?: number;
   height?: number;
+  /** Omit the clickable info markers (for images in emails and PDFs). */
+  hideHotspots?: boolean;
 }
 
 interface HotspotDef {
@@ -21,7 +23,7 @@ const TIP_W = 188;
 const TIP_H = 62;
 const MARKER_R = 6;
 
-export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ config, width = 800, height = 560 }, ref) {
+export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ config, width = 800, height = 560, hideHotspots = false }, ref) {
   const { type, dimensions, colors, selectedAccessories, surfaceFinish } = config;
   const cW = dimensions.width;   // court width  (feet)
   const cL = dimensions.length;  // court length (feet)
@@ -69,6 +71,19 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
   const uid = useId().replace(/:/g, '');
   const finishId = `surface-finish-${uid}`;
   const lawnId = `lawn-${uid}`;
+  const revealId = `reveal-${uid}`;
+
+  // When the sport changes, sweep the new court in from left to right. The
+  // clip rect's base width is the full court, so a serialized copy (email/PDF
+  // capture) always shows everything; only the running animation hides part.
+  // fill="remove" hands back to the base width afterwards, so later size
+  // changes are never clipped by a stale animated value.
+  const revealRef = useRef<SVGAnimateElement>(null);
+  useLayoutEffect(() => {
+    if (hideHotspots) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    revealRef.current?.beginElement?.();
+  }, [type, hideHotspots]);
 
   // ─── HOTSPOT STATE ────────────────────────────────────────────────────────
   const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
@@ -1161,6 +1176,15 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
             <rect width="12" height="12" fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="0.5" />
           </pattern>
         )}
+        <clipPath id={revealId}>
+          <rect x={ox - pad - 6} y={0} width={svgCW + (pad + 6) * 2} height={height}>
+            {!hideHotspots && (
+              <animate ref={revealRef} attributeName="width" from={0} to={svgCW + (pad + 6) * 2}
+                dur="0.9s" begin="indefinite" fill="remove"
+                calcMode="spline" keyTimes="0;1" keySplines="0.3 0 0.2 1" />
+            )}
+          </rect>
+        </clipPath>
         <pattern id={lawnId} patternUnits="userSpaceOnUse" width="64" height="64">
           <rect width="64" height="64" fill="#467535" />
           <rect width="32" height="64" fill="#4d7d3b" />
@@ -1172,12 +1196,12 @@ export const CourtSVG = forwardRef<SVGSVGElement, Props>(function CourtSVG({ con
       <rect x={ox - pad} y={oy - pad} width={svgCW + pad * 2} height={svgCH + pad * 2} fill={colors.border} rx={2} />
       {renderFencing()}
       {renderLighting()}
-      {renderCourt()}
+      <g clipPath={`url(#${revealId})`}>{renderCourt()}</g>
       {renderBenches()}
       {renderScoreboards()}
       {renderWaterFountain()}
       {renderLabels()}
-      {renderHotspots()}
+      {!hideHotspots && renderHotspots()}
       <text
         x={width - 10} y={height - 10}
         textAnchor="end" fontSize={11}

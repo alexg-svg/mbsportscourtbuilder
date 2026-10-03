@@ -1,15 +1,17 @@
 import React from 'react';
-import { CheckCircle, Phone, FileText, MapPin, HardHat, Download } from 'lucide-react';
+import { CheckCircle, Phone, FileText, MapPin, HardHat, Download, FileDown, Loader2 } from 'lucide-react';
 import { trackEvent } from '../../utils/analytics';
 
 interface Props {
   name: string;
   email: string;
   render3D?: string;
+  onDownloadPdf?: () => void;
+  pdfBusy?: boolean;
   onReset: () => void;
 }
 
-export const StepDone: React.FC<Props> = ({ name, email, render3D, onReset }) => (
+export const StepDone: React.FC<Props> = ({ name, email, render3D, onDownloadPdf, pdfBusy, onReset }) => (
   <div className="h-full overflow-y-auto">
   <div className="min-h-full flex flex-col items-center justify-center px-8 py-10 text-center">
     <div className="w-20 h-20 flex-shrink-0 rounded-full bg-pink-600/20 border-2 border-pink-500 flex items-center justify-center mb-6 animate-scale-in">
@@ -37,8 +39,18 @@ export const StepDone: React.FC<Props> = ({ name, email, render3D, onReset }) =>
           className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-pink-500 hover:text-pink-400"
         >
           <Download className="w-3.5 h-3.5" />
-          Download your design
+          Download picture
         </a>
+        {onDownloadPdf && (
+          <button
+            onClick={onDownloadPdf}
+            disabled={pdfBusy}
+            className="mt-2 ml-4 inline-flex items-center gap-1.5 text-xs font-semibold text-pink-500 hover:text-pink-400 disabled:opacity-60"
+          >
+            {pdfBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
+            Download PDF summary
+          </button>
+        )}
       </div>
     )}
 

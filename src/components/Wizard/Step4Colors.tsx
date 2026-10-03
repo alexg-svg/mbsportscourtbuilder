@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import type { CourtColors, CourtType, SurfaceFinish } from '../../types/court';
 import { SURFACE_COLORS, LINE_COLORS, BORDER_COLORS, DEFAULT_COLORS } from '../../utils/courtData';
 import { StepShell } from './StepShell';
@@ -48,6 +48,38 @@ const COMBOS: { name: string; surface: string; border: string; lines: string; zo
   { name: 'Desert Clay',        surface: '#D97706', border: '#7F1D1D', lines: '#FFFFFF', zone: '#7F1D1D' },
   { name: 'Team Purple',        surface: '#7C3AED', border: '#4C1D95', lines: '#FFFFFF', zone: '#4C1D95' },
 ];
+
+/**
+ * Close-up of a surface finish in the chosen court color: a satin sheen for
+ * Smooth, fine sand grit for Textured, a soft dimpled look for Cushioned.
+ */
+const FinishSample: React.FC<{ finish: SurfaceFinish; color: string }> = ({ finish, color }) => {
+  const id = useId().replace(/:/g, '');
+  return (
+    <svg className="w-full h-9 rounded-md mb-1.5 border border-black/10" preserveAspectRatio="none" viewBox="0 0 100 36" aria-hidden>
+      <defs>
+        <linearGradient id={`sheen-${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="white" stopOpacity="0.28" />
+          <stop offset="0.5" stopColor="white" stopOpacity="0.04" />
+          <stop offset="1" stopColor="black" stopOpacity="0.12" />
+        </linearGradient>
+        <filter id={`grit-${id}`} x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency={finish === 'textured' ? 1.6 : 0.28}
+            numOctaves={finish === 'textured' ? 1 : 3} seed={3} stitchTiles="stitch" />
+          <feColorMatrix type="matrix"
+            values={finish === 'textured'
+              ? '0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.2 1.25'
+              : '0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.1 -0.45'} />
+        </filter>
+      </defs>
+      <rect width="100" height="36" fill={color} />
+      {finish === 'smooth' && <rect width="100" height="36" fill={`url(#sheen-${id})`} />}
+      {finish !== 'smooth' && (
+        <rect width="100" height="36" filter={`url(#grit-${id})`} opacity={finish === 'textured' ? 0.55 : 0.35} />
+      )}
+    </svg>
+  );
+};
 
 const FINISHES: { id: SurfaceFinish; label: string; desc: string }[] = [
   { id: 'smooth',    label: 'Smooth',    desc: 'Standard' },
@@ -174,6 +206,7 @@ export const Step4Colors: React.FC<Props> = ({
                     : 'border-theme-mid bg-theme-raised/60 text-theme-primary/80 hover:border-theme-mid'
                 }`}
               >
+                <FinishSample finish={f.id} color={colors.surface} />
                 <div className="text-xs font-semibold">{f.label}</div>
                 <div className={`text-xs mt-0.5 ${surfaceFinish === f.id ? 'text-pink-700 dark:text-pink-200' : 'text-theme-muted'}`}>{f.desc}</div>
               </button>

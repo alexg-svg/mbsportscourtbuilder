@@ -8,6 +8,7 @@ import {
   Lawn, BackyardFence, LeafyTree, Shrub, SceneLighting, ShadowGroup, FOG_COLOR,
 } from './realism';
 import type { TimeOfDay } from './realism';
+import { trackEvent } from '../../utils/analytics';
 import {
   SportNet, BasketballGoal, Goal, LightPole, PerimeterFence, PlayerBench, DasherBoards,
 } from './equipment';
@@ -919,8 +920,10 @@ export function Court3D({ config }: { config: CourtConfig }) {
       mbsportsbuilders.com
     </div>
     <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
-      <Toggle value={view} onChange={setView} options={[['corner', 'Corner'], ['top', 'Top'], ['side', 'Courtside']]} />
-      <Toggle value={time} onChange={setTime} options={[['day', 'Day'], ['sunset', 'Sunset'], ['night', 'Night']]} />
+      <Toggle value={view} options={[['corner', 'Corner'], ['top', 'Top'], ['side', 'Courtside']]}
+        onChange={(v) => { setView(v); trackEvent('camera_view_selected', { view: v, court_type: config.type }); }} />
+      <Toggle value={time} options={[['day', 'Day'], ['sunset', 'Sunset'], ['night', 'Night']]}
+        onChange={(t) => { setTime(t); trackEvent('time_of_day_selected', { time: t, court_type: config.type, has_lighting: hasLights }); }} />
     </div>
     {time === 'night' && !hasLights && (
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-lg bg-black/60 text-white text-xs whitespace-nowrap">

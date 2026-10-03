@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, lazy, Suspense, useEffect } from 'react';
-import { Eye, ClipboardList, Box, Map, ImagePlus, Link2, Check } from 'lucide-react';
+import { Eye, ClipboardList, Box, Map, ImagePlus, Link2, Check, FileDown, Loader2 } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
 import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES } from './utils/courtData';
 import { trackEvent } from './utils/analytics';
@@ -53,6 +53,7 @@ export default function App() {
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const [config, setConfig]       = useState<CourtConfig>(sharedDesign ?? initialConfig);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   useEffect(() => {
     if (sharedDesign) trackEvent('shared_design_opened', { court_type: sharedDesign.type });
@@ -124,7 +125,66 @@ export default function App() {
     return img;
   }, []);
 
-  const next = () => { setDirection('forward'); setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1)); };
+  // Two-page PDF: 3D picture and specs, then the 2D layout. Everything loads
+  // only when a customer asks for it.
+  const downloadPdf = async () => {
+    if (pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      const [{ buildDesignPdf }, court3D, plan] = await Promise.all([
+        import('./utils/designPdf'),
+        import('./components/Court/Court3D'),
+        getCaptureImage(),
+      ]);
+      const shot = render3D ?? await court3D.renderCourtSnapshot(config);
+      const blob = buildDesignPdf(
+        config,
+        shot ? { b64: shot, w: 1200, h: 750 } : undefined,
+        plan ? { b64: plan, w: 900, h: 560 } : undefined,
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `MB-Sports-${config.type}-court-design.pdf`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      trackEvent('pdf_downloaded', { court_type: config.type });
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+
+  // Latest values for handlers that fire after a delay (Step 1 advances 250 ms
+  // after the click, from a closure that predates the state update)
+  const configRef = useRef(config);
+  configRef.current = config;
+  const stepRef = useRef(step);
+  stepRef.current = step;
+
+  // GA4: record what the customer chose each time they complete a step, so
+  // popular sports, sizes, colors and extras show up in reports alongside the
+  // step_view drop-off funnel.
+  const trackStepChoices = (s: number) => {
+    const c = configRef.current;
+    const preset = COURT_PRESETS.find((p) =>
+      p.type === c.type && p.dimensions.length === c.dimensions.length && p.dimensions.width === c.dimensions.width);
+    const choices: Record<string, unknown>[] = [
+      { property_type: c.propertyType },
+      { court_type: c.type },
+      { court_type: c.type, court_size: preset?.name ?? 'Custom', length_ft: c.dimensions.length, width_ft: c.dimensions.width },
+      { court_type: c.type, surface_color: c.colors.surface, line_color: c.colors.lines,
+        border_color: c.colors.border, surface_finish: c.surfaceFinish },
+      { court_type: c.type, accessories: c.selectedAccessories.join(',') || 'none',
+        accessories_count: c.selectedAccessories.length },
+    ];
+    if (choices[s]) trackEvent('step_completed', { step_number: s, step_name: STEP_NAMES[s], ...choices[s] });
+  };
+
+  const next = () => {
+    trackStepChoices(stepRef.current);
+    setDirection('forward');
+    setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
+  };
   const back = () => { setDirection('back');    setStep((s) => Math.max(s - 1, 0)); };
 
   const update = useCallback(<K extends keyof CourtConfig>(key: K, value: CourtConfig[K]) => {
@@ -150,6 +210,11 @@ export default function App() {
   }, []);
 
   const handleAccessoryToggle = useCallback((id: AccessoryId) => {
+    const c = configRef.current;
+    trackEvent('accessory_toggled', {
+      accessory_id: id, court_type: c.type,
+      action: c.selectedAccessories.includes(id) ? 'removed' : 'added',
+    });
     setConfig((prev) => {
       const exclusionGroups: AccessoryId[][] = [
         ['lighting-2-pole', 'lighting-4-pole', 'lighting-6-pole'],
@@ -245,7 +310,7 @@ export default function App() {
           bg-theme-panel border-r border-theme-border flex-shrink-0 overflow-hidden
         `}>
           {step === -1 ? (
-            <StepDone name={submitted?.name ?? ''} email={submitted?.email ?? ''} render3D={render3D} onReset={handleReset} />
+            <StepDone name={submitted?.name ?? ''} email={submitted?.email ?? ''} render3D={render3D} onDownloadPdf={downloadPdf} pdfBusy={pdfBusy} onReset={handleReset} />
           ) : (
             <>
               <StepProgress current={step} />
@@ -303,7 +368,10 @@ export default function App() {
                 <span className="hidden md:inline font-mono">{config.dimensions.length} × {config.dimensions.width} ft</span>
                 <span className="hidden md:inline">·</span>
                 <button
-                  onClick={() => setView3D((v) => !v)}
+                  onClick={() => {
+                    if (!view3D) trackEvent('view_3d_opened', { court_type: config.type });
+                    setView3D((v) => !v);
+                  }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 ${
                     view3D
                       ? 'border-pink-500 bg-pink-600 text-white shadow-sm shadow-pink-900/30'
@@ -328,6 +396,15 @@ export default function App() {
                 >
                   {linkCopied ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
                   <span className="hidden lg:inline">{linkCopied ? 'Link copied' : 'Share'}</span>
+                </button>
+                <button
+                  onClick={downloadPdf}
+                  disabled={pdfBusy}
+                  title="Download a PDF summary of this design"
+                  className="flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-lg border font-semibold text-xs transition-all active:scale-95 border-pink-500/60 bg-theme-raised text-pink-400 hover:bg-pink-600 hover:text-white hover:border-pink-500 disabled:opacity-60"
+                >
+                  {pdfBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileDown className="w-3 h-3" />}
+                  <span className="hidden lg:inline">PDF</span>
                 </button>
               </div>
             )}
@@ -370,10 +447,11 @@ export default function App() {
         </Suspense>
       )}
 
-      {/* Off-screen SVG kept in DOM from step 1 onward for email image capture */}
-      {step > 0 && (
+      {/* Off-screen SVG kept in DOM from step 1 onward (and on the thank-you
+          screen) for the email and PDF layout image */}
+      {step !== 0 && (
         <div aria-hidden style={{ position: 'fixed', left: '-9999px', top: 0, width: '900px', height: '560px', overflow: 'hidden', pointerEvents: 'none' }}>
-          <CourtSVG ref={svgRef} config={config} width={900} height={560} />
+          <CourtSVG ref={svgRef} config={config} width={900} height={560} hideHotspots />
         </div>
       )}
     </div>

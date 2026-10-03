@@ -19,6 +19,32 @@ export const FINISH_LABELS: Record<SurfaceFinish, string> = {
   smooth: 'Smooth Asphalt', textured: 'Textured Asphalt', cushioned: 'Cushioned Asphalt',
 };
 
+// Optional sales questions on the contact form (the quote API keeps a
+// type-checked copy of these labels for the email)
+export const LEAD_TIMELINE = {
+  asap: 'As soon as possible',
+  '1-3-months': 'In 1–3 months',
+  '3-6-months': 'In 3–6 months',
+  '6-plus-months': 'In 6+ months',
+  researching: 'Just researching',
+} as const;
+export const LEAD_SITE = {
+  'existing-slab': 'Existing concrete or asphalt slab',
+  resurface: 'Resurfacing an existing court',
+  'new-ground': 'New ground (needs a base)',
+  'not-sure': 'Not sure yet',
+} as const;
+export const LEAD_SOURCE = {
+  google: 'Google search',
+  social: 'Facebook / Instagram',
+  referral: 'Friend or neighbor',
+  'saw-court': 'Saw one of your courts',
+  other: 'Other',
+} as const;
+export type LeadTimeline = keyof typeof LEAD_TIMELINE;
+export type LeadSite = keyof typeof LEAD_SITE;
+export type LeadSource = keyof typeof LEAD_SOURCE;
+
 /** Allowed court size in feet (inclusive, whole feet). The quote API enforces the same. */
 export const DIM_LIMITS = { length: { min: 10, max: 300 }, width: { min: 4, max: 150 } } as const;
 

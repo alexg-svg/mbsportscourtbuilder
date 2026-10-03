@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useRef, lazy, Suspense, useEffect } from 'react';
-import { Eye, ClipboardList, Box, Map, ImagePlus, Link2, Check, FileDown, Loader2 } from 'lucide-react';
+import { Eye, ClipboardList, Box, Map, ImagePlus, Link2, Check, FileDown, Loader2, History } from 'lucide-react';
 import type { CourtConfig, CourtType, PropertyType, AccessoryId, CourtDimensions, CourtColors, SurfaceFinish } from './types/court';
-import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES } from './utils/courtData';
+import { DEFAULT_COLORS, COURT_PRESETS, ACCESSORIES, COURT_LABELS } from './utils/courtData';
 import { trackEvent } from './utils/analytics';
-import { designUrl, readSharedDesign } from './utils/shareLink';
+import { designUrl, readSharedDesign, saveDraft, loadDraft, clearDraft } from './utils/shareLink';
 import { CourtSVG } from './components/Court/CourtSVG';
 
 const Court3D = lazy(() => import('./components/Court/Court3D').then((m) => ({ default: m.Court3D })));
@@ -58,6 +58,29 @@ export default function App() {
   useEffect(() => {
     if (sharedDesign) trackEvent('shared_design_opened', { court_type: sharedDesign.type });
   }, [sharedDesign]);
+
+  // Autosave: an unfinished design is kept in this browser and offered back
+  // on the next visit. A shared link takes priority over a saved draft.
+  const [draft, setDraft] = useState(() => (sharedDesign ? null : loadDraft()));
+  useEffect(() => {
+    if (step === 0 || step < 0 || draft) return;
+    const t = setTimeout(() => saveDraft(config, step), 400);
+    return () => clearTimeout(t);
+  }, [config, step, draft]);
+  useEffect(() => {
+    // Starting a new design without using the offer replaces the old draft
+    if (step !== 0 && draft) setDraft(null);
+  }, [step, draft]);
+
+  const resumeDraft = () => {
+    if (!draft) return;
+    setConfig(draft.config);
+    setDirection('forward');
+    setStep(draft.step);
+    setDraft(null);
+    trackEvent('draft_resumed', { court_type: draft.config.type, step_number: draft.step });
+  };
+  const discardDraft = () => { clearDraft(); setDraft(null); };
 
   const shareDesign = async () => {
     const url = designUrl(config);
@@ -233,8 +256,8 @@ export default function App() {
     });
   }, []);
 
-  const handleSubmit = (data: ContactData) => { setSubmitted(data); setStep(-1); };
-  const handleReset  = () => { if (location.hash) history.replaceState(null, '', location.pathname + location.search); setConfig(initialConfig); setSubmitted(null); setRender3D(undefined); setStep(0); setShowPreview(false); };
+  const handleSubmit = (data: ContactData) => { clearDraft(); setSubmitted(data); setStep(-1); };
+  const handleReset  = () => { clearDraft(); if (location.hash) history.replaceState(null, '', location.pathname + location.search); setConfig(initialConfig); setSubmitted(null); setRender3D(undefined); setStep(0); setShowPreview(false); };
 
   const renderStep = () => {
     switch (step) {
@@ -314,6 +337,29 @@ export default function App() {
           ) : (
             <>
               <StepProgress current={step} />
+              {step === 0 && draft && (
+                <div className="mx-4 mt-3 p-3 rounded-xl border border-pink-500/50 bg-pink-600/10 flex-shrink-0">
+                  <div className="flex items-start gap-2.5">
+                    <History className="w-4 h-4 text-pink-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-theme-primary">Pick up where you left off?</p>
+                      <p className="text-xs text-theme-muted mt-0.5">
+                        Your {COURT_LABELS[draft.config.type]} court ({draft.config.dimensions.length} × {draft.config.dimensions.width} ft) is saved on this device.
+                      </p>
+                      <div className="flex gap-2 mt-2">
+                        <button onClick={resumeDraft}
+                          className="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-xs font-semibold">
+                          Continue my design
+                        </button>
+                        <button onClick={discardDraft}
+                          className="px-3 py-1.5 rounded-lg border border-theme-mid text-theme-muted hover:text-theme-primary text-xs font-semibold">
+                          Start fresh
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               {/* Phones: small live preview on every step; tap to open the full view */}
               {step > 0 && (
                 <button
